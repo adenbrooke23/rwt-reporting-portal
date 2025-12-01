@@ -115,9 +115,13 @@
           </a>
           <!-- Overflow Menu for Secondary Actions -->
           <ibm-overflow-menu [flip]="true" [description]="''">
+            <ibm-overflow-menu-option (click)="toggleFavorite(data.id)">
+              <svg [cdsIcon]="isFavorite(data.id) ? 'star--filled' : 'star'" size="16" class="menu-icon"></svg>
+              {{ isFavorite(data.id) ? 'Remove from My Dashboard' : 'Add to My Dashboard' }}
+            </ibm-overflow-menu-option>
             <ibm-overflow-menu-option (click)="togglePin(data.id)">
               <svg [cdsIcon]="isPinned(data.id) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
-              {{ isPinned(data.id) ? 'Unpin' : 'Pin' }}
+              {{ isPinned(data.id) ? 'Remove from Quick Access' : 'Add to Quick Access' }}
             </ibm-overflow-menu-option>
           </ibm-overflow-menu>
         </div>
