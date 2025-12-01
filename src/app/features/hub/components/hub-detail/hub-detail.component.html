@@ -116,12 +116,12 @@
           <!-- Overflow Menu for Secondary Actions -->
           <ibm-overflow-menu [flip]="true" [description]="''">
             <ibm-overflow-menu-option (click)="toggleFavorite(data.id)">
-              <svg [cdsIcon]="isFavorite(data.id) ? 'star--filled' : 'star'" size="16" class="menu-icon"></svg>
-              {{ isFavorite(data.id) ? 'Remove from My Dashboard' : 'Add to My Dashboard' }}
+              <svg cdsIcon="star" size="16" class="menu-icon"></svg>
+              {{ isFavorite(data.id) ? 'Unfavorite' : 'Favorite' }}
             </ibm-overflow-menu-option>
             <ibm-overflow-menu-option (click)="togglePin(data.id)">
-              <svg [cdsIcon]="isPinned(data.id) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
-              {{ isPinned(data.id) ? 'Remove from Quick Access' : 'Add to Quick Access' }}
+              <svg cdsIcon="pin" size="16" class="menu-icon"></svg>
+              {{ isPinned(data.id) ? 'Unpin' : 'Pin' }}
             </ibm-overflow-menu-option>
           </ibm-overflow-menu>
         </div>
