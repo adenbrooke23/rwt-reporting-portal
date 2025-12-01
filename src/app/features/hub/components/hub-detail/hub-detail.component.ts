@@ -13,8 +13,9 @@ import { TilesModule, IconModule, IconService, ButtonModule, TableModule, TagMod
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import Document from '@carbon/icons/es/document/16';
 import DocumentBlank from '@carbon/icons/es/document--blank/20';
-import Star from '@carbon/icons/es/star/20';
-import StarFilled from '@carbon/icons/es/star--filled/20';
+import Star16 from '@carbon/icons/es/star/16';
+import Star20 from '@carbon/icons/es/star/20';
+import StarFilled from '@carbon/icons/es/star--filled/16';
 import Pin from '@carbon/icons/es/pin/16';
 import PinFilled from '@carbon/icons/es/pin--filled/16';
 import TrashCan from '@carbon/icons/es/trash-can/16';
@@ -67,7 +68,8 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       ArrowLeft,
       Document,
       DocumentBlank,
-      Star,
+      Star16,
+      Star20,
       StarFilled,
       Pin,
       PinFilled,
