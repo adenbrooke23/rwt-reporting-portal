@@ -1,0 +1,159 @@
+<div class="personal-dashboard-container">
+  <!-- Page Header matching admin style -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>My Dashboard</h1>
+        <p class="header-subtitle">Your curated collection of favorite reports</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToDashboard()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="dashboard-content">
+      <!-- Reports Table with Toolbar -->
+      <div *ngIf="totalFavoritesCount > 0" class="favorites-table">
+        <div class="carbon-table-wrapper" [ngClass]="'table-row-size-' + tableRowSize">
+          <ibm-table-container>
+            <ibm-table-toolbar [model]="tableModel">
+              <ibm-table-toolbar-content>
+                <ibm-table-toolbar-search
+                  [expandable]="true"
+                  [value]="searchQuery"
+                  (valueChange)="onSearchChange($event)"
+                  (clear)="onSearchChange('')"
+                  [placeholder]="'Search reports...'"
+                  [size]="'sm'">
+                </ibm-table-toolbar-search>
+                <!-- Row Height Settings Button -->
+                <button
+                  cdsButton="ghost"
+                  type="button"
+                  [iconOnly]="true"
+                  [size]="'sm'"
+                  class="row-height-settings-btn"
+                  [ibmOverflowMenu]="rowHeightMenu"
+                  aria-label="Adjust row height">
+                  <svg cdsIcon="settings" size="16"></svg>
+                </button>
+                <ibm-tag type="cool-gray" size="md">
+                  {{ totalFavoritesCount }} report{{ totalFavoritesCount !== 1 ? 's' : '' }}
+                </ibm-tag>
+              </ibm-table-toolbar-content>
+            </ibm-table-toolbar>
+            <ibm-table
+              [model]="isLoading ? skeletonModel : tableModel"
+              [skeleton]="isLoading"
+              [sortable]="true"
+              [size]="tableRowSize"
+              [striped]="false"
+              [showSelectionColumn]="false"
+              [attr.aria-busy]="isLoading">
+            </ibm-table>
+          </ibm-table-container>
+
+          <!-- Pagination Controls -->
+          <div *ngIf="allReports.length > (paginationModel.pageLength || 6)" class="pagination-wrapper">
+            <ibm-pagination
+              [model]="paginationModel"
+              (selectPage)="onPageChange($event)">
+            </ibm-pagination>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row Height Settings Menu -->
+      <ng-template #rowHeightMenu>
+        <ibm-overflow-menu-option (click)="setRowSize('xs')">
+          <svg *ngIf="tableRowSize === 'xs'" cdsIcon="checkmark" size="16" class="menu-icon"></svg>
+          <span [class.menu-option-selected]="tableRowSize === 'xs'">Extra small</span>
+        </ibm-overflow-menu-option>
+        <ibm-overflow-menu-option (click)="setRowSize('sm')">
+          <svg *ngIf="tableRowSize === 'sm'" cdsIcon="checkmark" size="16" class="menu-icon"></svg>
+          <span [class.menu-option-selected]="tableRowSize === 'sm'">Small</span>
+        </ibm-overflow-menu-option>
+        <ibm-overflow-menu-option (click)="setRowSize('md')">
+          <svg *ngIf="tableRowSize === 'md'" cdsIcon="checkmark" size="16" class="menu-icon"></svg>
+          <span [class.menu-option-selected]="tableRowSize === 'md'">Medium</span>
+        </ibm-overflow-menu-option>
+        <ibm-overflow-menu-option (click)="setRowSize('lg')">
+          <svg *ngIf="tableRowSize === 'lg'" cdsIcon="checkmark" size="16" class="menu-icon"></svg>
+          <span [class.menu-option-selected]="tableRowSize === 'lg'">Large</span>
+        </ibm-overflow-menu-option>
+      </ng-template>
+
+      <!-- Templates for table cells -->
+      <ng-template #reportNameTemplate let-data="data">
+        <div class="report-name-cell">
+          <svg cdsIcon="document" size="16" class="report-icon"></svg>
+          <span class="report-name">{{ data.name }}</span>
+        </div>
+      </ng-template>
+
+      <ng-template #hubTemplate let-data="data">
+        <span class="hub-text">{{ data }}</span>
+      </ng-template>
+
+      <ng-template #descriptionTemplate let-data="data">
+        <span class="description-text">{{ data }}</span>
+      </ng-template>
+
+      <ng-template #typeTemplate let-data="data">
+        <span class="type-badge" [class.ssrs]="data.type === 'SSRS'" [class.powerbi]="data.type === 'PowerBI'">
+          {{ data.type }}
+        </span>
+      </ng-template>
+
+      <ng-template #actionsTemplate let-data="data">
+        <div class="action-cell">
+          <!-- Primary Action: View Report -->
+          <a [routerLink]="data.route" cdsButton="primary" size="sm" class="view-report-btn">
+            <svg cdsIcon="view" size="16" class="cds--btn__icon"></svg>
+            View
+          </a>
+          <!-- Overflow Menu for Secondary Actions -->
+          <ibm-overflow-menu [flip]="true" [description]="''">
+            <ibm-overflow-menu-option (click)="togglePin(data.id, data.categoryId, data.categoryName)">
+              <svg [cdsIcon]="isPinned(data.id) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
+              {{ isPinned(data.id) ? 'Unpin' : 'Pin' }}
+            </ibm-overflow-menu-option>
+            <ibm-overflow-menu-option (click)="removeFavorite(data.id)" class="danger-option">
+              <svg cdsIcon="trash-can" size="16" class="menu-icon"></svg>
+              Remove
+            </ibm-overflow-menu-option>
+          </ibm-overflow-menu>
+        </div>
+      </ng-template>
+
+      <!-- Empty State -->
+      <div *ngIf="totalFavoritesCount === 0" class="no-favorites">
+        <svg cdsIcon="star" size="64" class="icon-large"></svg>
+        <div class="empty-state-content">
+          <h3>No Favorite Reports Yet</h3>
+          <p>Visit the reporting hubs and add reports to your favorites<br>for quick access.</p>
+        </div>
+        <button cdsButton="primary" size="md" (click)="backToDashboard()">
+          Browse Reporting Hubs
+        </button>
+      </div>
+
+      <!-- No Search Results -->
+      <div *ngIf="totalFavoritesCount > 0 && tableModel.data.length === 0" class="no-results">
+        <svg cdsIcon="document--blank" size="64" class="icon-large"></svg>
+        <div class="empty-state-content">
+          <h3>No Results Found</h3>
+          <p>No reports match your search query "{{ searchQuery }}".<br>Try a different search term.</p>
+        </div>
+        <button cdsButton="secondary" size="md" (click)="onSearchChange('')">
+          Clear Search
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

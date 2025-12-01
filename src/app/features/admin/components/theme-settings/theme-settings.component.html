@@ -1,0 +1,127 @@
+<div class="theme-settings-container">
+  <!-- Page Header matching standard navigation pattern -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Theme Settings</h1>
+        <p class="header-subtitle">Choose a theme to customize the look and feel of the application</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="goBack()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+
+  <!-- Carbon Design System Themes Section -->
+  <div class="theme-section">
+    <h2 class="section-title">Carbon Design System Themes</h2>
+    <p class="section-description">
+      Official Carbon themes with optimized color palettes for different lighting conditions.
+    </p>
+
+    <div class="themes-grid">
+      <div
+        *ngFor="let theme of carbonThemes"
+        class="theme-card"
+        [class.active]="isCurrentTheme(theme.id)"
+        (click)="selectTheme(theme.id)">
+
+        <!-- Theme Preview -->
+        <div class="theme-preview" [ngClass]="getThemePreviewClass(theme.id)">
+          <div class="preview-header"></div>
+          <div class="preview-content">
+            <div class="preview-sidebar"></div>
+            <div class="preview-main">
+              <div class="preview-card"></div>
+              <div class="preview-card"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme Info -->
+        <div class="theme-info">
+          <div class="theme-name-row">
+            <h3 class="theme-name">{{ theme.name }}</h3>
+            <svg *ngIf="isCurrentTheme(theme.id)" ibmIcon="checkmark" size="20" class="checkmark-icon"></svg>
+          </div>
+          <p class="theme-description">{{ theme.description }}</p>
+          <span class="theme-badge" [class.dark-badge]="theme.isDark">
+            {{ theme.isDark ? 'Dark' : 'Light' }}
+          </span>
+        </div>
+
+        <!-- Active Indicator -->
+        <div *ngIf="isCurrentTheme(theme.id)" class="active-indicator">
+          Current Theme
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Themes Section -->
+  <div class="theme-section">
+    <h2 class="section-title">Business Themes</h2>
+    <p class="section-description">
+      Custom themes with brand-specific color palettes for different business units.
+    </p>
+
+    <div class="themes-grid">
+      <div
+        *ngFor="let theme of businessThemes"
+        class="theme-card"
+        [class.active]="isCurrentTheme(theme.id)"
+        (click)="selectTheme(theme.id)">
+
+        <!-- Theme Preview -->
+        <div class="theme-preview" [ngClass]="getThemePreviewClass(theme.id)">
+          <div class="preview-header"></div>
+          <div class="preview-content">
+            <div class="preview-sidebar"></div>
+            <div class="preview-main">
+              <div class="preview-card"></div>
+              <div class="preview-card"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme Info -->
+        <div class="theme-info">
+          <div class="theme-name-row">
+            <h3 class="theme-name">{{ theme.name }}</h3>
+            <svg *ngIf="isCurrentTheme(theme.id)" ibmIcon="checkmark" size="20" class="checkmark-icon"></svg>
+          </div>
+          <p class="theme-description">{{ theme.description }}</p>
+          <span class="theme-badge business-badge">
+            Business
+          </span>
+        </div>
+
+        <!-- Active Indicator -->
+        <div *ngIf="isCurrentTheme(theme.id)" class="active-indicator">
+          Current Theme
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div class="info-section">
+    <h3 class="info-title">About Themes</h3>
+    <p class="info-text">
+      Themes define the complete color palette for the application. Business themes automatically
+      apply when you log in based on your business unit, but you can manually override them at any time.
+    </p>
+    <ul class="info-list">
+      <li><strong>Carbon Themes</strong> - Standard IBM Carbon Design System color palettes</li>
+      <li><strong>Business Themes</strong> - Custom branded themes for Sequoia, CoreVest, and Enterprise</li>
+    </ul>
+  </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,342 @@
+<div class="admin-container">
+  <header class="admin-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>User Management</h1>
+        <p class="header-subtitle">Manage user accounts, permissions, and access control</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToDashboard()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <div class="admin-content">
+      <div class="admin-grid">
+        <div class="users-panel">
+          <div class="users-panel-header">
+            <h2>Users</h2>
+            <!-- Carbon Fluid Search Component -->
+            <div class="search-container">
+              <ibm-search
+                [value]="searchQuery"
+                (valueChange)="onSearchChange($event)"
+                placeholder="Search users by name or email..."
+                [size]="'sm'">
+              </ibm-search>
+            </div>
+          </div>
+
+          <!-- Carbon Structured List for Users -->
+          <ibm-structured-list class="user-structured-list">
+            <ibm-list-header>
+              <ibm-list-column>User</ibm-list-column>
+              <ibm-list-column>Status</ibm-list-column>
+              <ibm-list-column>Reports</ibm-list-column>
+              <ibm-list-column>Departments</ibm-list-column>
+            </ibm-list-header>
+            <ibm-list-row
+              *ngFor="let user of filteredUsers"
+              (click)="selectUser(user)"
+              [class.selected]="selectedUser?.id === user.id"
+              [class.locked]="user.accountStatus === 'locked'"
+              [class.expired]="user.accountStatus === 'expired'"
+              class="user-row">
+              <ibm-list-column>
+                <div class="user-info-cell">
+                  <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                  <div class="user-email">{{ user.email }}</div>
+                </div>
+              </ibm-list-column>
+              <ibm-list-column>
+                <div class="status-cell">
+                  <ibm-tag
+                    *ngIf="user.accountStatus === 'active'"
+                    type="green"
+                    title="Active">
+                    Active
+                  </ibm-tag>
+                  <ibm-tag
+                    *ngIf="user.accountStatus === 'locked'"
+                    type="red"
+                    title="Locked">
+                    Locked
+                  </ibm-tag>
+                  <ibm-tag
+                    *ngIf="user.accountStatus === 'expired'"
+                    type="gray"
+                    title="Expired">
+                    Expired
+                  </ibm-tag>
+                  <ibm-tag
+                    *ngIf="user.roles.includes('admin')"
+                    type="purple"
+                    title="Administrator">
+                    Admin
+                  </ibm-tag>
+                </div>
+              </ibm-list-column>
+              <ibm-list-column>
+                <div class="reports-cell">
+                  {{ user.permissions.length }} report{{ user.permissions.length !== 1 ? 's' : '' }}
+                </div>
+              </ibm-list-column>
+              <ibm-list-column>
+                <div class="groups-cell">
+                  {{ user.groups.length }} dept{{ user.groups.length !== 1 ? 's' : '' }}
+                </div>
+              </ibm-list-column>
+            </ibm-list-row>
+          </ibm-structured-list>
+
+          <div *ngIf="filteredUsers.length === 0" class="no-results">
+            <p>No users found matching your search.</p>
+          </div>
+
+          <!-- Carbon Pagination -->
+          <ibm-pagination
+            [model]="{ currentPage: currentPage, pageLength: pageSize, totalDataLength: totalUsers }"
+            (selectPage)="onPaginationChange($event)">
+          </ibm-pagination>
+        </div>
+
+        <div class="permissions-panel">
+          <div *ngIf="!selectedUser" class="no-selection">
+            <svg cdsIcon="user" size="32" class="icon-large"></svg>
+            <h3>Select a User</h3>
+            <p>Choose a user from the list to manage their departments and report permissions</p>
+          </div>
+
+          <div *ngIf="selectedUser" class="permissions-editor">
+            <div class="editor-header">
+              <div>
+                <h2>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h2>
+                <p class="user-email-header">{{ selectedUser.email }}</p>
+                <div class="account-status-section">
+                  <span class="status-badge"
+                        [class.locked]="selectedUser.accountStatus === 'locked'"
+                        [class.active]="selectedUser.accountStatus === 'active'"
+                        [class.expired]="selectedUser.accountStatus === 'expired'">
+                    <ng-container [ngSwitch]="selectedUser.accountStatus">
+                      <ng-container *ngSwitchCase="'locked'">Account Locked</ng-container>
+                      <ng-container *ngSwitchCase="'expired'">Account Expired</ng-container>
+                      <ng-container *ngSwitchDefault>Account Active</ng-container>
+                    </ng-container>
+                  </span>
+                  <span class="failed-attempts" *ngIf="selectedUser.failedLoginAttempts > 0">
+                    {{ selectedUser.failedLoginAttempts }} failed login attempt{{ selectedUser.failedLoginAttempts !== 1 ? 's' : '' }}
+                  </span>
+                </div>
+              </div>
+              <div class="account-actions">
+                <!-- Actions for active users -->
+                <ng-container *ngIf="selectedUser.accountStatus === 'active'">
+                  <button
+                    cdsButton="danger--tertiary"
+                    size="sm"
+                    (click)="lockUser(selectedUser.id)"
+                    [disabled]="isLocking"
+                    [attr.title]="'Lock this user account'"
+                  >
+                    <svg cdsIcon="locked" size="16" class="cds--btn__icon"></svg>
+                    {{ isLocking ? 'Locking...' : 'Lock Account' }}
+                  </button>
+                  <button
+                    cdsButton="danger"
+                    size="sm"
+                    (click)="openExpireModal(selectedUser.id)"
+                    [disabled]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id"
+                    [attr.title]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
+                  >
+                    <svg cdsIcon="time" size="16" class="cds--btn__icon"></svg>
+                    Expire User
+                  </button>
+                </ng-container>
+
+                <!-- Actions for locked users -->
+                <ng-container *ngIf="selectedUser.accountStatus === 'locked'">
+                  <button
+                    cdsButton="secondary"
+                    size="sm"
+                    (click)="unlockUser(selectedUser.id)"
+                    [disabled]="isUnlocking"
+                    [attr.title]="'Unlock this user account'"
+                  >
+                    <svg cdsIcon="unlocked" size="16" class="cds--btn__icon"></svg>
+                    {{ isUnlocking ? 'Unlocking...' : 'Unlock Account' }}
+                  </button>
+                  <button
+                    cdsButton="danger"
+                    size="sm"
+                    (click)="openExpireModal(selectedUser.id)"
+                    [disabled]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id"
+                    [attr.title]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
+                  >
+                    <svg cdsIcon="time" size="16" class="cds--btn__icon"></svg>
+                    Expire User
+                  </button>
+                </ng-container>
+
+                <!-- Actions for expired users -->
+                <ng-container *ngIf="selectedUser.accountStatus === 'expired'">
+                  <button
+                    cdsButton="primary"
+                    size="sm"
+                    (click)="restoreUser(selectedUser.id)"
+                    [disabled]="isRestoring"
+                    [attr.title]="'Restore this user account'"
+                  >
+                    <svg cdsIcon="renew" size="16" class="cds--btn__icon"></svg>
+                    {{ isRestoring ? 'Restoring...' : 'Restore User' }}
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+
+            <div class="permissions-section">
+              <h3>Departments</h3>
+              <p class="section-description">Assign user to departments for group-based report access</p>
+
+              <div class="groups-compact-list">
+                <div *ngFor="let dept of departments" class="group-item-compact">
+                  <ibm-checkbox
+                    [checked]="hasDepartment(dept.id)"
+                    (change)="toggleDepartment(dept.id)">
+                    {{ dept.name }}
+                  </ibm-checkbox>
+                  <p class="group-helper-text">{{ dept.description }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="permissions-section">
+              <h3>Report Access Permissions</h3>
+              <p class="section-description">Select which specific reports this user can access</p>
+
+              <div class="categories-list">
+                <div *ngFor="let category of reportCategories" class="category-section">
+                  <div class="category-header">
+                    <div class="category-label">
+                      <ibm-checkbox
+                        [checked]="isCategoryFullySelected(category)"
+                        [indeterminate]="isCategoryPartiallySelected(category)"
+                        (change)="toggleCategoryPermissions(category)"
+                        [hideLabel]="true"
+                        class="category-checkbox">
+                      </ibm-checkbox>
+                      <div class="category-info">
+                        <div class="category-name">{{ category.name }}</div>
+                        <div class="category-description">{{ category.description }}</div>
+                      </div>
+                    </div>
+                    <button
+                      class="collapse-btn"
+                      (click)="toggleCategoryCollapse(category.id)"
+                      [attr.aria-label]="isCategoryCollapsed(category.id) ? 'Expand ' + category.name : 'Collapse ' + category.name"
+                      type="button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="collapse-icon" [class.collapsed]="isCategoryCollapsed(category.id)">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div class="reports-list" [class.collapsed]="isCategoryCollapsed(category.id)">
+                    <div
+                      *ngFor="let report of category.reports"
+                      class="report-item"
+                    >
+                      <ibm-checkbox
+                        [checked]="hasPermission(report.id)"
+                        (change)="togglePermission(report.id)"
+                        [hideLabel]="true"
+                        class="report-checkbox">
+                      </ibm-checkbox>
+                      <div class="report-info">
+                        <div class="report-name">{{ report.name }}</div>
+                        <div class="report-description">{{ report.description }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="editor-actions">
+                <button
+                  cdsButton="primary"
+                  (click)="savePermissions()"
+                  [disabled]="isSaving"
+                >
+                  <span *ngIf="!isSaving">Save Changes</span>
+                  <span *ngIf="isSaving">Saving...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Expire User Modal -->
+<cds-modal
+  [open]="showExpireModal"
+  (close)="closeExpireModal()"
+  size="md">
+  <cds-modal-header [showCloseButton]="false">
+    <h3 cdsModalHeaderHeading>Expire User Account</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent>
+    <div class="expire-modal-content" *ngIf="userToExpire">
+      <div class="expire-user-info">
+        <p class="expire-warning">
+          You are about to expire the account for <strong>{{ userToExpire.firstName }} {{ userToExpire.lastName }}</strong>
+          ({{ userToExpire.email }}). This will prevent them from logging in until the account is restored.
+        </p>
+      </div>
+
+      <div class="expire-form">
+        <div class="form-field">
+          <label class="form-label required-field">Ticket Number *</label>
+          <input
+            ibmText
+            [(ngModel)]="expireFormData.ticketNumber"
+            placeholder="Enter ticket number"
+            [size]="'md'">
+          <p class="form-helper">
+            Enter the ticket number associated with this request for audit tracking.
+          </p>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Additional Notes</label>
+          <textarea
+            class="expire-textarea"
+            [(ngModel)]="expireFormData.reason"
+            placeholder="Optional: Add any additional context or notes about why this account is being expired..."
+            rows="3">
+          </textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeExpireModal()">
+      Cancel
+    </button>
+    <button
+      cdsButton="danger"
+      (click)="confirmExpireUser()"
+      [disabled]="isExpiring || !isExpireFormValid">
+      {{ isExpiring ? 'Expiring...' : 'Expire Account' }}
+    </button>
+  </cds-modal-footer>
+</cds-modal>
+

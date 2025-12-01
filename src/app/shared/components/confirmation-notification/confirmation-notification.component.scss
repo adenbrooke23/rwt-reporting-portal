@@ -1,0 +1,46 @@
+.confirmation-container {
+  position: fixed;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  max-width: 600px;
+  width: calc(100% - 2rem);
+  animation: slideDown 0.3s cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  @media (max-width: 768px) {
+    top: 3.5rem;
+    max-width: none;
+    width: calc(100% - 1rem);
+  }
+}
+
+.confirmation-notification {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+
+  ::ng-deep {
+    .bx--actionable-notification__action-button {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+  }
+}
+
+.action-button {
+  &:not(:last-child) {
+    margin-right: 0.5rem;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}

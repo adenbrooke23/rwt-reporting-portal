@@ -1,0 +1,46 @@
+.modal-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .bx--modal-header__heading {
+    margin: 0;
+  }
+}
+
+.modal-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+
+  &.modal-icon-danger {
+    color: var(--color-danger, #da1e28);
+  }
+
+  &.modal-icon-warning {
+    color: var(--color-warning, #f1c21b);
+  }
+
+  &.modal-icon-info {
+    color: var(--color-info, #0f62fe);
+  }
+}
+
+.modal-message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+::ng-deep {
+  .bx--modal-container {
+    .bx--modal-header {
+      margin-bottom: 0;
+    }
+
+    .bx--modal-content {
+      margin-bottom: 1rem;
+    }
+  }
+}

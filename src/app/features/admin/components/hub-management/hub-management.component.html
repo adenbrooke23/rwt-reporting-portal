@@ -1,0 +1,181 @@
+<div class="hub-management-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Manage Hubs</h1>
+        <p class="header-subtitle">Create, edit, and organize reporting hubs</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToContent()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Content
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <ibm-search
+            [value]="searchQuery"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Search hubs..."
+            [size]="'sm'">
+          </ibm-search>
+          <ibm-toggle
+            [checked]="showInactive"
+            (checkedChange)="toggleShowInactive()"
+            size="sm"
+            [onText]="''"
+            [offText]="''"
+            label="Show inactive">
+          </ibm-toggle>
+        </div>
+        <div class="toolbar-right">
+          <button cdsButton="primary" size="sm" (click)="openCreateModal()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Create Hub
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <ibm-table-container>
+          <ibm-table
+            [model]="isLoading ? skeletonModel : tableModel"
+            [skeleton]="isLoading"
+            [size]="'md'"
+            [showSelectionColumn]="false"
+            [sortable]="true"
+            [striped]="false">
+          </ibm-table>
+        </ibm-table-container>
+
+        <div *ngIf="!isLoading && filteredHubs.length === 0" class="empty-state">
+          <svg cdsIcon="folder" size="32"></svg>
+          <p>No hubs found</p>
+          <button cdsButton="tertiary" size="sm" (click)="openCreateModal()">Create your first hub</button>
+        </div>
+      </div>
+
+      <ibm-pagination
+        *ngIf="paginationModel.totalDataLength > 0"
+        [model]="paginationModel"
+        [itemsPerPageOptions]="itemsPerPageOptions"
+        (selectPage)="onPageChange($event)"
+        (pageLength)="onPageSizeChange($any($event))">
+      </ibm-pagination>
+    </div>
+  </main>
+</div>
+
+<ng-template #nameTemplate let-data="data">
+  <div class="hub-name-cell">
+    <div class="hub-icon" [ngClass]="data.colorClass || 'default'">
+      <svg cdsIcon="folder" size="16"></svg>
+    </div>
+    <span class="hub-name">{{ data.name }}</span>
+  </div>
+</ng-template>
+
+<ng-template #statusTemplate let-data="data">
+  <ibm-tag [type]="data.isActive ? 'green' : 'red'" size="sm">
+    {{ data.isActive ? 'Active' : 'Inactive' }}
+  </ibm-tag>
+</ng-template>
+
+<ng-template #actionsTemplate let-data="data">
+  <div class="actions-cell">
+    <button
+      cdsButton="ghost"
+      size="sm"
+      (click)="openEditModal(data); $event.stopPropagation()"
+      title="Edit hub">
+      <svg cdsIcon="edit" size="16"></svg>
+    </button>
+    <button
+      *ngIf="data.isActive"
+      cdsButton="ghost"
+      size="sm"
+      (click)="deleteHub(data); $event.stopPropagation()"
+      title="Delete hub">
+      <svg cdsIcon="trash-can" size="16"></svg>
+    </button>
+    <button
+      *ngIf="!data.isActive"
+      cdsButton="ghost"
+      size="sm"
+      (click)="restoreHub(data); $event.stopPropagation()"
+      title="Restore hub">
+      <svg cdsIcon="renew" size="16"></svg>
+    </button>
+  </div>
+</ng-template>
+
+<cds-modal
+  [open]="showModal"
+  (close)="closeModal()"
+  size="md">
+  <cds-modal-header [showCloseButton]="false">
+    <h3 cdsModalHeaderHeading>{{ isEditing ? 'Edit Hub' : 'Create Hub' }}</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent>
+    <div class="modal-form">
+      <div class="form-field">
+        <label class="form-label required-field">Hub Name *</label>
+        <input
+          ibmText
+          [(ngModel)]="formData.name"
+          placeholder="Enter hub name"
+          [size]="'md'">
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Description</label>
+        <textarea
+          class="form-textarea"
+          [(ngModel)]="formData.description"
+          placeholder="Enter hub description"
+          rows="3">
+        </textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Icon</label>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onIconSelect($event)"
+            placeholder="Select icon">
+            <ibm-dropdown-list [items]="iconDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Color Theme</label>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onColorSelect($event)"
+            placeholder="Select color">
+            <ibm-dropdown-list [items]="colorDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeModal()">
+      Cancel
+    </button>
+    <button
+      cdsButton="primary"
+      (click)="saveHub()"
+      [disabled]="isSaving">
+      {{ isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Hub') }}
+    </button>
+  </cds-modal-footer>
+</cds-modal>

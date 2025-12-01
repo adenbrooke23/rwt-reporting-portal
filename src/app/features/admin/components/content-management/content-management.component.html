@@ -1,0 +1,151 @@
+<div class="content-management-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Content Management</h1>
+        <p class="header-subtitle">Manage hubs, reports, departments, and access control</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToAdmin()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Admin
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+      <!-- Stats Section -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card" (click)="navigateToHubs()">
+            <div class="stat-icon hubs">
+              <svg cdsIcon="folder" size="32"></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ hubCount }}</span>
+              <span class="stat-label">Reporting Hubs</span>
+              <span class="stat-sublabel">{{ activeHubCount }} active</span>
+            </div>
+            <svg cdsIcon="arrow--right" size="16" class="stat-arrow"></svg>
+          </div>
+
+          <div class="stat-card" (click)="navigateToGroups()">
+            <div class="stat-icon groups">
+              <svg cdsIcon="category" size="32"></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ groupCount }}</span>
+              <span class="stat-label">Report Categories</span>
+              <span class="stat-sublabel">Organize reports</span>
+            </div>
+            <svg cdsIcon="arrow--right" size="16" class="stat-arrow"></svg>
+          </div>
+
+          <div class="stat-card" (click)="navigateToDepartments()">
+            <div class="stat-icon departments">
+              <svg cdsIcon="group" size="32"></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ departmentCount }}</span>
+              <span class="stat-label">Departments</span>
+              <span class="stat-sublabel">Organizational groups</span>
+            </div>
+            <svg cdsIcon="arrow--right" size="16" class="stat-arrow"></svg>
+          </div>
+
+          <div class="stat-card" (click)="navigateToReports()">
+            <div class="stat-icon reports">
+              <svg cdsIcon="document" size="32"></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ reportCount }}</span>
+              <span class="stat-label">Reports</span>
+              <span class="stat-sublabel">Power BI, SSRS, Paginated</span>
+            </div>
+            <svg cdsIcon="arrow--right" size="16" class="stat-arrow"></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="quick-actions-section">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+          <button cdsButton="secondary" (click)="navigateToHubs()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Create Hub
+          </button>
+          <button cdsButton="secondary" (click)="navigateToGroups()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Create Report Category
+          </button>
+          <button cdsButton="secondary" (click)="navigateToDepartments()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Create Department
+          </button>
+          <button cdsButton="secondary" (click)="navigateToReports()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Add Report
+          </button>
+        </div>
+      </section>
+
+      <!-- Two Column Layout for Recent Items -->
+      <div class="recent-sections">
+        <!-- Recent Hubs -->
+        <section class="recent-section">
+          <div class="section-header">
+            <h2>Recent Hubs</h2>
+            <button cdsButton="ghost" size="sm" (click)="navigateToHubs()">
+              View All
+              <svg cdsIcon="arrow--right" size="16" class="cds--btn__icon"></svg>
+            </button>
+          </div>
+          <div class="recent-list">
+            <div *ngFor="let hub of recentHubs" class="recent-item hub-item" (click)="navigateToHubs()">
+              <div class="item-icon" [ngClass]="hub.colorClass || 'default'">
+                <svg cdsIcon="folder" size="16"></svg>
+              </div>
+              <div class="item-info">
+                <span class="item-name">{{ hub.name }}</span>
+                <span class="item-meta">{{ hub.reportCount }} reports</span>
+              </div>
+              <ibm-tag *ngIf="!hub.isActive" type="red" size="sm">Inactive</ibm-tag>
+            </div>
+            <div *ngIf="recentHubs.length === 0" class="empty-state">
+              <p>No hubs created yet</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Reports -->
+        <section class="recent-section">
+          <div class="section-header">
+            <h2>Recent Reports</h2>
+            <button cdsButton="ghost" size="sm" (click)="navigateToReports()">
+              View All
+              <svg cdsIcon="arrow--right" size="16" class="cds--btn__icon"></svg>
+            </button>
+          </div>
+          <div class="recent-list">
+            <div *ngFor="let report of recentReports" class="recent-item" (click)="navigateToReports()">
+              <div class="item-icon report">
+                <svg cdsIcon="document" size="16"></svg>
+              </div>
+              <div class="item-info">
+                <span class="item-name">{{ report.name }}</span>
+                <span class="item-meta">Updated {{ formatDate(report.updatedAt) }}</span>
+              </div>
+              <ibm-tag [type]="getReportTypeTag(report.type)" size="sm">{{ report.type }}</ibm-tag>
+            </div>
+            <div *ngIf="recentReports.length === 0" class="empty-state">
+              <p>No reports created yet</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>

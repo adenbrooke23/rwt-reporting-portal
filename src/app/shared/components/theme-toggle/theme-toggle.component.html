@@ -1,0 +1,11 @@
+<button
+  class="theme-toggle strip-icon"
+  (click)="toggleTheme()"
+  [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+  title="{{ isDarkMode ? 'Switch to light mode' : 'Switch to dark mode' }}">
+  <!-- Light Icon (when in light mode - shows sun) -->
+  <svg *ngIf="!isDarkMode" ibmIcon="light" size="20" class="icon"></svg>
+
+  <!-- Asleep/Moon Icon (when in dark mode) -->
+  <svg *ngIf="isDarkMode" ibmIcon="asleep" size="20" class="icon"></svg>
+</button>

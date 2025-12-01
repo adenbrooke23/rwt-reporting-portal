@@ -1,0 +1,13 @@
+<div class="confirmation-container" *ngIf="confirmation$ | async as request">
+  <ibm-actionable-notification
+    [notificationObj]="{
+      type: getNotificationType(request.type),
+      title: request.title,
+      message: request.message,
+      showClose: false,
+      lowContrast: false,
+      actions: getActions(request)
+    }"
+    class="confirmation-notification">
+  </ibm-actionable-notification>
+</div>

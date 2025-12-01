@@ -1,0 +1,290 @@
+<div class="report-management-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Manage Reports</h1>
+        <p class="header-subtitle">Add and configure Power BI, SSRS, and Paginated reports</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToContent()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Content
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <ibm-search
+            [value]="searchQuery"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Search reports..."
+            [size]="'sm'">
+          </ibm-search>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onHubFilterSelect($event)"
+            placeholder="Filter by hub"
+            [size]="'sm'"
+            class="filter-dropdown">
+            <ibm-dropdown-list [items]="hubFilterDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onGroupFilterSelect($event)"
+            placeholder="Filter by group"
+            [size]="'sm'"
+            class="filter-dropdown">
+            <ibm-dropdown-list [items]="groupFilterDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onTypeFilterSelect($event)"
+            placeholder="Filter by type"
+            [size]="'sm'"
+            class="filter-dropdown">
+            <ibm-dropdown-list [items]="typeFilterDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+          <ibm-toggle
+            [checked]="showInactive"
+            (checkedChange)="toggleShowInactive()"
+            size="sm"
+            [onText]="''"
+            [offText]="''"
+            label="Show inactive">
+          </ibm-toggle>
+        </div>
+        <div class="toolbar-right">
+          <button cdsButton="primary" size="sm" (click)="openCreateModal()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            Add Report
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <ibm-table-container>
+          <ibm-table
+            [model]="isLoading ? skeletonModel : tableModel"
+            [skeleton]="isLoading"
+            [size]="'md'"
+            [showSelectionColumn]="false"
+            [sortable]="true"
+            [striped]="false">
+          </ibm-table>
+        </ibm-table-container>
+
+        <div *ngIf="!isLoading && filteredReports.length === 0" class="empty-state">
+          <svg cdsIcon="document" size="32"></svg>
+          <p>No reports found</p>
+          <button cdsButton="tertiary" size="sm" (click)="openCreateModal()">Add your first report</button>
+        </div>
+      </div>
+
+      <ibm-pagination
+        *ngIf="paginationModel.totalDataLength > 0"
+        [model]="paginationModel"
+        [itemsPerPageOptions]="itemsPerPageOptions"
+        (selectPage)="onPageChange($event)"
+        (pageLength)="onPageSizeChange($any($event))">
+      </ibm-pagination>
+    </div>
+  </main>
+</div>
+
+<ng-template #groupTemplate let-data="data">
+  <div class="group-cell">
+    <span class="group-name">{{ getGroupName(data.reportGroupId) }}</span>
+    <span class="hub-name">{{ getHubNameByGroupId(data.reportGroupId) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #typeTemplate let-data="data">
+  <ibm-tag [type]="getTypeTagColor(data.type)" size="sm">
+    {{ data.type }}
+  </ibm-tag>
+</ng-template>
+
+<ng-template #statusTemplate let-data="data">
+  <ibm-tag [type]="data.isActive ? 'green' : 'red'" size="sm">
+    {{ data.isActive ? 'Active' : 'Inactive' }}
+  </ibm-tag>
+</ng-template>
+
+<ng-template #actionsTemplate let-data="data">
+  <div class="actions-cell">
+    <button
+      cdsButton="ghost"
+      size="sm"
+      (click)="openEditModal(data); $event.stopPropagation()"
+      title="Edit report">
+      <svg cdsIcon="edit" size="16"></svg>
+    </button>
+    <button
+      *ngIf="data.isActive"
+      cdsButton="ghost"
+      size="sm"
+      (click)="deleteReport(data); $event.stopPropagation()"
+      title="Delete report">
+      <svg cdsIcon="trash-can" size="16"></svg>
+    </button>
+    <button
+      *ngIf="!data.isActive"
+      cdsButton="ghost"
+      size="sm"
+      (click)="restoreReport(data); $event.stopPropagation()"
+      title="Restore report">
+      <svg cdsIcon="renew" size="16"></svg>
+    </button>
+  </div>
+</ng-template>
+
+<cds-modal
+  [open]="showModal"
+  (close)="closeModal()"
+  size="lg">
+  <cds-modal-header [showCloseButton]="false">
+    <h3 cdsModalHeaderHeading>{{ isEditing ? 'Edit Report' : 'Add Report' }}</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent>
+    <div class="modal-form">
+      <div class="form-section">
+        <h4 class="section-title">Basic Information</h4>
+
+        <div class="form-field">
+          <label class="form-label required-field">Report Group *</label>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onGroupFormSelect($event)"
+            placeholder="Select a report group">
+            <ibm-dropdown-list [items]="groupFormDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label required-field">Report Name *</label>
+          <input
+            ibmText
+            [(ngModel)]="formData.name"
+            placeholder="Enter report name"
+            [size]="'md'">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Description</label>
+          <textarea
+            class="form-textarea"
+            [(ngModel)]="formData.description"
+            placeholder="Enter report description"
+            rows="2">
+          </textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label required-field">Report Type *</label>
+          <ibm-dropdown
+            [appendInline]="true"
+            (selected)="onTypeFormSelect($event)"
+            placeholder="Select report type">
+            <ibm-dropdown-list [items]="typeFormDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Embed Configuration</h4>
+        <p class="section-description">Configure how this report will be embedded in the portal</p>
+
+        <ng-container *ngIf="formData.type === 'PowerBI' || formData.type === 'Paginated'">
+          <div class="form-field">
+            <label class="form-label">Embed URL</label>
+            <input
+              ibmText
+              [(ngModel)]="formData.embedUrl"
+              placeholder="https://app.powerbi.com/reportEmbed?..."
+              [size]="'md'">
+            <p class="form-helper">The full Power BI embed URL for this report</p>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">Workspace ID</label>
+              <input
+                ibmText
+                [(ngModel)]="formData.workspaceId"
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                [size]="'md'">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Report ID</label>
+              <input
+                ibmText
+                [(ngModel)]="formData.reportId"
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                [size]="'md'">
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="formData.type === 'SSRS'">
+          <div class="form-field">
+            <label class="form-label">SSRS Server URL</label>
+            <input
+              ibmText
+              [(ngModel)]="formData.serverUrl"
+              placeholder="http://server/ReportServer"
+              [size]="'md'">
+            <p class="form-helper">The base URL of your SSRS/PBIRS server</p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Report Path</label>
+            <input
+              ibmText
+              [(ngModel)]="formData.reportPath"
+              placeholder="/Folder/ReportName"
+              [size]="'md'">
+            <p class="form-helper">The path to the report on the server</p>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Department Access</h4>
+        <p class="section-description">Select which departments can access this report. Leave empty for unrestricted access.</p>
+
+        <div class="department-checkboxes">
+          <ibm-checkbox
+            *ngFor="let dept of departments"
+            [checked]="isDepartmentSelected(dept.id)"
+            (checkedChange)="toggleDepartment(dept.id)">
+            {{ dept.name }}
+          </ibm-checkbox>
+        </div>
+
+        <p *ngIf="formData.departmentIds.length === 0" class="form-helper">
+          No departments selected - this report will be accessible based on ad-hoc permissions only.
+        </p>
+        <p *ngIf="formData.departmentIds.length > 0" class="form-helper">
+          {{ formData.departmentIds.length }} department(s) selected - users in these departments will have access.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeModal()">
+      Cancel
+    </button>
+    <button
+      cdsButton="primary"
+      (click)="saveReport()"
+      [disabled]="isSaving">
+      {{ isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Report') }}
+    </button>
+  </cds-modal-footer>
+</cds-modal>

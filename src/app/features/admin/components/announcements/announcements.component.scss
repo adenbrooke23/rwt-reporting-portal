@@ -1,0 +1,489 @@
+@use '@carbon/styles/scss/spacing';
+
+.announcements-container {
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.page-header {
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: spacing.$spacing-07 0;
+}
+
+.header-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 spacing.$spacing-06;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    margin: 0 0 spacing.$spacing-02 0;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--color-text-primary);
+  }
+
+  .header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+}
+
+.header-actions {
+  display: flex;
+  gap: spacing.$spacing-04;
+  align-items: center;
+}
+
+.page-main {
+  padding: spacing.$spacing-05 0;
+}
+
+.page-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 spacing.$spacing-06;
+}
+
+// Carbon Table Wrapper
+.carbon-table-wrapper {
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+
+  // Table Toolbar Styling
+  ::ng-deep ibm-table-toolbar,
+  ::ng-deep .cds--toolbar,
+  ::ng-deep .cds--table-toolbar {
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-light);
+
+    .cds--toolbar-content {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: spacing.$spacing-05;
+      padding: spacing.$spacing-04 spacing.$spacing-05;
+    }
+
+    // Expandable search styling
+    ibm-table-toolbar-search,
+    .cds--toolbar-search-container {
+      flex: 1;
+      max-width: 400px;
+
+      .cds--search {
+        background: var(--color-bg-primary);
+
+        .cds--search-input {
+          background: var(--color-bg-primary);
+          color: var(--color-text-primary);
+          border-bottom-color: var(--color-border-light);
+
+          &:focus {
+            outline: 2px solid var(--color-primary);
+          }
+
+          &::placeholder {
+            color: var(--color-text-tertiary);
+          }
+        }
+
+        .cds--search-magnifier-icon {
+          fill: var(--color-text-secondary);
+        }
+
+        .cds--search-close {
+          fill: var(--color-text-primary);
+
+          &:hover {
+            background: var(--color-bg-hover);
+          }
+        }
+      }
+    }
+
+    // Tag in toolbar
+    ibm-tag {
+      .cds--tag {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+        border: 1px solid var(--color-border-light);
+      }
+    }
+  }
+}
+
+// Show deleted toggle in toolbar
+.show-deleted-toggle {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-right: spacing.$spacing-03;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+// Pagination wrapper
+.pagination-wrapper {
+  border-top: 1px solid var(--color-border-light);
+}
+
+// Table Container Styling
+::ng-deep {
+  ibm-table-container {
+    background: var(--color-bg-primary);
+    border-radius: 0;
+    border: none;
+    overflow: visible;
+  }
+
+  .bx--data-table,
+  .cds--data-table {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+
+    thead {
+      background: var(--color-bg-tertiary);
+
+      th {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-inverse);
+        font-weight: 600;
+        font-size: 0.8125rem;
+        border-bottom: 1px solid var(--color-border-light);
+      }
+    }
+
+    tbody {
+      tr {
+        background: var(--color-bg-primary);
+        border-bottom: 1px solid var(--color-border-light);
+
+        &:hover {
+          background: var(--color-bg-hover);
+        }
+
+        td {
+          color: var(--color-text-primary);
+          font-size: 0.875rem;
+          vertical-align: middle;
+          border-bottom: 1px solid var(--color-border-light);
+        }
+      }
+    }
+  }
+
+  // Pagination
+  ibm-pagination,
+  cds-pagination {
+    .cds--pagination,
+    .bx--pagination {
+      background: var(--color-bg-primary) !important;
+      border: none !important;
+      display: flex !important;
+      align-items: center !important;
+
+      .cds--pagination__text,
+      .cds--pagination__left,
+      .cds--pagination__right,
+      .bx--pagination__text {
+        color: var(--color-text-primary) !important;
+      }
+
+      .cds--pagination__button,
+      .bx--pagination__button {
+        background: transparent !important;
+        border: 1px solid var(--color-border-light) !important;
+        color: var(--color-text-primary) !important;
+        fill: var(--color-text-primary) !important;
+
+        svg {
+          fill: var(--color-text-primary) !important;
+        }
+
+        &:hover:not(:disabled) {
+          background: var(--color-bg-hover) !important;
+        }
+
+        &:disabled {
+          opacity: 0.25 !important;
+          cursor: not-allowed !important;
+        }
+      }
+
+      .cds--select-input,
+      .bx--select-input {
+        background: var(--color-bg-primary) !important;
+        color: var(--color-text-primary) !important;
+        border-color: var(--color-border-light) !important;
+
+        &:focus {
+          outline: 2px solid var(--color-primary) !important;
+        }
+      }
+    }
+  }
+
+  // Modal styling
+  .cds--modal-container {
+    background: var(--color-bg-primary);
+
+    .cds--modal-header {
+      background: var(--color-bg-primary);
+      border-bottom: 1px solid var(--color-border-light);
+
+      h3 {
+        color: var(--color-text-primary);
+      }
+    }
+
+    .cds--modal-content {
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+    }
+
+    .cds--modal-footer {
+      background: var(--color-bg-tertiary);
+      border-top: 1px solid var(--color-border-light);
+    }
+  }
+
+  // Form inputs
+  .bx--text-input,
+  .bx--text-area {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-light);
+
+    &:focus {
+      outline-color: var(--color-primary);
+    }
+  }
+
+  .bx--dropdown {
+    background: var(--color-bg-secondary);
+
+    .bx--list-box__field {
+      color: var(--color-text-primary);
+    }
+  }
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  gap: spacing.$spacing-02;
+  align-items: center;
+
+  button {
+    padding: spacing.$spacing-02;
+    min-height: auto;
+
+    svg {
+      fill: currentColor;
+    }
+  }
+}
+
+// Featured Button
+.featured-btn {
+  background: transparent;
+  border: none;
+  padding: spacing.$spacing-02;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    color: #f1c21b; // Gold color for star
+  }
+
+  &.is-featured {
+    color: #f1c21b;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    fill: currentColor;
+  }
+}
+
+// No Results
+.no-results {
+  text-align: center;
+  padding: spacing.$spacing-09;
+  color: var(--color-text-secondary);
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}
+
+// Form Grid
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: spacing.$spacing-05;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+// Native select styling
+.form-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 spacing.$spacing-09 0 spacing.$spacing-04;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23525252' d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  &:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    border-color: var(--color-primary);
+  }
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+  }
+
+  option {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+}
+
+.form-helper {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+// Content textarea styling
+.content-textarea {
+  width: 100%;
+  padding: spacing.$spacing-04;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  resize: vertical;
+  line-height: 1.5;
+
+  &:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    border-color: var(--color-primary);
+  }
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+  }
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: spacing.$spacing-04;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-left {
+    max-width: none;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

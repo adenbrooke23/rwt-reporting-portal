@@ -1,0 +1,175 @@
+@use '@carbon/styles/scss/spacing';
+
+/* Carbon Side Navigation - Positioning and Theme Integration */
+:host {
+  display: block;
+}
+
+/* Position the Carbon sidenav below the header */
+::ng-deep cds-sidenav {
+  position: fixed !important;
+  top: 48px !important; /* Below Carbon header */
+  left: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000;
+
+  /* Hide the built-in close/toggle button - we use the header hamburger instead */
+  .cds--side-nav__toggle,
+  .cds--side-nav__footer,
+  .cds--side-nav__switcher,
+  button[aria-label="Close"],
+  button[aria-label="Toggle"] {
+    display: none !important;
+  }
+
+  /* Apply theme colors */
+  .cds--side-nav,
+  .cds--side-nav--ux {
+    background-color: var(--sidebar-bg, var(--cds-background));
+    border-right: 1px solid var(--sidebar-border, var(--cds-border-subtle));
+  }
+
+  /* Style navigation items with theme colors */
+  .cds--side-nav__link,
+  .cds--side-nav__submenu {
+    color: var(--color-text-primary, var(--cds-text-primary));
+
+    &:hover {
+      background-color: var(--color-bg-tertiary, var(--cds-layer-hover));
+    }
+
+    &[aria-current="page"],
+    &.cds--side-nav__link--current {
+      background-color: var(--color-bg-tertiary, var(--cds-layer-active));
+
+      &::before {
+        background-color: var(--color-primary, var(--cds-border-interactive));
+      }
+    }
+  }
+
+  /* Style menu titles */
+  .cds--side-nav__submenu-title {
+    color: var(--color-text-primary, var(--cds-text-primary));
+  }
+
+  /* Style icons */
+  .cds--side-nav__icon {
+    svg {
+      fill: var(--color-text-secondary, var(--cds-icon-secondary));
+    }
+  }
+
+  /* Active state icon color */
+  .cds--side-nav__link--current .cds--side-nav__icon svg {
+    fill: var(--color-primary, var(--cds-icon-primary));
+  }
+
+  /* Remove focus/click outlines and borders from links */
+  .cds--side-nav__link,
+  .cds--side-nav__link:focus,
+  .cds--side-nav__link:active,
+  .cds--side-nav__submenu,
+  .cds--side-nav__submenu:focus,
+  .cds--side-nav__submenu:active,
+  .cds--side-nav__submenu-chevron,
+  .cds--side-nav__menu-item,
+  .cds--side-nav__menu-item:focus,
+  .cds--side-nav__menu-item:active,
+  a, a:focus, a:active,
+  button, button:focus, button:active {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Also target the anchor elements directly */
+  a.cds--side-nav__link,
+  a.cds--side-nav__link:focus,
+  a.cds--side-nav__link:active {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide submenu items when sidenav is in rail/collapsed mode */
+  .cds--side-nav:not(.cds--side-nav--expanded) {
+    /* Force all nested menu lists to collapse completely */
+    ul.cds--side-nav__menu,
+    .cds--side-nav__menu {
+      display: none !important;
+      height: 0 !important;
+      max-height: 0 !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      line-height: 0 !important;
+      font-size: 0 !important;
+    }
+
+    /* Hide individual menu items */
+    .cds--side-nav__menu-item {
+      display: none !important;
+      height: 0 !important;
+    }
+
+    /* Ensure the nav item wrapper doesn't expand for hidden children */
+    .cds--side-nav__item--active > ul,
+    .cds--side-nav__item > ul {
+      display: none !important;
+      height: 0 !important;
+    }
+
+    /* Target expanded menu items specifically */
+    li.cds--side-nav__item {
+      > ul {
+        display: none !important;
+        height: 0 !important;
+      }
+    }
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  ::ng-deep cds-sidenav {
+    /* On mobile, the sidenav overlays content when expanded */
+    .cds--side-nav--expanded {
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+  }
+}
+
+/* Sidebar notification badge */
+.sidenav-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: spacing.$spacing-03;
+}
+
+.sidenav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  color: #ffffff;
+  background-color: #da1e28;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+/* Hide badge when sidenav is collapsed (rail mode) */
+::ng-deep cds-sidenav .cds--side-nav:not(.cds--side-nav--expanded) {
+  .sidenav-badge {
+    display: none;
+  }
+}

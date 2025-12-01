@@ -1,0 +1,43 @@
+<ibm-modal
+  [open]="isOpen"
+  [hasScrollingContent]="false"
+  [size]="'sm'"
+  (overlaySelected)="onCancel()">
+
+  <ibm-modal-header (closeSelect)="onCancel()">
+    <div class="modal-title-wrapper">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        [class]="'modal-icon modal-icon-' + type">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          [attr.d]="iconPath" />
+      </svg>
+      <h3 class="bx--modal-header__heading">{{ title }}</h3>
+    </div>
+  </ibm-modal-header>
+
+  <section class="bx--modal-content">
+    <p class="modal-message">{{ message }}</p>
+  </section>
+
+  <ibm-modal-footer>
+    <button
+      class="bx--btn bx--btn--secondary"
+      type="button"
+      (click)="onCancel()">
+      {{ cancelText }}
+    </button>
+    <button
+      [class]="'bx--btn ' + (type === 'danger' ? 'bx--btn--danger' : 'bx--btn--primary')"
+      type="button"
+      (click)="onConfirm()">
+      {{ confirmText }}
+    </button>
+  </ibm-modal-footer>
+</ibm-modal>

@@ -1,0 +1,94 @@
+.toast-container {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  z-index: 9999;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+
+  @media (max-width: 640px) {
+    top: 3.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    max-width: none;
+  }
+}
+
+.toast-notification {
+  pointer-events: auto;
+  animation: slideIn 0.3s cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  &.removing {
+    animation: slideOut 0.2s cubic-bezier(0.2, 0, 1, 0.9);
+  }
+
+  // Force consistent dark background and light text for all toast types
+  // This ensures visibility in both light and dark themes
+  ::ng-deep {
+    .cds--toast-notification {
+      // Force dark background for all notification types
+      &.cds--toast-notification--success {
+        background-color: #24a148 !important;
+      }
+      &.cds--toast-notification--error {
+        background-color: #da1e28 !important;
+      }
+      &.cds--toast-notification--warning {
+        background-color: #f1c21b !important;
+
+        // Warning uses dark text
+        .cds--toast-notification__title {
+          color: #161616 !important;
+        }
+        .cds--toast-notification__subtitle {
+          color: #161616 !important;
+        }
+        .cds--toast-notification__close-icon {
+          fill: #161616 !important;
+        }
+      }
+      &.cds--toast-notification--info {
+        background-color: #0043ce !important;
+      }
+    }
+
+    // Light text for non-warning toasts
+    .cds--toast-notification:not(.cds--toast-notification--warning) {
+      .cds--toast-notification__title {
+        color: #ffffff !important;
+      }
+      .cds--toast-notification__subtitle {
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+      .cds--toast-notification__close-icon {
+        fill: #ffffff !important;
+      }
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(calc(100% + 1rem));
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(calc(100% + 1rem));
+    opacity: 0;
+  }
+}
