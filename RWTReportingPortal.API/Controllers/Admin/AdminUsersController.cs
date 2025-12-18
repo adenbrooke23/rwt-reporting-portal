@@ -32,7 +32,7 @@ public class AdminUsersController : ControllerBase
     /// Get all users (paginated)
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<AdminUserListResponse>> GetUsers(
+    public Task<ActionResult<AdminUserListResponse>> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         [FromQuery] string? search = null,
@@ -40,7 +40,7 @@ public class AdminUsersController : ControllerBase
         [FromQuery] bool includeExpired = false)
     {
         // TODO: Implement with UserService
-        return Ok(new AdminUserListResponse());
+        return Task.FromResult<ActionResult<AdminUserListResponse>>(Ok(new AdminUserListResponse()));
     }
 
     /// <summary>

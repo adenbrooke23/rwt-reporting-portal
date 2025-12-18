@@ -62,11 +62,23 @@ public class EntraAuthService : IEntraAuthService
     {
         try
         {
+            var azureAdSettings = _configuration.GetSection("AzureAd");
+            var tenantId = azureAdSettings["TenantId"]!;
+            var clientId = azureAdSettings["ClientId"]!;
+            var clientSecret = azureAdSettings["ClientSecret"]!;
+
+            // Build a new confidential client with the specific redirect URI
+            var confidentialClient = ConfidentialClientApplicationBuilder
+                .Create(clientId)
+                .WithClientSecret(clientSecret)
+                .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                .WithRedirectUri(redirectUri)
+                .Build();
+
             var scopes = new[] { "User.Read" };
 
-            var result = await _confidentialClient
+            var result = await confidentialClient
                 .AcquireTokenByAuthorizationCode(scopes, code)
-                .WithRedirectUri(redirectUri)
                 .ExecuteAsync();
 
             return new EntraTokenResult
