@@ -1,0 +1,40 @@
+.app-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg-secondary);
+  z-index: 9999;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 48px); /* Account for fixed header */
+  margin-left: 48px; /* Collapsed sidebar width */
+  margin-top: 48px; /* Height of Carbon header */
+
+  &.with-sidebar {
+    margin-left: 256px; /* Expanded sidebar width */
+  }
+
+  transition: margin-left 0.11s cubic-bezier(0.2, 0, 0.38, 0.9); /* Carbon motion */
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive - Mobile/Tablet */
+@media (max-width: 1024px) {
+  .app-container {
+    margin-left: 48px;
+
+    &.with-sidebar {
+      margin-left: 48px; /* Keep same margin on mobile, overlay sidebar instead */
+    }
+  }
+}

@@ -1,0 +1,38 @@
+<div class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="warning-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <h2>Session Timeout Warning</h2>
+    </div>
+
+    <div class="modal-body">
+      <p class="warning-message">
+        Your session is about to expire due to inactivity. You will be automatically logged out in:
+      </p>
+
+      <div class="countdown">
+        <div class="time-display">
+          <span class="time-value">{{ minutesRemaining }}</span>
+          <span class="time-label">min</span>
+        </div>
+        <div class="time-separator">:</div>
+        <div class="time-display">
+          <span class="time-value">{{ secondsRemaining.toString().padStart(2, '0') }}</span>
+          <span class="time-label">sec</span>
+        </div>
+      </div>
+
+      <p class="info-message">
+        Click the button below to stay logged in and continue your session.
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="stay-active-btn" (click)="onStayActive()">
+        Stay Active
+      </button>
+    </div>
+  </div>
+</div>

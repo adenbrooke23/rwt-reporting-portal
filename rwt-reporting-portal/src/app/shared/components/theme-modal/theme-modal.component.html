@@ -1,0 +1,77 @@
+<cds-modal
+  [open]="open"
+  size="sm"
+  (overlaySelected)="onOverlayClick()">
+
+  <cds-modal-header (closeSelect)="onCancel()">
+    <p cdsModalHeaderLabel>Appearance</p>
+    <p cdsModalHeaderHeading>Change theme</p>
+  </cds-modal-header>
+
+  <section cdsModalContent>
+    <!-- Carbon Themes Section -->
+    <div class="theme-section">
+      <p class="section-label">Standard themes</p>
+      <div class="theme-options">
+        <button
+          *ngFor="let theme of carbonThemes"
+          type="button"
+          class="theme-option"
+          [class.theme-option--selected]="isSelectedTheme(theme.id)"
+          [class.theme-option--dark]="theme.isDark"
+          (click)="selectTheme(theme.id)"
+          [attr.aria-label]="'Select ' + theme.name + ' theme'"
+          [attr.aria-pressed]="isSelectedTheme(theme.id)">
+          <div class="theme-preview" [class]="'theme-preview--' + theme.id">
+            <div class="preview-header"></div>
+            <div class="preview-sidebar"></div>
+            <div class="preview-content">
+              <div class="preview-line"></div>
+              <div class="preview-line preview-line--short"></div>
+            </div>
+          </div>
+          <span class="theme-label">{{ theme.name }}</span>
+          <svg *ngIf="isSelectedTheme(theme.id)"
+               cdsIcon="checkmark"
+               size="16"
+               class="checkmark-icon"></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Business Themes Section -->
+    <div class="theme-section">
+      <p class="section-label">Brand themes</p>
+      <div class="theme-options">
+        <button
+          *ngFor="let theme of businessThemes"
+          type="button"
+          class="theme-option"
+          [class.theme-option--selected]="isSelectedTheme(theme.id)"
+          (click)="selectTheme(theme.id)"
+          [attr.aria-label]="'Select ' + theme.name + ' theme'"
+          [attr.aria-pressed]="isSelectedTheme(theme.id)">
+          <div class="theme-preview" [class]="'theme-preview--' + theme.id">
+            <div class="preview-header"></div>
+            <div class="preview-sidebar"></div>
+            <div class="preview-content">
+              <div class="preview-line"></div>
+              <div class="preview-line preview-line--short"></div>
+            </div>
+          </div>
+          <span class="theme-label">{{ theme.name }}</span>
+          <svg *ngIf="isSelectedTheme(theme.id)"
+               cdsIcon="checkmark"
+               size="16"
+               class="checkmark-icon"></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="onCancel()">Cancel</button>
+    <button cdsButton="primary" (click)="onSave()">Done</button>
+  </cds-modal-footer>
+
+</cds-modal>

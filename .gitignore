@@ -1,0 +1,36 @@
+# Angular
+rwt-reporting-portal/node_modules/
+rwt-reporting-portal/dist/
+rwt-reporting-portal/.angular/
+rwt-reporting-portal/.sass-cache/
+rwt-reporting-portal/coverage/
+
+# .NET
+RWTReportingPortal.API/bin/
+RWTReportingPortal.API/obj/
+RWTReportingPortal.API/logs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment/Secrets
+*.env
+*.local
+appsettings.Development.json
+appsettings.Production.json
+
+# Logs
+*.log
+logs/

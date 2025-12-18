@@ -1,0 +1,669 @@
+@use '@carbon/styles/scss/spacing';
+
+.hub-detail-container {
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+  overflow-x: hidden;
+}
+
+// Page Header - matches standard navigation pattern
+.page-header {
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: spacing.$spacing-07 0;
+}
+
+.header-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 spacing.$spacing-06;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    margin: 0 0 spacing.$spacing-02 0;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--color-text-primary);
+  }
+
+  .header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-01;
+}
+
+.header-actions {
+  display: flex;
+  gap: spacing.$spacing-04;
+  align-items: center;
+}
+
+// Main Content
+.page-main {
+  padding: spacing.$spacing-05 0;
+}
+
+.page-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 spacing.$spacing-06;
+}
+
+// Reports Table
+.reports-table {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+// Pagination Wrapper
+.pagination-wrapper {
+  padding: spacing.$spacing-05;
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg-primary);
+  display: flex;
+  justify-content: flex-end;
+  min-height: 60px;
+  position: relative;
+  z-index: 1;
+
+  ::ng-deep ibm-pagination {
+    display: flex;
+    width: 100%;
+  }
+}
+
+// Carbon Table Wrapper
+.carbon-table-wrapper {
+  background: var(--color-bg-primary);
+
+  // Table Toolbar Styling
+  ::ng-deep ibm-table-toolbar,
+  ::ng-deep .cds--toolbar,
+  ::ng-deep .cds--table-toolbar {
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-light);
+
+    .cds--toolbar-content {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: spacing.$spacing-05;
+      padding: spacing.$spacing-04 spacing.$spacing-05;
+    }
+
+    // Expandable search styling
+    ibm-table-toolbar-search,
+    .cds--toolbar-search-container {
+      flex: 1;
+      max-width: 400px;
+
+      .cds--search {
+        background: var(--color-bg-primary);
+
+        .cds--search-input {
+          background: var(--color-bg-primary);
+          color: var(--color-text-primary);
+          border-bottom-color: var(--color-border-light);
+
+          &:focus {
+            outline: 2px solid var(--color-primary);
+          }
+
+          &::placeholder {
+            color: var(--color-text-tertiary);
+          }
+        }
+
+        .cds--search-magnifier-icon {
+          fill: var(--color-text-secondary);
+        }
+
+        .cds--search-close {
+          fill: var(--color-text-primary);
+
+          &:hover {
+            background: var(--color-bg-hover);
+          }
+        }
+      }
+    }
+
+    // Tag in toolbar
+    ibm-tag {
+      .cds--tag {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+        border: 1px solid var(--color-border-light);
+      }
+    }
+
+    // Row height settings button
+    .row-height-settings-btn {
+      color: var(--color-text-primary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      min-width: 32px;
+      min-height: 32px;
+      transition: background-color 0.11s;
+
+      &:hover {
+        background: var(--color-bg-hover);
+      }
+
+      &:focus {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
+
+      svg {
+        fill: var(--color-text-primary);
+      }
+    }
+  }
+
+  // Skeleton loading state transitions
+  ::ng-deep ibm-table,
+  ::ng-deep .cds--data-table-container {
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  // Smooth fade for skeleton rows
+  ::ng-deep .cds--skeleton {
+    animation: skeleton-fade 0.2s ease-in;
+  }
+}
+
+@keyframes skeleton-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Row height menu styling
+::ng-deep .cds--overflow-menu-options {
+  .menu-icon {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    fill: var(--color-primary);
+  }
+
+  .menu-option-selected {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  ibm-overflow-menu-option {
+    display: flex;
+    align-items: center;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    span {
+      color: var(--color-text-primary);
+    }
+  }
+}
+
+// Report Name Cell
+.report-name-cell {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+
+  .report-icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  .report-name {
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+}
+
+.description-text {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+// Type Badge
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: spacing.$spacing-02 spacing.$spacing-03;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border: 1px solid;
+
+  &.ssrs {
+    background: rgba(15, 98, 254, 0.1);
+    color: var(--color-primary);
+    border-color: rgba(15, 98, 254, 0.3);
+  }
+
+  &.powerbi {
+    background: rgba(166, 82, 255, 0.15);
+    color: #a56eff;
+    border-color: rgba(166, 82, 255, 0.3);
+  }
+}
+
+// Action Cell
+.action-cell {
+  display: flex;
+  gap: spacing.$spacing-03;
+  align-items: center;
+  justify-content: flex-start;
+
+  .view-report-btn {
+    white-space: nowrap;
+  }
+}
+
+// Empty State
+.no-reports,
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: spacing.$spacing-10 spacing.$spacing-07;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  text-align: center;
+
+  .icon-large {
+    color: var(--color-text-tertiary);
+    margin-bottom: spacing.$spacing-07;
+    opacity: 0.6;
+  }
+
+  .empty-state-content {
+    margin-bottom: spacing.$spacing-07;
+    max-width: 480px;
+  }
+
+  h3 {
+    margin: 0 0 spacing.$spacing-05 0;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  button {
+    min-width: 200px;
+  }
+}
+
+// Carbon Component Theme Overrides
+::ng-deep {
+  // Table styling
+  .carbon-table-wrapper {
+    ibm-table-container {
+      background: var(--color-bg-primary);
+
+      .cds--data-table-container {
+        background: var(--color-bg-primary);
+      }
+    }
+
+    .cds--data-table {
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+
+      thead {
+        background: var(--color-bg-tertiary);
+
+        th {
+          background: var(--color-bg-tertiary);
+          color: var(--color-text-inverse);
+          font-weight: 600;
+          border-bottom: 1px solid var(--color-border-light);
+
+          &.cds--table-sort {
+            cursor: pointer;
+            transition: background-color 0.11s;
+
+            &:hover {
+              background: var(--color-bg-hover);
+            }
+
+            .cds--table-sort__icon {
+              fill: var(--color-text-inverse);
+              opacity: 0.5;
+            }
+
+            &.cds--table-sort--active {
+              background: var(--color-bg-hover);
+
+              .cds--table-sort__icon {
+                opacity: 1;
+              }
+            }
+          }
+        }
+      }
+
+      tbody {
+        tr {
+          background: var(--color-bg-primary);
+          border-bottom: 1px solid var(--color-border-light);
+
+          &:nth-child(odd),
+          &:nth-child(even) {
+            background: var(--color-bg-primary);
+          }
+
+          &:hover {
+            background: var(--color-bg-hover);
+          }
+
+          td {
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border-light);
+          }
+        }
+      }
+    }
+  }
+
+  // Overflow menu styling
+  .cds--overflow-menu {
+    .cds--overflow-menu__icon {
+      fill: var(--color-text-primary);
+    }
+
+    &:hover {
+      background: var(--color-bg-hover);
+    }
+  }
+
+  .cds--overflow-menu-options {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-width: max-content !important;
+    width: auto !important;
+    max-width: none !important;
+
+    .cds--overflow-menu-options__option {
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      border-bottom: 1px solid var(--color-border-light);
+      white-space: nowrap !important;
+      padding-right: 2rem !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+
+      &:hover {
+        background: var(--color-bg-hover);
+      }
+
+      &:focus,
+      &:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      button {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        outline: none !important;
+        box-shadow: none !important;
+
+        &:focus,
+        &:focus-visible {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      }
+    }
+
+    .menu-icon {
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+  }
+
+  // Pagination styling
+  ibm-pagination,
+  cds-pagination {
+    .cds--pagination {
+      background: var(--color-bg-primary) !important;
+      border: none !important;
+      display: flex !important;
+      align-items: center !important;
+
+      .cds--pagination__text,
+      .cds--pagination__left,
+      .cds--pagination__right {
+        color: var(--color-text-primary) !important;
+      }
+
+      .cds--pagination__button {
+        background: transparent !important;
+        border: 1px solid var(--color-border-light) !important;
+        color: var(--color-text-primary) !important;
+        fill: var(--color-text-primary) !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.5rem !important;
+
+        svg {
+          fill: var(--color-text-primary) !important;
+          width: 16px !important;
+          height: 16px !important;
+          display: block !important;
+        }
+
+        &:hover:not(:disabled) {
+          background: var(--color-bg-hover) !important;
+        }
+
+        &:disabled {
+          opacity: 0.25 !important;
+          cursor: not-allowed !important;
+          border-color: var(--color-border-light) !important;
+
+          svg {
+            fill: var(--color-text-secondary) !important;
+          }
+        }
+      }
+
+      .cds--select-input {
+        background: var(--color-bg-primary) !important;
+        color: var(--color-text-primary) !important;
+        border-color: var(--color-border-light) !important;
+
+        &:focus {
+          outline: 2px solid var(--color-primary) !important;
+        }
+      }
+
+      .cds--pagination__left,
+      .cds--pagination__right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+
+        .cds--pagination__text {
+          color: var(--color-text-primary) !important;
+        }
+      }
+    }
+  }
+
+  // Tag styling
+  ibm-tag {
+    .cds--tag {
+      background: var(--color-bg-tertiary);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border-light);
+    }
+  }
+
+  // Search component styling
+  ibm-search {
+    .cds--search {
+      background: var(--color-bg-primary);
+
+      .cds--search-input {
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        border-bottom-color: var(--color-border-light);
+
+        &:focus {
+          outline: 2px solid var(--color-primary);
+        }
+
+        &::placeholder {
+          color: var(--color-text-tertiary);
+        }
+      }
+
+      .cds--search-magnifier-icon {
+        fill: var(--color-text-secondary);
+      }
+
+      .cds--search-close {
+        fill: var(--color-text-primary);
+
+        &:hover {
+          background: var(--color-bg-hover);
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .page-content {
+    padding: 0 spacing.$spacing-05;
+  }
+}
+
+@media (max-width: 968px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: spacing.$spacing-05;
+    padding: 0 spacing.$spacing-05;
+
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    .header-subtitle {
+      font-size: 0.8125rem;
+    }
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .page-content {
+    padding: 0 spacing.$spacing-05;
+  }
+
+  .carbon-table-wrapper {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 spacing.$spacing-05;
+
+    h1 {
+      font-size: 1.125rem;
+    }
+  }
+
+  .page-content {
+    padding: 0 spacing.$spacing-05;
+  }
+
+  .action-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: spacing.$spacing-02;
+  }
+}
+
+// Table Row Height Controls
+.table-row-size-xs {
+  ::ng-deep .cds--data-table tbody tr td {
+    height: 1.5rem;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+}
+
+.table-row-size-sm {
+  ::ng-deep .cds--data-table tbody tr td {
+    height: 2rem;
+    padding-top: 0.4375rem !important;
+    padding-bottom: 0.4375rem !important;
+  }
+}
+
+.table-row-size-md {
+  ::ng-deep .cds--data-table tbody tr td {
+    height: 2.5rem;
+    padding-top: 0.6875rem !important;
+    padding-bottom: 0.6875rem !important;
+  }
+}
+
+.table-row-size-lg {
+  ::ng-deep .cds--data-table tbody tr td {
+    height: 3rem;
+    padding-top: 0.9375rem !important;
+    padding-bottom: 0.9375rem !important;
+  }
+}

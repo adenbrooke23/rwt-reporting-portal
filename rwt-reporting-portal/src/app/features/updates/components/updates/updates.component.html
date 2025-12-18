@@ -1,0 +1,159 @@
+<div class="updates-page-container">
+  <!-- Page Header matching standard navigation pattern -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Latest Updates</h1>
+        <p class="header-subtitle">Stay informed about system updates, new features, and important announcements</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="goBack()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+      <!-- Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div class="filter-toolbar__left">
+          <ibm-search
+            [placeholder]="'Search by title, category, or author'"
+            [(ngModel)]="searchTerm"
+            (valueChange)="onSearchChange()"
+            size="sm"
+            theme="light">
+          </ibm-search>
+
+          <ibm-dropdown
+            [placeholder]="'Date range'"
+            size="sm"
+            theme="light"
+            (selected)="onDateRangeChange($event)">
+            <ibm-dropdown-list [items]="dateRangeOptions"></ibm-dropdown-list>
+          </ibm-dropdown>
+
+          <ng-container *ngIf="selectedDateRange === 'custom'">
+            <ibm-date-picker
+              [label]="'Start date'"
+              [dateFormat]="'m/d/Y'"
+              [placeholder]="'mm/dd/yyyy'"
+              (valueChange)="onStartDateChange($event)"
+              size="sm">
+            </ibm-date-picker>
+
+            <ibm-date-picker
+              [label]="'End date'"
+              [dateFormat]="'m/d/Y'"
+              [placeholder]="'mm/dd/yyyy'"
+              (valueChange)="onEndDateChange($event)"
+              size="sm">
+            </ibm-date-picker>
+          </ng-container>
+        </div>
+
+        <div class="filter-toolbar__right">
+          <button
+            *ngIf="hasActiveFilters"
+            cdsButton="ghost"
+            size="sm"
+            (click)="clearFilters()">
+            <svg cdsIcon="close" size="16" class="cds--btn__icon"></svg>
+            Clear filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Results count -->
+      <div class="results-info" *ngIf="!isLoading">
+        <span *ngIf="hasActiveFilters">
+          Showing {{ filteredAnnouncements.length }} of {{ announcements.length }} updates
+        </span>
+        <span *ngIf="!hasActiveFilters">
+          {{ announcements.length }} updates
+        </span>
+      </div>
+
+      <!-- Loading State -->
+      <div class="updates-grid" *ngIf="isLoading">
+        <article class="article-card article-card--skeleton" *ngFor="let i of [1,2,3,4,5,6]">
+          <div class="card-image">
+            <div class="skeleton skeleton-image"></div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton skeleton-subtitle"></div>
+            <div class="skeleton skeleton-title"></div>
+          </div>
+          <div class="card-footer">
+            <div class="footer-content">
+              <div class="skeleton skeleton-author"></div>
+              <div class="skeleton skeleton-meta"></div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Updates Grid -->
+      <div class="updates-grid" *ngIf="!isLoading && filteredAnnouncements.length > 0">
+        <article class="article-card" *ngFor="let announcement of filteredAnnouncements" (click)="openAnnouncement(announcement.id)">
+          <div class="card-image">
+            <img [src]="announcement.imagePath" [alt]="announcement.title" loading="lazy">
+          </div>
+          <div class="card-body">
+            <p class="card-subtitle">{{ announcement.subtitle }}</p>
+            <h3 class="card-title">{{ announcement.title }}</h3>
+          </div>
+          <div class="card-footer">
+            <div class="footer-content">
+              <p class="card-author">{{ announcement.author }}</p>
+              <p class="card-meta">{{ announcement.date }}</p>
+            </div>
+            <svg class="footer-arrow" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+            </svg>
+          </div>
+        </article>
+      </div>
+
+      <!-- Empty State -->
+      <div class="no-announcements" *ngIf="!isLoading && filteredAnnouncements.length === 0">
+        <p *ngIf="announcements.length === 0">No announcements available at this time.</p>
+        <p *ngIf="announcements.length > 0 && hasActiveFilters">No updates match your current filters.</p>
+        <button *ngIf="hasActiveFilters" cdsButton="ghost" (click)="clearFilters()">Clear filters</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Announcement Detail Modal -->
+<cds-modal
+  [open]="showAnnouncementModal"
+  (overlaySelected)="closeAnnouncementModal()"
+  size="lg">
+  <cds-modal-header
+    *ngIf="selectedAnnouncement"
+    (closeSelect)="closeAnnouncementModal()">
+    <span class="modal-category-tag">{{ selectedAnnouncement.subtitle }}</span>
+    <h3 cdsModalHeaderHeading>{{ selectedAnnouncement.title }}</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent *ngIf="selectedAnnouncement">
+    <div class="announcement-modal-meta">
+      <span class="meta-author">{{ selectedAnnouncement.authorName || 'Admin' }}</span>
+      <span class="meta-separator">·</span>
+      <span class="meta-date">{{ formatDate(selectedAnnouncement.publishedAt) }}</span>
+      <span class="meta-separator">·</span>
+      <span class="meta-read-time">{{ selectedAnnouncement.readTimeMinutes || 2 }} min read</span>
+    </div>
+
+    <div class="announcement-modal-image" *ngIf="selectedAnnouncement.imagePath">
+      <img [src]="selectedAnnouncement.imagePath" [alt]="selectedAnnouncement.title">
+    </div>
+
+    <div class="announcement-modal-content" [innerHTML]="selectedAnnouncement.content | markdown">
+    </div>
+  </section>
+</cds-modal>

@@ -1,0 +1,98 @@
+<!-- Carbon Side Navigation with Rail -->
+<cds-sidenav
+  [rail]="true"
+  [expanded]="isExpanded"
+  [allowExpansion]="true"
+  [useRouter]="true">
+
+  <!-- Hubs (Dashboard) -->
+  <cds-sidenav-item
+    [route]="['/dashboard']"
+    [active]="isActive('/dashboard')"
+    title="Hubs">
+    <svg cdsIcon="home" size="16"></svg>
+    Hubs
+  </cds-sidenav-item>
+
+  <!-- My Dashboard -->
+  <cds-sidenav-item
+    [route]="['/my-dashboard']"
+    [active]="isActive('/my-dashboard')"
+    title="My Dashboard">
+    <svg cdsIcon="star" size="16"></svg>
+    My Dashboard
+  </cds-sidenav-item>
+
+  <!-- Quick Access Menu (only show if there are pinned items) -->
+  <cds-sidenav-menu
+    *ngIf="quickAccessItems.length > 0"
+    title="Quick Access"
+    [expanded]="quickAccessExpanded && isExpanded"
+    [useRouter]="true">
+    <svg cdsIcon="folder" icon size="16"></svg>
+    <ng-container *ngIf="isExpanded">
+      <cds-sidenav-item
+        *ngFor="let item of quickAccessItems"
+        [route]="[item.route]"
+        [active]="isActive(item.route)"
+        [title]="item.label">
+        <svg cdsIcon="document" size="16"></svg>
+        {{ item.label }}
+      </cds-sidenav-item>
+    </ng-container>
+  </cds-sidenav-menu>
+
+  <!-- Admin Menu (only show for admins) -->
+  <cds-sidenav-menu
+    *ngIf="isAdmin"
+    title="Admin"
+    [expanded]="adminExpanded && isExpanded"
+    [hasActiveChild]="hasActiveChild(['/admin', '/admin/content', '/admin/theme-settings', '/admin/announcements'])"
+    [useRouter]="true">
+    <svg cdsIcon="user--multiple" icon size="16"></svg>
+    <ng-container *ngIf="isExpanded">
+      <cds-sidenav-item
+        [route]="['/admin']"
+        [active]="isActive('/admin')"
+        title="User Management">
+        <svg cdsIcon="user--multiple" size="16"></svg>
+        User Management
+      </cds-sidenav-item>
+      <cds-sidenav-item
+        [route]="['/admin/content']"
+        [active]="isActiveStartsWith('/admin/content')"
+        title="Content Management">
+        <svg cdsIcon="folder" size="16"></svg>
+        Content Management
+      </cds-sidenav-item>
+      <cds-sidenav-item
+        [route]="['/admin/announcements']"
+        [active]="isActive('/admin/announcements')"
+        title="Announcements">
+        <svg cdsIcon="notification" size="16"></svg>
+        Announcements
+      </cds-sidenav-item>
+      <cds-sidenav-item
+        [route]="['/admin/theme-settings']"
+        [active]="isActive('/admin/theme-settings')"
+        title="Theme Settings">
+        <svg cdsIcon="color-palette" size="16"></svg>
+        Theme Settings
+      </cds-sidenav-item>
+    </ng-container>
+  </cds-sidenav-menu>
+
+  <!-- What's New -->
+  <cds-sidenav-item
+    [route]="['/updates']"
+    [active]="isActive('/updates')"
+    title="What's New"
+    class="sidenav-item-with-badge">
+    <svg cdsIcon="notification" size="16"></svg>
+    <span class="sidenav-item-content">
+      What's New
+      <span class="sidenav-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </span>
+  </cds-sidenav-item>
+
+</cds-sidenav>

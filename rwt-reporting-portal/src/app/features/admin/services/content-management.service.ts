@@ -1,0 +1,946 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, of, delay, throwError } from 'rxjs';
+import {
+  Hub,
+  CreateHubDto,
+  UpdateHubDto,
+  ReportGroup,
+  CreateReportGroupDto,
+  UpdateReportGroupDto,
+  Report,
+  CreateReportDto,
+  UpdateReportDto,
+  Department,
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+  PowerBIWorkspace,
+  PowerBIReport,
+  BulkImportResult
+} from '../models/content-management.models';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ContentManagementService {
+  private hubs = new BehaviorSubject<Hub[]>([]);
+  private reportGroups = new BehaviorSubject<ReportGroup[]>([]);
+  private reports = new BehaviorSubject<Report[]>([]);
+  private departments = new BehaviorSubject<Department[]>([]);
+
+  hubs$ = this.hubs.asObservable();
+  reportGroups$ = this.reportGroups.asObservable();
+  reports$ = this.reports.asObservable();
+  departments$ = this.departments.asObservable();
+
+  private mockDelay = 300;
+
+  constructor() {
+    this.initializeMockData();
+  }
+
+  private initializeMockData(): void {
+    const now = new Date();
+    const adminUser = 'admin@redwoodtrust.com';
+
+    // Initialize hubs
+    const hubsData: Hub[] = [
+      {
+        id: 'sequoia',
+        name: 'Sequoia',
+        description: 'Sequoia reporting and analytics',
+        iconName: 'analytics',
+        colorClass: 'sequoia',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportGroupCount: 2,
+        reportCount: 6
+      },
+      {
+        id: 'corevest',
+        name: 'CoreVest',
+        description: 'CoreVest reporting and analytics',
+        iconName: 'building',
+        colorClass: 'corevest',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportGroupCount: 1,
+        reportCount: 3
+      },
+      {
+        id: 'enterprise',
+        name: 'Enterprise',
+        description: 'Enterprise reporting and analytics',
+        iconName: 'dashboard',
+        colorClass: 'enterprise',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportGroupCount: 1,
+        reportCount: 3
+      },
+      {
+        id: 'aspire',
+        name: 'Aspire',
+        description: 'Aspire reporting and analytics',
+        iconName: 'finance',
+        colorClass: 'aspire',
+        sortOrder: 4,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportGroupCount: 1,
+        reportCount: 3
+      }
+    ];
+
+    // Initialize report groups
+    const groupsData: ReportGroup[] = [
+      {
+        id: 'sequoia-main',
+        hubId: 'sequoia',
+        name: 'Main Reports',
+        description: 'Primary Sequoia reports',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportCount: 3
+      },
+      {
+        id: 'sequoia-samples',
+        hubId: 'sequoia',
+        name: 'Sample Reports',
+        description: 'Demo and sample reports',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportCount: 3
+      },
+      {
+        id: 'corevest-main',
+        hubId: 'corevest',
+        name: 'Main Reports',
+        description: 'Primary CoreVest reports',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportCount: 3
+      },
+      {
+        id: 'enterprise-main',
+        hubId: 'enterprise',
+        name: 'Main Reports',
+        description: 'Primary Enterprise reports',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportCount: 3
+      },
+      {
+        id: 'aspire-main',
+        hubId: 'aspire',
+        name: 'Main Reports',
+        description: 'Primary Aspire reports',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser,
+        reportCount: 3
+      }
+    ];
+
+    // Initialize reports
+    const reportsData: Report[] = [
+      // Sequoia Main Reports
+      {
+        id: 'sequoia-monthly-summary',
+        reportGroupId: 'sequoia-main',
+        hubId: 'sequoia',
+        name: 'Monthly Summary',
+        description: 'Outstanding Conditions for all sellers',
+        type: 'SSRS',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'sequoia-transaction-details',
+        reportGroupId: 'sequoia-main',
+        hubId: 'sequoia',
+        name: 'Transaction Details',
+        description: 'Detailed transaction reports',
+        type: 'PowerBI',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'sequoia-performance-metrics',
+        reportGroupId: 'sequoia-main',
+        hubId: 'sequoia',
+        name: 'Performance Metrics',
+        description: 'Key performance indicators',
+        type: 'SSRS',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      // Sequoia Sample Reports
+      {
+        id: 'sample-powerbi-embed',
+        reportGroupId: 'sequoia-samples',
+        hubId: 'sequoia',
+        name: 'Sample Power BI Report',
+        description: 'Interactive Power BI embedded report demo',
+        type: 'PowerBI',
+        embedConfig: {
+          embedUrl: 'https://playground.powerbi.com/sampleReportEmbed'
+        },
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'sample-ssrs-report',
+        reportGroupId: 'sequoia-samples',
+        hubId: 'sequoia',
+        name: 'Sample SSRS Report',
+        description: 'On-premises SSRS paginated report demo',
+        type: 'SSRS',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'sample-paginated-report',
+        reportGroupId: 'sequoia-samples',
+        hubId: 'sequoia',
+        name: 'Sample Paginated Report',
+        description: 'Paginated/RDL report on Power BI service',
+        type: 'Paginated',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      // CoreVest Reports
+      {
+        id: 'corevest-portfolio-overview',
+        reportGroupId: 'corevest-main',
+        hubId: 'corevest',
+        name: 'Portfolio Overview',
+        description: 'Portfolio summary and overview',
+        type: 'PowerBI',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'corevest-asset-analysis',
+        reportGroupId: 'corevest-main',
+        hubId: 'corevest',
+        name: 'Asset Analysis',
+        description: 'Detailed asset analysis',
+        type: 'SSRS',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'corevest-risk-assessment',
+        reportGroupId: 'corevest-main',
+        hubId: 'corevest',
+        name: 'Risk Assessment',
+        description: 'Risk metrics and assessment',
+        type: 'PowerBI',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      // Enterprise Reports
+      {
+        id: 'enterprise-financial-dashboard',
+        reportGroupId: 'enterprise-main',
+        hubId: 'enterprise',
+        name: 'Financial Dashboard',
+        description: 'Enterprise-wide financial dashboard',
+        type: 'PowerBI',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'enterprise-compliance-report',
+        reportGroupId: 'enterprise-main',
+        hubId: 'enterprise',
+        name: 'Compliance Report',
+        description: 'Compliance and regulatory reports',
+        type: 'SSRS',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'enterprise-executive-summary',
+        reportGroupId: 'enterprise-main',
+        hubId: 'enterprise',
+        name: 'Executive Summary',
+        description: 'High-level executive summary',
+        type: 'PowerBI',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      // Aspire Reports
+      {
+        id: 'aspire-loan-pipeline',
+        reportGroupId: 'aspire-main',
+        hubId: 'aspire',
+        name: 'Loan Pipeline',
+        description: 'Loan pipeline and origination reports',
+        type: 'PowerBI',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'aspire-servicing-summary',
+        reportGroupId: 'aspire-main',
+        hubId: 'aspire',
+        name: 'Servicing Summary',
+        description: 'Loan servicing and portfolio summary',
+        type: 'SSRS',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'aspire-performance-analytics',
+        reportGroupId: 'aspire-main',
+        hubId: 'aspire',
+        name: 'Performance Analytics',
+        description: 'Performance metrics and analytics',
+        type: 'PowerBI',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      }
+    ];
+
+    // Initialize departments (organizational groups)
+    const departmentsData: Department[] = [
+      {
+        id: 'admin',
+        name: 'Admin',
+        description: 'Full system access',
+        sortOrder: 1,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'it',
+        name: 'IT',
+        description: 'IT department',
+        sortOrder: 2,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'treasury',
+        name: 'Treasury',
+        description: 'Treasury department',
+        sortOrder: 3,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'finance',
+        name: 'Finance',
+        description: 'Finance department',
+        sortOrder: 4,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'accounting',
+        name: 'Accounting',
+        description: 'Accounting department',
+        sortOrder: 5,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      },
+      {
+        id: 'enterprise',
+        name: 'Enterprise',
+        description: 'Enterprise group',
+        sortOrder: 6,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: now,
+        createdBy: adminUser
+      }
+    ];
+
+    this.hubs.next(hubsData);
+    this.reportGroups.next(groupsData);
+    this.reports.next(reportsData);
+    this.departments.next(departmentsData);
+  }
+
+  // ============== HUB OPERATIONS ==============
+
+  getHubs(includeInactive = false): Observable<Hub[]> {
+    return of(
+      this.hubs.value
+        .filter(h => includeInactive || h.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    ).pipe(delay(this.mockDelay));
+  }
+
+  getHubById(id: string): Observable<Hub | undefined> {
+    return of(this.hubs.value.find(h => h.id === id)).pipe(delay(this.mockDelay));
+  }
+
+  createHub(dto: CreateHubDto): Observable<Hub> {
+    const currentHubs = this.hubs.value;
+    const maxSortOrder = Math.max(...currentHubs.map(h => h.sortOrder), 0);
+
+    const newHub: Hub = {
+      id: this.generateId('hub'),
+      name: dto.name,
+      description: dto.description,
+      iconName: dto.iconName,
+      colorClass: dto.colorClass,
+      sortOrder: maxSortOrder + 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'admin@redwoodtrust.com',
+      reportGroupCount: 0,
+      reportCount: 0
+    };
+
+    this.hubs.next([...currentHubs, newHub]);
+    return of(newHub).pipe(delay(this.mockDelay));
+  }
+
+  updateHub(id: string, dto: UpdateHubDto): Observable<Hub> {
+    const currentHubs = this.hubs.value;
+    const index = currentHubs.findIndex(h => h.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Hub not found'));
+    }
+
+    const updatedHub: Hub = {
+      ...currentHubs[index],
+      ...dto,
+      updatedAt: new Date()
+    };
+
+    currentHubs[index] = updatedHub;
+    this.hubs.next([...currentHubs]);
+    return of(updatedHub).pipe(delay(this.mockDelay));
+  }
+
+  deleteHub(id: string): Observable<void> {
+    const currentHubs = this.hubs.value;
+    const index = currentHubs.findIndex(h => h.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Hub not found'));
+    }
+
+    // Soft delete - mark as inactive
+    currentHubs[index] = {
+      ...currentHubs[index],
+      isActive: false,
+      updatedAt: new Date()
+    };
+
+    this.hubs.next([...currentHubs]);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  reorderHubs(hubIds: string[]): Observable<void> {
+    const currentHubs = this.hubs.value;
+
+    hubIds.forEach((id, index) => {
+      const hub = currentHubs.find(h => h.id === id);
+      if (hub) {
+        hub.sortOrder = index + 1;
+        hub.updatedAt = new Date();
+      }
+    });
+
+    this.hubs.next([...currentHubs]);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  // ============== REPORT GROUP OPERATIONS ==============
+
+  getReportGroups(hubId?: string, includeInactive = false): Observable<ReportGroup[]> {
+    return of(
+      this.reportGroups.value
+        .filter(g => (!hubId || g.hubId === hubId) && (includeInactive || g.isActive))
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    ).pipe(delay(this.mockDelay));
+  }
+
+  getReportGroupById(id: string): Observable<ReportGroup | undefined> {
+    return of(this.reportGroups.value.find(g => g.id === id)).pipe(delay(this.mockDelay));
+  }
+
+  createReportGroup(dto: CreateReportGroupDto): Observable<ReportGroup> {
+    const currentGroups = this.reportGroups.value;
+    const hubGroups = currentGroups.filter(g => g.hubId === dto.hubId);
+    const maxSortOrder = Math.max(...hubGroups.map(g => g.sortOrder), 0);
+
+    const newGroup: ReportGroup = {
+      id: this.generateId('group'),
+      hubId: dto.hubId,
+      name: dto.name,
+      description: dto.description,
+      sortOrder: maxSortOrder + 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'admin@redwoodtrust.com',
+      reportCount: 0
+    };
+
+    this.reportGroups.next([...currentGroups, newGroup]);
+    this.updateHubCounts(dto.hubId);
+    return of(newGroup).pipe(delay(this.mockDelay));
+  }
+
+  updateReportGroup(id: string, dto: UpdateReportGroupDto): Observable<ReportGroup> {
+    const currentGroups = this.reportGroups.value;
+    const index = currentGroups.findIndex(g => g.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Report group not found'));
+    }
+
+    const oldHubId = currentGroups[index].hubId;
+    const updatedGroup: ReportGroup = {
+      ...currentGroups[index],
+      ...dto,
+      updatedAt: new Date()
+    };
+
+    currentGroups[index] = updatedGroup;
+    this.reportGroups.next([...currentGroups]);
+
+    // Update hub counts if hub changed
+    if (dto.hubId && dto.hubId !== oldHubId) {
+      this.updateHubCounts(oldHubId);
+      this.updateHubCounts(dto.hubId);
+    }
+
+    return of(updatedGroup).pipe(delay(this.mockDelay));
+  }
+
+  deleteReportGroup(id: string): Observable<void> {
+    const currentGroups = this.reportGroups.value;
+    const index = currentGroups.findIndex(g => g.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Report group not found'));
+    }
+
+    const hubId = currentGroups[index].hubId;
+
+    // Soft delete
+    currentGroups[index] = {
+      ...currentGroups[index],
+      isActive: false,
+      updatedAt: new Date()
+    };
+
+    this.reportGroups.next([...currentGroups]);
+    this.updateHubCounts(hubId);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  reorderReportGroups(hubId: string, groupIds: string[]): Observable<void> {
+    const currentGroups = this.reportGroups.value;
+
+    groupIds.forEach((id, index) => {
+      const group = currentGroups.find(g => g.id === id && g.hubId === hubId);
+      if (group) {
+        group.sortOrder = index + 1;
+        group.updatedAt = new Date();
+      }
+    });
+
+    this.reportGroups.next([...currentGroups]);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  // ============== REPORT OPERATIONS ==============
+
+  getReports(groupId?: string, hubId?: string, includeInactive = false): Observable<Report[]> {
+    return of(
+      this.reports.value
+        .filter(r =>
+          (!groupId || r.reportGroupId === groupId) &&
+          (!hubId || r.hubId === hubId) &&
+          (includeInactive || r.isActive)
+        )
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    ).pipe(delay(this.mockDelay));
+  }
+
+  getReportById(id: string): Observable<Report | undefined> {
+    return of(this.reports.value.find(r => r.id === id)).pipe(delay(this.mockDelay));
+  }
+
+  createReport(dto: CreateReportDto): Observable<Report> {
+    const currentReports = this.reports.value;
+    const groupReports = currentReports.filter(r => r.reportGroupId === dto.reportGroupId);
+    const maxSortOrder = Math.max(...groupReports.map(r => r.sortOrder), 0);
+
+    const group = this.reportGroups.value.find(g => g.id === dto.reportGroupId);
+    const hubId = group?.hubId || '';
+
+    const newReport: Report = {
+      id: this.generateId('report'),
+      reportGroupId: dto.reportGroupId,
+      hubId: hubId,
+      name: dto.name,
+      description: dto.description,
+      type: dto.type,
+      embedConfig: dto.embedConfig,
+      sortOrder: maxSortOrder + 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'admin@redwoodtrust.com'
+    };
+
+    this.reports.next([...currentReports, newReport]);
+    this.updateGroupCounts(dto.reportGroupId);
+    this.updateHubCounts(hubId);
+    return of(newReport).pipe(delay(this.mockDelay));
+  }
+
+  updateReport(id: string, dto: UpdateReportDto): Observable<Report> {
+    const currentReports = this.reports.value;
+    const index = currentReports.findIndex(r => r.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Report not found'));
+    }
+
+    const oldGroupId = currentReports[index].reportGroupId;
+    let newHubId = currentReports[index].hubId;
+
+    if (dto.reportGroupId && dto.reportGroupId !== oldGroupId) {
+      const newGroup = this.reportGroups.value.find(g => g.id === dto.reportGroupId);
+      newHubId = newGroup?.hubId || newHubId;
+    }
+
+    const updatedReport: Report = {
+      ...currentReports[index],
+      ...dto,
+      hubId: newHubId,
+      updatedAt: new Date()
+    };
+
+    currentReports[index] = updatedReport;
+    this.reports.next([...currentReports]);
+
+    // Update counts if group changed
+    if (dto.reportGroupId && dto.reportGroupId !== oldGroupId) {
+      this.updateGroupCounts(oldGroupId);
+      this.updateGroupCounts(dto.reportGroupId);
+      this.updateHubCounts(currentReports[index].hubId);
+      this.updateHubCounts(newHubId);
+    }
+
+    return of(updatedReport).pipe(delay(this.mockDelay));
+  }
+
+  deleteReport(id: string): Observable<void> {
+    const currentReports = this.reports.value;
+    const index = currentReports.findIndex(r => r.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Report not found'));
+    }
+
+    const groupId = currentReports[index].reportGroupId;
+    const hubId = currentReports[index].hubId;
+
+    // Soft delete
+    currentReports[index] = {
+      ...currentReports[index],
+      isActive: false,
+      updatedAt: new Date()
+    };
+
+    this.reports.next([...currentReports]);
+    this.updateGroupCounts(groupId);
+    this.updateHubCounts(hubId);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  reorderReports(groupId: string, reportIds: string[]): Observable<void> {
+    const currentReports = this.reports.value;
+
+    reportIds.forEach((id, index) => {
+      const report = currentReports.find(r => r.id === id && r.reportGroupId === groupId);
+      if (report) {
+        report.sortOrder = index + 1;
+        report.updatedAt = new Date();
+      }
+    });
+
+    this.reports.next([...currentReports]);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  // ============== POWER BI DISCOVERY ==============
+
+  getWorkspaces(): Observable<PowerBIWorkspace[]> {
+    // Mock workspaces
+    const mockWorkspaces: PowerBIWorkspace[] = [
+      { id: 'ws-001', name: 'Finance Reports', type: 'Workspace', isReadOnly: false },
+      { id: 'ws-002', name: 'Operations Analytics', type: 'Workspace', isReadOnly: false },
+      { id: 'ws-003', name: 'Executive Dashboards', type: 'Workspace', isReadOnly: true }
+    ];
+    return of(mockWorkspaces).pipe(delay(this.mockDelay));
+  }
+
+  getWorkspaceReports(workspaceId: string): Observable<PowerBIReport[]> {
+    // Mock reports for workspaces
+    const mockReports: Record<string, PowerBIReport[]> = {
+      'ws-001': [
+        { id: 'pbi-001', name: 'Financial Overview', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' },
+        { id: 'pbi-002', name: 'Budget Analysis', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' },
+        { id: 'pbi-003', name: 'Monthly Statement', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PaginatedReport' }
+      ],
+      'ws-002': [
+        { id: 'pbi-004', name: 'Operations Dashboard', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' },
+        { id: 'pbi-005', name: 'Performance Metrics', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' }
+      ],
+      'ws-003': [
+        { id: 'pbi-006', name: 'Executive Summary', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' }
+      ]
+    };
+    return of(mockReports[workspaceId] || []).pipe(delay(this.mockDelay));
+  }
+
+  bulkImportReports(reportGroupId: string, reports: PowerBIReport[]): Observable<BulkImportResult> {
+    const group = this.reportGroups.value.find(g => g.id === reportGroupId);
+    if (!group) {
+      return throwError(() => new Error('Report group not found'));
+    }
+
+    const currentReports = this.reports.value;
+    let successCount = 0;
+    const errors: string[] = [];
+
+    reports.forEach(pbiReport => {
+      const maxSortOrder = Math.max(
+        ...currentReports.filter(r => r.reportGroupId === reportGroupId).map(r => r.sortOrder),
+        0
+      );
+
+      const newReport: Report = {
+        id: this.generateId('report'),
+        reportGroupId: reportGroupId,
+        hubId: group.hubId,
+        name: pbiReport.name,
+        description: `Imported from Power BI: ${pbiReport.name}`,
+        type: pbiReport.reportType === 'PaginatedReport' ? 'Paginated' : 'PowerBI',
+        embedConfig: {
+          embedUrl: pbiReport.embedUrl,
+          reportId: pbiReport.id
+        },
+        sortOrder: maxSortOrder + 1 + successCount,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: 'admin@redwoodtrust.com'
+      };
+
+      currentReports.push(newReport);
+      successCount++;
+    });
+
+    this.reports.next([...currentReports]);
+    this.updateGroupCounts(reportGroupId);
+    this.updateHubCounts(group.hubId);
+
+    const result: BulkImportResult = {
+      totalProcessed: reports.length,
+      successCount,
+      failureCount: errors.length,
+      errors
+    };
+
+    return of(result).pipe(delay(this.mockDelay * 2));
+  }
+
+  // ============== DEPARTMENT OPERATIONS ==============
+
+  getDepartments(includeInactive = false): Observable<Department[]> {
+    return of(
+      this.departments.value
+        .filter(d => includeInactive || d.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    ).pipe(delay(this.mockDelay));
+  }
+
+  getDepartmentById(id: string): Observable<Department | undefined> {
+    return of(this.departments.value.find(d => d.id === id)).pipe(delay(this.mockDelay));
+  }
+
+  createDepartment(dto: CreateDepartmentDto): Observable<Department> {
+    const currentDepartments = this.departments.value;
+    const maxSortOrder = Math.max(...currentDepartments.map(d => d.sortOrder), 0);
+
+    const newDepartment: Department = {
+      id: this.generateId('dept'),
+      name: dto.name,
+      description: dto.description,
+      sortOrder: maxSortOrder + 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'admin@redwoodtrust.com'
+    };
+
+    this.departments.next([...currentDepartments, newDepartment]);
+    return of(newDepartment).pipe(delay(this.mockDelay));
+  }
+
+  updateDepartment(id: string, dto: UpdateDepartmentDto): Observable<Department> {
+    const currentDepartments = this.departments.value;
+    const index = currentDepartments.findIndex(d => d.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Department not found'));
+    }
+
+    const updatedDepartment: Department = {
+      ...currentDepartments[index],
+      ...dto,
+      updatedAt: new Date()
+    };
+
+    currentDepartments[index] = updatedDepartment;
+    this.departments.next([...currentDepartments]);
+    return of(updatedDepartment).pipe(delay(this.mockDelay));
+  }
+
+  deleteDepartment(id: string): Observable<void> {
+    const currentDepartments = this.departments.value;
+    const index = currentDepartments.findIndex(d => d.id === id);
+
+    if (index === -1) {
+      return throwError(() => new Error('Department not found'));
+    }
+
+    // Soft delete
+    currentDepartments[index] = {
+      ...currentDepartments[index],
+      isActive: false,
+      updatedAt: new Date()
+    };
+
+    this.departments.next([...currentDepartments]);
+    return of(void 0).pipe(delay(this.mockDelay));
+  }
+
+  // ============== HELPER METHODS ==============
+
+  private generateId(prefix: string): string {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private updateHubCounts(hubId: string): void {
+    const currentHubs = this.hubs.value;
+    const hub = currentHubs.find(h => h.id === hubId);
+
+    if (hub) {
+      hub.reportGroupCount = this.reportGroups.value.filter(
+        g => g.hubId === hubId && g.isActive
+      ).length;
+      hub.reportCount = this.reports.value.filter(
+        r => r.hubId === hubId && r.isActive
+      ).length;
+      this.hubs.next([...currentHubs]);
+    }
+  }
+
+  private updateGroupCounts(groupId: string): void {
+    const currentGroups = this.reportGroups.value;
+    const group = currentGroups.find(g => g.id === groupId);
+
+    if (group) {
+      group.reportCount = this.reports.value.filter(
+        r => r.reportGroupId === groupId && r.isActive
+      ).length;
+      this.reportGroups.next([...currentGroups]);
+    }
+  }
+}

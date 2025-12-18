@@ -1,0 +1,66 @@
+<cds-modal
+  [open]="open"
+  size="sm"
+  (overlaySelected)="onOverlayClick()">
+
+  <cds-modal-header (closeSelect)="onCancel()">
+    <p cdsModalHeaderLabel>Profile</p>
+    <p cdsModalHeaderHeading>Edit profile</p>
+  </cds-modal-header>
+
+  <section cdsModalContent *ngIf="currentUser">
+    <!-- User Info Section -->
+    <div class="profile-info">
+      <div class="profile-avatar-large" [style.background-color]="getCurrentAvatar()?.color">
+        <svg *ngIf="getCurrentAvatar() && !getCurrentAvatar()?.isInitials"
+             cdsIcon="user--avatar"
+             size="32"
+             class="avatar-icon"></svg>
+        <span *ngIf="getCurrentAvatar()?.isInitials" class="avatar-initials">
+          {{ getUserInitials() }}
+        </span>
+      </div>
+      <div class="profile-details">
+        <p class="profile-name">{{ getFullName() }}</p>
+        <p class="profile-email">{{ currentUser.email }}</p>
+        <p class="profile-company">{{ getCompany() }}</p>
+      </div>
+    </div>
+
+    <!-- Avatar Selection -->
+    <div class="avatar-section">
+      <p class="section-label">Choose avatar</p>
+      <div class="avatar-options">
+        <button
+          *ngFor="let avatar of avatarOptions"
+          type="button"
+          class="avatar-option"
+          [class.avatar-option--selected]="isSelectedAvatar(avatar.id)"
+          (click)="selectAvatar(avatar.id)"
+          [attr.aria-label]="'Select ' + avatar.name + ' avatar'"
+          [attr.aria-pressed]="isSelectedAvatar(avatar.id)">
+          <div class="avatar-preview" [style.background-color]="avatar.color">
+            <svg *ngIf="!avatar.isInitials"
+                 cdsIcon="user--avatar"
+                 size="20"
+                 class="avatar-icon-small"></svg>
+            <span *ngIf="avatar.isInitials" class="avatar-initials-small">
+              {{ getUserInitials() }}
+            </span>
+          </div>
+          <span class="avatar-label">{{ avatar.name }}</span>
+          <svg *ngIf="isSelectedAvatar(avatar.id)"
+               cdsIcon="checkmark"
+               size="16"
+               class="checkmark-icon"></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="onCancel()">Cancel</button>
+    <button cdsButton="primary" (click)="onSave()" [disabled]="!hasChanges()">Save changes</button>
+  </cds-modal-footer>
+
+</cds-modal>

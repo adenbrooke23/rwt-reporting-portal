@@ -1,0 +1,64 @@
+<header class="app-header">
+  <div class="header-container">
+    <div class="header-left">
+      <h2 class="app-title">RWT Reporting Portal</h2>
+    </div>
+
+    <div class="header-right">
+      <!-- Search Icon -->
+      <button class="icon-button" (click)="handleSearch()" title="Search">
+        <svg ibmIcon="search" size="20"></svg>
+      </button>
+
+      <!-- Notification Bell -->
+      <button class="icon-button" (click)="handleNotifications()" title="Notifications">
+        <svg ibmIcon="notification" size="20"></svg>
+      </button>
+
+      <!-- User Profile Dropdown -->
+      <div class="user-profile-wrapper">
+        <button class="user-profile-button" (click)="toggleProfileDropdown()">
+          <div class="profile-picture">
+            {{ getAvatarEmoji() }}
+          </div>
+          <span class="user-name">{{ getFullName() }}</span>
+          <svg ibmIcon="chevron--down" size="20" class="chevron-icon" [class.rotated]="isProfileDropdownOpen"></svg>
+        </button>
+
+        <!-- Profile Dropdown Menu -->
+        <div class="profile-dropdown" [class.open]="isProfileDropdownOpen" (click)="$event.stopPropagation()">
+          <div class="dropdown-header">
+            <div class="dropdown-user-info">
+              <div class="dropdown-name">{{ getFullName() }}</div>
+              <div class="dropdown-email">{{ getEmail() }}</div>
+            </div>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <div class="dropdown-section">
+            <div class="dropdown-item theme-toggle-item">
+              <span class="item-label">Theme</span>
+              <app-theme-toggle></app-theme-toggle>
+            </div>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <button class="dropdown-item dropdown-action" (click)="navigateToSettings()">
+            <svg ibmIcon="settings" size="20" class="dropdown-icon"></svg>
+            <span>Settings</span>
+          </button>
+
+          <button class="dropdown-item dropdown-action logout-action" (click)="logout()">
+            <svg ibmIcon="logout" size="20" class="dropdown-icon"></svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Overlay to close dropdown -->
+      <div class="dropdown-overlay" [class.visible]="isProfileDropdownOpen" (click)="closeProfileDropdown()"></div>
+    </div>
+  </div>
+</header>

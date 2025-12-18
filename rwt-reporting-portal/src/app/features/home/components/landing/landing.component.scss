@@ -1,0 +1,306 @@
+@use '@carbon/styles/scss/spacing';
+
+.landing-container {
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+}
+
+// Hero Section - Sleek and centered
+.hero {
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-tertiary) 100%);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: spacing.$spacing-08 spacing.$spacing-06; // Reduced from spacing-10 (64px) to spacing-08 (40px)
+  text-align: center;
+
+  @media (max-width: 768px) {
+    padding: spacing.$spacing-07 spacing.$spacing-05; // Reduced from spacing-09 (48px) to spacing-07 (32px)
+  }
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: spacing.$spacing-05;
+}
+
+.hero-title {
+  font-size: 2.5rem; // 40px
+  font-weight: 300;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+
+  @media (max-width: 768px) {
+    font-size: 2rem; // 32px
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.75rem; // 28px
+  }
+}
+
+.hero-subtitle {
+  font-size: 1.125rem; // 18px
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.5;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+}
+
+.hero-description {
+  font-size: 0.875rem; // 14px
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 600px;
+
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+  }
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-04 spacing.$spacing-06;
+  background: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: spacing.$spacing-04;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 98, 254, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.arrow-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.cta-button:hover .arrow-icon {
+  transform: translateX(3px);
+}
+
+// Latest Updates Section - ArticleCard Pattern
+.updates-section {
+  padding: spacing.$spacing-07 spacing.$spacing-06; // Reduced from spacing-09 (48px) to spacing-07 (32px)
+  background: var(--color-bg-secondary);
+
+  @media (max-width: 768px) {
+    padding: spacing.$spacing-06 spacing.$spacing-05; // Reduced from spacing-08 (40px) to spacing-06 (24px)
+  }
+}
+
+.updates-content {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+// Section Header with "View All Updates" link
+.section-header {
+  display: flex;
+  justify-content: flex-start; // Keep items close together, not spread apart
+  align-items: center;
+  margin-bottom: spacing.$spacing-05;
+  gap: spacing.$spacing-06; // 24px gap between title and link
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: spacing.$spacing-04;
+  }
+}
+
+.section-title {
+  font-size: 1.75rem; // 28px
+  font-weight: 400;
+  line-height: 1.29;
+  margin: 0;
+  color: var(--color-text-primary);
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem; // 24px
+  }
+}
+
+// View All Updates Link with Carbon arrow
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  padding: spacing.$spacing-03 spacing.$spacing-04;
+  font-size: 0.875rem; // 14px
+  font-weight: 400;
+  color: var(--color-primary);
+  text-decoration: none;
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  transition: all 0.2s ease;
+
+  .arrow-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+
+    .arrow-icon {
+      transform: translateX(4px);
+    }
+  }
+
+  &:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+// Card Grid Layout - Compact layout
+.updates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); // Reduced from 256px to 200px
+  gap: spacing.$spacing-04; // Reduced from spacing-05 (16px) to spacing-04 (12px)
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: spacing.$spacing-04; // 12px - tighter on mobile
+  }
+}
+
+// Article Cards - Gatsby Carbon Design Pattern
+.article-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 110ms cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  &:hover {
+    background: var(--color-bg-tertiary);
+  }
+}
+
+.card-image {
+  width: 100%;
+  height: 140px; // Reduced from 200px to 140px
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.card-body {
+  padding: spacing.$spacing-05;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-03;
+}
+
+.card-subtitle {
+  margin: 0;
+  font-size: 0.75rem; // 12px
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  line-height: 1.33;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem; // 20px
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.card-footer {
+  padding: spacing.$spacing-05;
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: spacing.$spacing-04;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-02;
+  flex: 1;
+}
+
+.card-author {
+  margin: 0;
+  font-size: 0.875rem; // 14px
+  color: var(--color-text-primary);
+  font-weight: 400;
+  line-height: 1.43;
+}
+
+.card-meta {
+  margin: 0;
+  font-size: 0.75rem; // 12px
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  line-height: 1.33;
+}
+
+.footer-arrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-secondary);
+}
+
+// Responsive adjustments
+@media (max-width: 480px) {
+  .hero-content {
+    gap: spacing.$spacing-04;
+  }
+
+  .cta-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .announcement-item {
+    padding: spacing.$spacing-04;
+  }
+}

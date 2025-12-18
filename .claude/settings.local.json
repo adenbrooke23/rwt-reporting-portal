@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ng generate:*)",
+      "WebFetch(domain:youpez.vercel.app)",
+      "WebFetch(domain:carbondesignsystem.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)",
+      "Bash(ng serve:*)",
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:angular.carbondesignsystem.com)",
+      "Bash(tree:*)",
+      "WebFetch(domain:gatsby.carbondesignsystem.com)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "Bash(ng build:*)",
+      "Bash(cat:*)",
+      "Bash(timeout 30 ng serve:*)",
+      "Bash(timeout 60 ng serve:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
