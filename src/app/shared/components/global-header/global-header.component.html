@@ -1,0 +1,110 @@
+<cds-header name="Reporting Portal" brand="Redwood Trust">
+  <!-- Hamburger menu for sidebar toggle (X when open, hamburger when closed) -->
+  <cds-hamburger [active]="sidebarOpen" (click)="toggleMenu()"></cds-hamburger>
+
+  <!-- Global actions on the right -->
+  <cds-header-global>
+    <!-- Theme toggle -->
+    <app-theme-toggle></app-theme-toggle>
+
+    <!-- Notification bell -->
+    <button class="notification-bell" (click)="goToUpdates()" aria-label="View updates">
+      <svg cdsIcon="notification" size="20"></svg>
+      <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </button>
+
+    <!-- Admin badge (if user is admin) -->
+    <div class="admin-badge-wrapper" *ngIf="isAdmin()">
+      <span class="admin-badge">Admin</span>
+    </div>
+
+    <!-- User profile action - Carbon disclosure pattern -->
+    <cds-header-action
+      #profileAction
+      [active]="showUserMenu"
+      (activeChange)="onProfileMenuToggle($event)"
+      [ariaLabel]="'User profile for ' + getFullName()">
+      <span class="header-avatar" [style.background-color]="getAvatarColor()">
+        <svg *ngIf="getCurrentAvatar() && !getCurrentAvatar()?.isInitials"
+             cdsIcon="user--avatar"
+             size="20"
+             class="avatar-icon"></svg>
+        <span *ngIf="!getCurrentAvatar() || getCurrentAvatar()?.isInitials" class="avatar-initials">
+          {{ getInitials() }}
+        </span>
+      </span>
+    </cds-header-action>
+  </cds-header-global>
+</cds-header>
+
+<!-- Profile dropdown - Carbon disclosure popover pattern -->
+<div class="profile-dropdown" [class.profile-dropdown--open]="showUserMenu" role="menu" aria-label="User profile menu">
+  <!-- User info header -->
+  <div class="profile-dropdown__header">
+    <div class="profile-dropdown__avatar" [style.background-color]="getAvatarColor()">
+      <svg *ngIf="getCurrentAvatar() && !getCurrentAvatar()?.isInitials"
+           cdsIcon="user--avatar"
+           size="32"
+           class="profile-dropdown__avatar-icon"></svg>
+      <span *ngIf="!getCurrentAvatar() || getCurrentAvatar()?.isInitials" class="profile-dropdown__avatar-initials">
+        {{ getInitials() }}
+      </span>
+    </div>
+    <div class="profile-dropdown__user-info">
+      <span class="profile-dropdown__name">{{ getFullName() }}</span>
+      <span class="profile-dropdown__email">{{ currentUser?.email }}</span>
+    </div>
+  </div>
+
+  <!-- View profile -->
+  <button class="profile-dropdown__item" role="menuitem" (click)="openProfileModal()">
+    View profile
+  </button>
+
+  <div class="profile-dropdown__divider"></div>
+
+  <!-- Company info row -->
+  <div class="profile-dropdown__info-row">
+    <span class="profile-dropdown__info-label">Company</span>
+    <span class="profile-dropdown__info-value">{{ getCompany() }}</span>
+  </div>
+
+  <div class="profile-dropdown__divider"></div>
+
+  <!-- Change theme -->
+  <button class="profile-dropdown__item" role="menuitem" (click)="openThemeModal()">
+    Change theme
+  </button>
+
+  <!-- Help -->
+  <button class="profile-dropdown__item" role="menuitem" (click)="openHelp()">
+    Help
+  </button>
+
+  <div class="profile-dropdown__divider"></div>
+
+  <!-- Logout -->
+  <button class="profile-dropdown__item profile-dropdown__item--logout" role="menuitem" (click)="logout()">
+    <span>Log out</span>
+    <svg cdsIcon="logout" size="16"></svg>
+  </button>
+</div>
+
+<!-- Overlay for closing dropdown when clicking outside -->
+<div
+  class="profile-dropdown__overlay"
+  *ngIf="showUserMenu"
+  (click)="closeProfileMenu()">
+</div>
+
+<!-- Profile Modal -->
+<app-profile-modal
+  [open]="profileModalOpen"
+  (closeModal)="closeProfileModal()">
+</app-profile-modal>
+
+<!-- Theme Modal -->
+<app-theme-modal
+  [open]="themeModalOpen"
+  (closeModal)="closeThemeModal()">
+</app-theme-modal>

@@ -1,0 +1,210 @@
+<div class="dashboard-container">
+  <!-- Welcome Banner -->
+  <section class="welcome-banner">
+    <div class="banner-overlay"></div>
+    <div class="welcome-content">
+      <!-- Skeleton for welcome text -->
+      <ng-container *ngIf="isLoading">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-description"></div>
+      </ng-container>
+      <!-- Actual welcome text -->
+      <ng-container *ngIf="!isLoading">
+        <h1 class="welcome-title">{{ getGreeting() }}, {{ getUserName() }}</h1>
+        <p class="welcome-description">Your centralized hub for accessing enterprise reports, analytics, and business intelligence across all platforms.</p>
+
+        <!-- Quick Stats Row -->
+        <div class="quick-stats">
+          <div class="stat-item" *ngFor="let stat of quickStats">
+            <span class="stat-value">{{ stat.value }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </section>
+
+  <!-- Hubs Section -->
+  <div class="dashboard-main">
+    <div class="dashboard-content">
+      <h2 class="page-title">Reporting Hub</h2>
+
+      <!-- Skeleton Hub Cards -->
+      <div class="feature-cards-grid" *ngIf="isLoading">
+        <div class="feature-card feature-card--skeleton" *ngFor="let item of skeletonHubs">
+          <div class="card-overlay"></div>
+          <div class="feature-card-header">
+            <div class="skeleton skeleton-card-title"></div>
+          </div>
+          <div class="feature-card-details feature-card-details--skeleton">
+            <div class="skeleton skeleton-card-description"></div>
+            <div class="skeleton skeleton-card-description skeleton-card-description--short"></div>
+            <div class="feature-card-footer">
+              <div class="skeleton skeleton-card-count"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actual Hub Cards -->
+      <div class="feature-cards-grid" *ngIf="!isLoading && hubs.length > 0">
+        <a [routerLink]="['/hub', hub.id]"
+           class="feature-card"
+           [ngClass]="'feature-card--' + hub.colorClass"
+           *ngFor="let hub of hubs">
+
+          <!-- Dark Overlay -->
+          <div class="card-overlay"></div>
+
+          <!-- Card Header -->
+          <div class="feature-card-header">
+            <h3 class="feature-card-title">{{ hub.name }}</h3>
+            <svg class="feature-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+            </svg>
+          </div>
+
+          <!-- Hover Reveal Content -->
+          <div class="feature-card-details">
+            <p class="feature-card-description">{{ hub.description }}</p>
+            <div class="feature-card-footer">
+              <span class="feature-card-count">{{ hub.reportCount }} report{{ hub.reportCount !== 1 ? 's' : '' }}</span>
+              <span class="feature-card-link">View Reports</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="no-hubs" *ngIf="!isLoading && hubs.length === 0">
+        <svg class="icon-large" viewBox="0 0 32 32" fill="currentColor">
+          <path d="M16 4L6 14l1.4 1.4L15 7.8V28h2V7.8l7.6 7.6L26 14 16 4z"></path>
+        </svg>
+        <h3>No Reporting Hubs Available</h3>
+        <p>Contact your administrator to request access to reporting hubs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest Updates Section -->
+  <section class="updates-section">
+    <div class="updates-content">
+      <div class="section-header">
+        <h2 class="section-title">Latest Updates</h2>
+        <a [routerLink]="['/updates']" class="view-all-link" *ngIf="!isLoading">
+          View All
+          <svg class="arrow-icon" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+          </svg>
+        </a>
+        <div class="skeleton skeleton-link" *ngIf="isLoading"></div>
+      </div>
+
+      <!-- Skeleton Loading State -->
+      <div class="updates-layout" *ngIf="isLoading">
+        <!-- Featured Skeleton -->
+        <article class="featured-card featured-card--skeleton">
+          <div class="featured-image">
+            <div class="skeleton skeleton-image"></div>
+          </div>
+          <div class="featured-body">
+            <div class="skeleton skeleton-tag"></div>
+            <div class="skeleton skeleton-featured-title"></div>
+            <div class="skeleton skeleton-featured-title skeleton-featured-title--short"></div>
+            <div class="featured-meta">
+              <div class="skeleton skeleton-author"></div>
+              <div class="skeleton skeleton-meta"></div>
+            </div>
+          </div>
+        </article>
+        <!-- Grid Skeleton -->
+        <div class="updates-grid">
+          <article class="article-card article-card--skeleton" *ngFor="let item of [1,2,3]">
+            <div class="card-content">
+              <div class="skeleton skeleton-tag"></div>
+              <div class="skeleton skeleton-card-title"></div>
+              <div class="card-meta-row">
+                <div class="skeleton skeleton-meta"></div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Actual Content -->
+      <div class="updates-layout" *ngIf="!isLoading && announcements.length > 0">
+        <!-- Featured Article (First Item) -->
+        <article class="featured-card" *ngIf="announcements[0] as featured" (click)="openAnnouncement(featured.id)">
+          <div class="featured-image">
+            <img [src]="featured.imagePath" [alt]="featured.title" loading="lazy">
+          </div>
+          <div class="featured-body">
+            <span class="category-tag">{{ featured.subtitle }}</span>
+            <h3 class="featured-title">{{ featured.title }}</h3>
+            <div class="featured-meta">
+              <span class="meta-author">{{ featured.author }}</span>
+              <span class="meta-separator">·</span>
+              <span class="meta-date">{{ featured.date }}</span>
+              <span class="meta-separator">·</span>
+              <span class="meta-read-time">{{ featured.readTime }} min read</span>
+            </div>
+          </div>
+          <div class="featured-hover-indicator">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+            </svg>
+          </div>
+        </article>
+
+        <!-- Remaining Articles Grid -->
+        <div class="updates-grid">
+          <article class="article-card" *ngFor="let announcement of announcements.slice(1, 4)" (click)="openAnnouncement(announcement.id)">
+            <div class="card-content">
+              <span class="category-tag category-tag--small">{{ announcement.subtitle }}</span>
+              <h4 class="card-title">{{ announcement.title }}</h4>
+              <div class="card-meta-row">
+                <span class="meta-date">{{ announcement.date }}</span>
+                <span class="meta-separator">·</span>
+                <span class="meta-read-time">{{ announcement.readTime }} min read</span>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+              </svg>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Announcement Detail Modal -->
+<cds-modal
+  [open]="showAnnouncementModal"
+  (overlaySelected)="closeAnnouncementModal()"
+  size="lg">
+  <cds-modal-header
+    *ngIf="selectedAnnouncement"
+    (closeSelect)="closeAnnouncementModal()">
+    <span class="modal-category-tag">{{ selectedAnnouncement.subtitle }}</span>
+    <h3 cdsModalHeaderHeading>{{ selectedAnnouncement.title }}</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent *ngIf="selectedAnnouncement">
+    <div class="announcement-modal-meta">
+      <span class="meta-author">{{ selectedAnnouncement.authorName || 'Admin' }}</span>
+      <span class="meta-separator">·</span>
+      <span class="meta-date">{{ formatDate(selectedAnnouncement.publishedAt) }}</span>
+      <span class="meta-separator">·</span>
+      <span class="meta-read-time">{{ selectedAnnouncement.readTimeMinutes || 2 }} min read</span>
+    </div>
+
+    <div class="announcement-modal-image" *ngIf="selectedAnnouncement.imagePath">
+      <img [src]="selectedAnnouncement.imagePath" [alt]="selectedAnnouncement.title">
+    </div>
+
+    <div class="announcement-modal-content" [innerHTML]="selectedAnnouncement.content | markdown">
+    </div>
+  </section>
+</cds-modal>

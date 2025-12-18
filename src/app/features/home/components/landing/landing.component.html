@@ -1,0 +1,54 @@
+<div class="landing-container">
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">RWT Reporting Portal</h1>
+      <p class="hero-subtitle">Your centralized platform for enterprise reporting and analytics</p>
+      <p class="hero-description">
+        Access SSRS and Power BI reports, manage your data insights, and stay informed about system updates—all in one place.
+      </p>
+      <button class="cta-button" (click)="goToDashboard()">
+        View Reports
+        <svg class="arrow-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M11.8 7.3L8.5 4 7.5 5l2.3 2.3H1v1.4h8.8L7.5 11l1 1 4.3-4.3.2-.3v-.8l-.2-.3z"></path>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Latest Updates Section -->
+  <section class="updates-section">
+    <div class="updates-content">
+      <div class="section-header">
+        <h2 class="section-title">Latest Updates</h2>
+        <a routerLink="/updates" class="view-all-link">
+          View All Updates
+          <svg class="arrow-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+          </svg>
+        </a>
+      </div>
+
+      <div class="updates-grid">
+        <article class="article-card" *ngFor="let announcement of announcements.slice(0, 4)" (click)="goToUpdates()">
+          <div class="card-image">
+            <img [src]="announcement.imagePath" [alt]="announcement.title" loading="lazy">
+          </div>
+          <div class="card-body">
+            <p class="card-subtitle">{{ announcement.subtitle }}</p>
+            <h3 class="card-title">{{ announcement.title }}</h3>
+          </div>
+          <div class="card-footer">
+            <div class="footer-content">
+              <p class="card-author">{{ announcement.author }}</p>
+              <p class="card-meta">{{ announcement.date }}</p>
+            </div>
+            <svg class="footer-arrow" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11.8 2.8L10.8 3.8 16.2 9.3 1 9.3 1 10.7 16.2 10.7 10.8 16.2 11.8 17.2 19 10z"></path>
+            </svg>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</div>

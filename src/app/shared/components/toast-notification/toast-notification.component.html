@@ -1,0 +1,9 @@
+<div class="toast-container">
+  <ibm-toast
+    *ngFor="let notification of notifications$ | async"
+    [notificationObj]="getNotificationObj(notification)"
+    (close)="closeNotification(notification.id)"
+    [class.toast-notification]="true"
+    [class.removing]="isRemoving(notification.id)">
+  </ibm-toast>
+</div>

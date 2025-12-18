@@ -1,0 +1,178 @@
+@use '@carbon/styles/scss/spacing';
+
+.report-viewer-container {
+  display: flex;
+  flex-direction: column;
+  // Account for global header (48px)
+  height: calc(100vh - 48px);
+  background: var(--color-bg-secondary);
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: spacing.$spacing-02 spacing.$spacing-05;
+  flex-shrink: 0;
+
+  h1 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.header-divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--color-border-light);
+}
+
+.report-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: spacing.$spacing-03;
+}
+
+.report-iframe-container {
+  flex: 1;
+  display: flex;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.report-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+// State messages (loading, error, config)
+.state-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: spacing.$spacing-07;
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+
+  .state-icon {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: spacing.$spacing-05;
+    color: var(--color-text-tertiary);
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  h2 {
+    margin: 0 0 spacing.$spacing-03 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  p {
+    margin: 0 0 spacing.$spacing-04 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    max-width: 500px;
+  }
+
+  &.error {
+    .state-icon {
+      color: var(--color-error, #da1e28);
+    }
+
+    h2 {
+      color: var(--color-error, #da1e28);
+    }
+  }
+
+  &.config {
+    .state-icon {
+      color: var(--color-primary);
+    }
+
+    .report-name {
+      font-weight: 500;
+      color: var(--color-text-primary);
+      font-size: 1rem;
+    }
+
+    .config-message {
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
+.config-help {
+  text-align: left;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+  padding: spacing.$spacing-05;
+  margin: spacing.$spacing-05 0;
+  max-width: 500px;
+
+  p {
+    margin: 0 0 spacing.$spacing-03 0;
+    font-size: 0.8125rem;
+    color: var(--color-text-primary);
+
+    &:last-of-type {
+      margin-top: spacing.$spacing-04;
+    }
+  }
+
+  ul {
+    margin: 0 0 spacing.$spacing-03 spacing.$spacing-05;
+    padding: 0;
+    list-style-type: disc;
+
+    li {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      margin-bottom: spacing.$spacing-02;
+    }
+  }
+
+  code {
+    background: var(--color-bg-primary);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-primary);
+  }
+}
+
+// Loading spinner
+.loading-spinner {
+  width: 3rem !important;
+  height: 3rem !important;
+  border: 3px solid var(--color-border-light);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

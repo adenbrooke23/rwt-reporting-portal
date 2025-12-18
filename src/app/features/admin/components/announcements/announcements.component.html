@@ -1,0 +1,238 @@
+<div class="announcements-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Announcements</h1>
+        <p class="header-subtitle">Create and manage announcements for the dashboard</p>
+      </div>
+      <div class="header-actions">
+        <button cdsButton="ghost" size="sm" (click)="backToAdmin()">
+          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+          Back to Admin
+        </button>
+        <button cdsButton="primary" size="sm" (click)="openCreateModal()">
+          <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+          New Announcement
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="page-content">
+      <div class="carbon-table-wrapper">
+        <ibm-table-container>
+          <ibm-table-toolbar [model]="tableModel">
+            <ibm-table-toolbar-content>
+              <ibm-table-toolbar-search
+                [expandable]="true"
+                [value]="searchQuery"
+                (valueChange)="onSearchChange($event)"
+                (clear)="onSearchChange('')"
+                [placeholder]="'Search announcements...'"
+                [size]="'sm'">
+              </ibm-table-toolbar-search>
+              <label class="show-deleted-toggle">
+                <input type="checkbox" [checked]="showDeleted" (change)="toggleShowDeleted()">
+                <span>Show deleted</span>
+              </label>
+              <ibm-tag type="cool-gray" size="md">
+                {{ totalItems }} announcement{{ totalItems !== 1 ? 's' : '' }}
+              </ibm-tag>
+            </ibm-table-toolbar-content>
+          </ibm-table-toolbar>
+          <ibm-table
+            [model]="isLoading ? skeletonModel : tableModel"
+            [skeleton]="isLoading"
+            [showSelectionColumn]="false"
+            [striped]="false">
+          </ibm-table>
+        </ibm-table-container>
+
+        <div *ngIf="!isLoading && filteredAnnouncements.length === 0" class="no-results">
+          <p *ngIf="searchQuery">No announcements found matching "{{ searchQuery }}"</p>
+          <p *ngIf="!searchQuery && !showDeleted">No announcements yet. Create your first one!</p>
+          <p *ngIf="!searchQuery && showDeleted">No deleted announcements found.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="totalItems > 0" class="pagination-wrapper">
+          <ibm-pagination
+            [model]="{ currentPage: currentPage, pageLength: pageSize, totalDataLength: totalItems }"
+            (selectPage)="onPageChange($event)">
+          </ibm-pagination>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Status Template -->
+<ng-template #statusTemplate let-data="data">
+  <ibm-tag [type]="getStatusType(data)">
+    {{ getStatusLabel(data) }}
+  </ibm-tag>
+</ng-template>
+
+<!-- Featured Template -->
+<ng-template #featuredTemplate let-data="data">
+  <button
+    class="featured-btn"
+    [class.is-featured]="data.isFeatured"
+    (click)="toggleFeatured(data)"
+    [disabled]="data.isDeleted"
+    [title]="data.isFeatured ? 'Remove from featured' : 'Set as featured'">
+    <svg *ngIf="data.isFeatured" cdsIcon="star--filled" size="16"></svg>
+    <svg *ngIf="!data.isFeatured" cdsIcon="star" size="16"></svg>
+  </button>
+</ng-template>
+
+<!-- Actions Template -->
+<ng-template #actionsTemplate let-data="data">
+  <div class="action-buttons">
+    <ng-container *ngIf="!data.isDeleted">
+      <button
+        cdsButton="ghost"
+        size="sm"
+        (click)="openEditModal(data)"
+        title="Edit">
+        <svg cdsIcon="edit" size="16"></svg>
+      </button>
+      <button
+        *ngIf="!data.isPublished"
+        cdsButton="ghost"
+        size="sm"
+        (click)="publishAnnouncement(data)"
+        title="Publish">
+        <svg cdsIcon="checkmark" size="16"></svg>
+      </button>
+      <button
+        *ngIf="data.isPublished"
+        cdsButton="ghost"
+        size="sm"
+        (click)="unpublishAnnouncement(data)"
+        title="Unpublish">
+        <svg cdsIcon="close" size="16"></svg>
+      </button>
+      <button
+        cdsButton="danger--ghost"
+        size="sm"
+        (click)="deleteAnnouncement(data)"
+        title="Delete">
+        <svg cdsIcon="trash-can" size="16"></svg>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="data.isDeleted">
+      <button
+        cdsButton="ghost"
+        size="sm"
+        (click)="restoreAnnouncement(data)"
+        title="Restore">
+        <svg cdsIcon="renew" size="16"></svg>
+      </button>
+    </ng-container>
+  </div>
+</ng-template>
+
+<!-- Create/Edit Modal -->
+<cds-modal
+  [open]="showModal"
+  (close)="closeModal()"
+  size="lg">
+  <cds-modal-header [showCloseButton]="false">
+    <h3 cdsModalHeaderHeading>{{ isEditing ? 'Edit Announcement' : 'New Announcement' }}</h3>
+  </cds-modal-header>
+
+  <section cdsModalContent>
+    <div class="form-grid">
+      <!-- Title -->
+      <div class="form-field full-width">
+        <label class="form-label">Title *</label>
+        <input
+          ibmText
+          [(ngModel)]="formData.title"
+          placeholder="Enter announcement title"
+          [size]="'md'">
+      </div>
+
+      <!-- Category / Subtitle -->
+      <div class="form-field">
+        <label class="form-label">Category</label>
+        <select class="form-select" [(ngModel)]="formData.subtitle">
+          <option value="">Select a category</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <!-- Author Name -->
+      <div class="form-field">
+        <label class="form-label">Author Name</label>
+        <input
+          ibmText
+          [(ngModel)]="formData.authorName"
+          placeholder="e.g., IT Operations, Product Team"
+          [size]="'md'">
+      </div>
+
+      <!-- Image Path -->
+      <div class="form-field">
+        <label class="form-label">Image</label>
+        <select class="form-select" [(ngModel)]="formData.imagePath">
+          <option *ngFor="let img of images" [value]="img.path">{{ img.label }}</option>
+        </select>
+      </div>
+
+      <!-- Read Time -->
+      <div class="form-field">
+        <label class="form-label">Read Time (minutes)</label>
+        <input
+          ibmText
+          type="number"
+          [(ngModel)]="formData.readTimeMinutes"
+          [min]="1"
+          [max]="60"
+          [size]="'md'">
+      </div>
+
+      <!-- Content -->
+      <div class="form-field full-width">
+        <label class="form-label">Content</label>
+        <textarea
+          class="content-textarea"
+          [(ngModel)]="formData.content"
+          placeholder="Enter announcement content (Markdown supported)"
+          rows="8">
+        </textarea>
+      </div>
+
+      <!-- Toggles -->
+      <div class="form-field toggle-group">
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="formData.isFeatured">
+          <span>Featured</span>
+        </label>
+        <p class="form-helper">Featured announcements appear prominently on the dashboard</p>
+      </div>
+
+      <div class="form-field toggle-group">
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="formData.isPublished">
+          <span>Publish immediately</span>
+        </label>
+        <p class="form-helper">If unchecked, the announcement will be saved as a draft</p>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeModal()">
+      Cancel
+    </button>
+    <button
+      cdsButton="primary"
+      (click)="saveAnnouncement()"
+      [disabled]="isSaving || !formData.title.trim()">
+      {{ isSaving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+    </button>
+  </cds-modal-footer>
+</cds-modal>
