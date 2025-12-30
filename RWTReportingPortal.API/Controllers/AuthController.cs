@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RWTReportingPortal.API.Infrastructure.Auth;
 using RWTReportingPortal.API.Models.DTOs.Auth;
 using RWTReportingPortal.API.Services.Interfaces;
 using System.Security.Claims;
@@ -11,11 +12,19 @@ namespace RWTReportingPortal.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IEntraAuthService _entraAuthService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        IEntraAuthService entraAuthService,
+        IConfiguration configuration,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
+        _entraAuthService = entraAuthService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -25,8 +34,17 @@ public class AuthController : ControllerBase
     [HttpGet("login")]
     public IActionResult InitiateSSOLogin([FromQuery] string? returnUrl = null)
     {
-        // TODO: Build Entra authorization URL and redirect
-        var entraLoginUrl = "https://login.microsoftonline.com/...";
+        // Generate a state parameter (for security - prevents CSRF)
+        var state = Guid.NewGuid().ToString();
+
+        // Build the redirect URI (where Microsoft sends the user after login)
+        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/auth/callback";
+
+        // Get the Entra authorization URL
+        var entraLoginUrl = _entraAuthService.GetAuthorizationUrl(state, redirectUri);
+
+        _logger.LogInformation("Redirecting to Entra login: {Url}", entraLoginUrl);
+
         return Redirect(entraLoginUrl);
     }
 
