@@ -133,6 +133,8 @@ export class LoginComponent implements OnInit {
   }
 
   loginWithSSO(): void {
+    console.log('SSO button clicked');
+    alert('Redirecting to SSO...');
     window.location.href = 'https://erpqaapi.redwoodtrust.com/api/auth/login';
   }
 
