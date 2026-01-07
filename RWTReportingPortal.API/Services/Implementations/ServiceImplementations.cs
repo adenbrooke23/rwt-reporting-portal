@@ -157,19 +157,35 @@ public class AuthService : IAuthService
         var accessToken = _jwtTokenService.GenerateAccessToken(user, roles);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
-        // 8. Store refresh token
+        // 8. Create user session first (required for refresh token FK)
+        var session = new UserSession
+        {
+            SessionId = Guid.NewGuid(),
+            UserId = user.UserId,
+            AccessTokenHash = accessToken.GetHashCode().ToString(),
+            IPAddress = ipAddress,
+            UserAgent = userAgent,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
+            LastActivityAt = DateTime.UtcNow,
+            IsActive = 1
+        };
+        _context.UserSessions.Add(session);
+        await _context.SaveChangesAsync();
+
+        // 9. Store refresh token (linked to session)
         var refreshTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
             TokenHash = refreshToken,
-            SessionId = Guid.NewGuid(),
+            SessionId = session.SessionId,
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };
         _context.RefreshTokens.Add(refreshTokenEntity);
         await _context.SaveChangesAsync();
 
-        // 9. Log successful login
+        // 10. Log successful login
         _context.LoginHistory.Add(new LoginHistory
         {
             UserId = user.UserId,
@@ -269,11 +285,27 @@ public class AuthService : IAuthService
         var accessToken = _jwtTokenService.GenerateAccessToken(user, roles);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
+        // Create user session first (required for refresh token FK)
+        var session = new UserSession
+        {
+            SessionId = Guid.NewGuid(),
+            UserId = user.UserId,
+            AccessTokenHash = accessToken.GetHashCode().ToString(),
+            IPAddress = ipAddress,
+            UserAgent = userAgent,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
+            LastActivityAt = DateTime.UtcNow,
+            IsActive = 1
+        };
+        _context.UserSessions.Add(session);
+        await _context.SaveChangesAsync();
+
         var refreshTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
             TokenHash = refreshToken,
-            SessionId = Guid.NewGuid(),
+            SessionId = session.SessionId,
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };
@@ -326,12 +358,12 @@ public class AuthService : IAuthService
         // Revoke old refresh token
         tokenEntity.RevokedAt = DateTime.UtcNow;
 
-        // Create new refresh token
+        // Create new refresh token (reuse the existing session)
         var newTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
             TokenHash = newRefreshToken,
-            SessionId = Guid.NewGuid(),
+            SessionId = tokenEntity.SessionId,
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };
