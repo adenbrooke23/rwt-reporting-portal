@@ -232,6 +232,38 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(a => a.HubId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // UserReportAccess relationships
+        modelBuilder.Entity<UserReportAccess>()
+            .HasOne(a => a.User)
+            .WithMany(u => u.ReportAccess)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserReportAccess>()
+            .HasOne(a => a.Report)
+            .WithMany()
+            .HasForeignKey(a => a.ReportId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserReportAccess>()
+            .HasOne(a => a.GrantedByUser)
+            .WithMany()
+            .HasForeignKey(a => a.GrantedBy)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // UserReportGroupAccess relationships
+        modelBuilder.Entity<UserReportGroupAccess>()
+            .HasOne(a => a.User)
+            .WithMany(u => u.ReportGroupAccess)
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserReportGroupAccess>()
+            .HasOne(a => a.ReportGroup)
+            .WithMany()
+            .HasForeignKey(a => a.ReportGroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Unique indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
