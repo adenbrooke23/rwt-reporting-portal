@@ -41,9 +41,9 @@ public class JwtTokenService : IJwtTokenService
         {
             new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.GivenName, user.FirstName),
-            new(ClaimTypes.Surname, user.LastName),
-            new("company_id", user.CompanyId.ToString()),
+            new(ClaimTypes.GivenName, user.FirstName ?? ""),
+            new(ClaimTypes.Surname, user.LastName ?? ""),
+            new("company_id", user.CompanyId?.ToString() ?? "0"),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

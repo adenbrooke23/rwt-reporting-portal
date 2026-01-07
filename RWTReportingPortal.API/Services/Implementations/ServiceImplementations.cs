@@ -375,12 +375,12 @@ public class AuthService : IAuthService
         {
             UserId = user.UserId,
             Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
+            FirstName = user.FirstName ?? "",
+            LastName = user.LastName ?? "",
             DisplayName = user.Profile?.DisplayName ?? $"{user.FirstName} {user.LastName}".Trim(),
             AvatarId = user.Profile?.AvatarId,
             Company = user.Company?.CompanyName ?? "",
-            CompanyId = user.CompanyId,
+            CompanyId = user.CompanyId ?? 0,
             Roles = roles,
             IsAdmin = isAdmin,
             Preferences = new UserPreferencesDto
@@ -409,12 +409,12 @@ public class AuthService : IAuthService
         {
             UserId = user.UserId,
             Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
+            FirstName = user.FirstName ?? "",
+            LastName = user.LastName ?? "",
             DisplayName = user.Profile?.DisplayName ?? $"{user.FirstName} {user.LastName}".Trim(),
             AvatarId = user.Profile?.AvatarId,
             Company = user.Company?.CompanyName ?? "",
-            CompanyId = user.CompanyId,
+            CompanyId = user.CompanyId ?? 0,
             Roles = roles,
             IsAdmin = roles.Contains("Admin")
         };

@@ -81,8 +81,11 @@ public class AdminUsersController : ControllerBase
         }
 
         user.IsLockedOut = false;
-        user.LockoutEnd = null;
+        user.LockedOutUntil = null;
+        user.LockedOutAt = null;
+        user.LockoutReason = null;
         user.FailedLoginAttempts = 0;
+        user.UnlockedAt = DateTime.UtcNow;
         await _userService.UpdateAsync(user);
 
         return Ok(new { success = true, message = "User account unlocked" });
