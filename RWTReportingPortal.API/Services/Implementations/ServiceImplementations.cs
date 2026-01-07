@@ -167,8 +167,7 @@ public class AuthService : IAuthService
             UserAgent = userAgent,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
-            LastActivityAt = DateTime.UtcNow,
-            IsActive = 1
+            LastActivityAt = DateTime.UtcNow
         };
         _context.UserSessions.Add(session);
         await _context.SaveChangesAsync();
@@ -295,8 +294,7 @@ public class AuthService : IAuthService
             UserAgent = userAgent,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
-            LastActivityAt = DateTime.UtcNow,
-            IsActive = 1
+            LastActivityAt = DateTime.UtcNow
         };
         _context.UserSessions.Add(session);
         await _context.SaveChangesAsync();

@@ -12,7 +12,6 @@ public class UserSession
     public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
     public DateTime? RevokedAt { get; set; }
     public string? RevokedReason { get; set; }
-    public int IsActive { get; set; } = 1;
 
     // Navigation properties
     public User User { get; set; } = null!;
