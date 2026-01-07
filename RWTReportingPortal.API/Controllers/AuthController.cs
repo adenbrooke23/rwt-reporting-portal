@@ -38,7 +38,8 @@ public class AuthController : ControllerBase
         var state = Guid.NewGuid().ToString();
 
         // Build the redirect URI (where Microsoft sends the user after login)
-        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/auth/callback";
+        // Force HTTPS since we're behind a load balancer/proxy that terminates SSL
+        var redirectUri = $"https://{Request.Host}/api/auth/callback";
 
         // Get the Entra authorization URL
         var entraLoginUrl = _entraAuthService.GetAuthorizationUrl(state, redirectUri);
