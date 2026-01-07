@@ -192,10 +192,9 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<LoginResponse> HandleSSOCallbackAsync(string code, string ipAddress, string userAgent)
+    public async Task<LoginResponse> HandleSSOCallbackAsync(string code, string redirectUri, string ipAddress, string userAgent)
     {
         // Exchange authorization code for tokens
-        var redirectUri = _configuration["AzureAd:CallbackPath"] ?? "/api/auth/callback";
         var entraResult = await _entraAuthService.ExchangeCodeForTokenAsync(code, redirectUri);
 
         if (!entraResult.Success)

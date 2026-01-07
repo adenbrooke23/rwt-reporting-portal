@@ -58,11 +58,14 @@ public class AuthController : ControllerBase
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers.UserAgent.ToString();
 
-        var result = await _authService.HandleSSOCallbackAsync(code, ipAddress, userAgent);
+        // Build the redirect URI (must match what was sent to Entra)
+        var redirectUri = $"https://{Request.Host}/api/auth/callback";
+
+        var result = await _authService.HandleSSOCallbackAsync(code, redirectUri, ipAddress, userAgent);
 
         // Redirect to Angular app with token
-        var frontendUrl = $"http://localhost:4200/auth/callback?token={result.AccessToken}";
-        return Redirect(frontendUrl);
+        var frontendUrl = _configuration["Cors:AllowedOrigins:0"] ?? "https://erpqa.redwoodtrust.com";
+        return Redirect($"{frontendUrl}/auth/callback?token={result.AccessToken}&refresh={result.RefreshToken}");
     }
 
     /// <summary>
