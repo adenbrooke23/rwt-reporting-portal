@@ -93,32 +93,33 @@
           </span>
         </button>
 
-        <!-- SSO Options Placeholder -->
-        <div class="sso-divider">
-          <span>Or continue with</span>
-        </div>
-
-        <div class="sso-options">
-          <button type="button" class="sso-button" (click)="loginWithSSO()">
-            <svg ibmIcon="login" size="16" class="icon"></svg>
-            SSO Login
-          </button>
-        </div>
-
-        <!-- Admin/Regular Login Link -->
-        <div class="admin-login-section" *ngIf="!isAdminLogin">
-          <a href="#" (click)="navigateToAdminLogin(); $event.preventDefault()" class="admin-login-link">
-            <svg ibmIcon="user--admin" size="16"></svg>
-            <span>Administrator Login</span>
-          </a>
-        </div>
-        <div class="admin-login-section" *ngIf="isAdminLogin">
-          <a href="#" (click)="navigateToRegularLogin(); $event.preventDefault()" class="admin-login-link">
-            <svg ibmIcon="login" size="16"></svg>
-            <span>Regular User Login</span>
-          </a>
-        </div>
       </form>
+
+      <!-- SSO Options - Outside form -->
+      <div class="sso-divider">
+        <span>Or continue with</span>
+      </div>
+
+      <div class="sso-options">
+        <button type="button" class="sso-button" (click)="loginWithSSO(); $event.stopPropagation()">
+          <svg ibmIcon="login" size="16" class="icon"></svg>
+          SSO Login
+        </button>
+      </div>
+
+      <!-- Admin/Regular Login Link -->
+      <div class="admin-login-section" *ngIf="!isAdminLogin">
+        <a href="#" (click)="navigateToAdminLogin(); $event.preventDefault()" class="admin-login-link">
+          <svg ibmIcon="user--admin" size="16"></svg>
+          <span>Administrator Login</span>
+        </a>
+      </div>
+      <div class="admin-login-section" *ngIf="isAdminLogin">
+        <a href="#" (click)="navigateToRegularLogin(); $event.preventDefault()" class="admin-login-link">
+          <svg ibmIcon="login" size="16"></svg>
+          <span>Regular User Login</span>
+        </a>
+      </div>
     </div>
 
     <!-- Vertical Divider -->
