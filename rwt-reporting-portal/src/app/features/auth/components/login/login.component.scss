@@ -333,6 +333,7 @@ cds-notification {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
+  text-decoration: none; // For anchor tag
 
   .icon {
     width: 0.875rem;
