@@ -11,5 +11,4 @@ public class ReportDepartment
     // Navigation properties
     public Report Report { get; set; } = null!;
     public Department Department { get; set; } = null!;
-    public User? GrantedByUser { get; set; }
 }

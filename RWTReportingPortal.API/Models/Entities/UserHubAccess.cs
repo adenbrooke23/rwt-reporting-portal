@@ -12,5 +12,4 @@ public class UserHubAccess
     // Navigation properties
     public User User { get; set; } = null!;
     public ReportingHub Hub { get; set; } = null!;
-    public User? GrantedByUser { get; set; }
 }

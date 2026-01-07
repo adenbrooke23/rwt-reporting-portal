@@ -11,5 +11,4 @@ public class UserDepartment
     // Navigation properties
     public User User { get; set; } = null!;
     public Department Department { get; set; } = null!;
-    public User? GrantedByUser { get; set; }
 }

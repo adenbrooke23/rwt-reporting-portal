@@ -161,7 +161,8 @@ public class AuthService : IAuthService
         var refreshTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
-            Token = refreshToken,
+            TokenHash = refreshToken,
+            SessionId = Guid.NewGuid(),
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };
@@ -172,12 +173,12 @@ public class AuthService : IAuthService
         _context.LoginHistory.Add(new LoginHistory
         {
             UserId = user.UserId,
-            Email = user.Email,
+            UserEmail = user.Email,
             LoginMethod = "ROPC",
-            IpAddress = ipAddress,
+            IPAddress = ipAddress,
             UserAgent = userAgent,
-            Success = true,
-            Timestamp = DateTime.UtcNow
+            IsSuccess = true,
+            CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
@@ -271,7 +272,8 @@ public class AuthService : IAuthService
         var refreshTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
-            Token = refreshToken,
+            TokenHash = refreshToken,
+            SessionId = Guid.NewGuid(),
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };
@@ -280,12 +282,12 @@ public class AuthService : IAuthService
         _context.LoginHistory.Add(new LoginHistory
         {
             UserId = user.UserId,
-            Email = user.Email,
+            UserEmail = user.Email,
             LoginMethod = "SSO",
-            IpAddress = ipAddress,
+            IPAddress = ipAddress,
             UserAgent = userAgent,
-            Success = true,
-            Timestamp = DateTime.UtcNow
+            IsSuccess = true,
+            CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
@@ -302,7 +304,7 @@ public class AuthService : IAuthService
     {
         var tokenEntity = await _context.RefreshTokens
             .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Token == refreshToken && t.RevokedAt == null);
+            .FirstOrDefaultAsync(t => t.TokenHash == refreshToken && t.RevokedAt == null);
 
         if (tokenEntity == null || tokenEntity.ExpiresAt < DateTime.UtcNow)
         {
@@ -328,7 +330,8 @@ public class AuthService : IAuthService
         var newTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
-            Token = newRefreshToken,
+            TokenHash = newRefreshToken,
+            SessionId = Guid.NewGuid(),
             ExpiresAt = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationDays", 7)),
             CreatedAt = DateTime.UtcNow
         };

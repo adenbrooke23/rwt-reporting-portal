@@ -11,5 +11,4 @@ public class UserRole
     // Navigation properties
     public User User { get; set; } = null!;
     public Role Role { get; set; } = null!;
-    public User? GrantedByUser { get; set; }
 }

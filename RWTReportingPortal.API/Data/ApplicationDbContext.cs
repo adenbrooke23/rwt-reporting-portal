@@ -91,7 +91,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Company>().HasKey(e => e.CompanyId);
         modelBuilder.Entity<User>().HasKey(e => e.UserId);
         modelBuilder.Entity<UserProfile>().HasKey(e => e.UserProfileId);
-        modelBuilder.Entity<UserPreferences>().HasKey(e => e.UserPreferencesId);
+        modelBuilder.Entity<UserPreferences>().HasKey(e => e.UserPreferenceId);
         modelBuilder.Entity<UserSession>().HasKey(e => e.SessionId);
         modelBuilder.Entity<RefreshToken>().HasKey(e => e.RefreshTokenId);
         modelBuilder.Entity<LoginHistory>().HasKey(e => e.LoginHistoryId);
@@ -109,7 +109,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<UserFavorite>().HasKey(e => e.UserFavoriteId);
         modelBuilder.Entity<AuditLog>().HasKey(e => e.AuditLogId);
         modelBuilder.Entity<ReportAccessLog>().HasKey(e => e.ReportAccessLogId);
-        modelBuilder.Entity<AppSetting>().HasKey(e => e.AppSettingId);
+        modelBuilder.Entity<AppSetting>().HasKey(e => e.SettingId);
         modelBuilder.Entity<Announcement>().HasKey(e => e.AnnouncementId);
 
         // User relationships
@@ -244,12 +244,6 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.ReportId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<UserReportAccess>()
-            .HasOne(a => a.GrantedByUser)
-            .WithMany()
-            .HasForeignKey(a => a.GrantedBy)
-            .OnDelete(DeleteBehavior.SetNull);
 
         // UserReportGroupAccess relationships
         modelBuilder.Entity<UserReportGroupAccess>()

@@ -12,5 +12,4 @@ public class UserReportGroupAccess
     // Navigation properties
     public User User { get; set; } = null!;
     public ReportGroup ReportGroup { get; set; } = null!;
-    public User? GrantedByUser { get; set; }
 }
