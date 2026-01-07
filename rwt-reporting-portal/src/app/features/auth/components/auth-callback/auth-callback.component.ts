@@ -8,8 +8,10 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule],
   template: `
     <div class="callback-container">
-      <div class="loading-spinner"></div>
-      <p>Completing sign in...</p>
+      <h1>SSO CALLBACK PAGE</h1>
+      <p>Status: {{ status }}</p>
+      <p>Token: {{ hasToken ? 'YES' : 'NO' }}</p>
+      <button *ngIf="hasToken" (click)="proceed()">Continue to Dashboard</button>
     </div>
   `,
   styles: [`
@@ -20,21 +22,22 @@ import { AuthService } from '../../services/auth.service';
       justify-content: center;
       height: 100vh;
       gap: 1rem;
+      background: white;
     }
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #e2e8f0;
-      border-top-color: #0f62fe;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    h1 {
+      color: #0f62fe;
+      font-size: 24px;
     }
     p {
       color: #525252;
-      font-size: 14px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 24px;
+      background: #0f62fe;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
   `]
 })
@@ -43,28 +46,31 @@ export class AuthCallbackComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
 
+  status = 'Loading...';
+  hasToken = false;
+  private token = '';
+  private refreshToken = '';
+
   ngOnInit(): void {
     console.log('AuthCallbackComponent loaded');
-    console.log('Current URL:', window.location.href);
+    this.status = 'Reading URL params...';
 
     this.route.queryParams.subscribe(params => {
       console.log('Query params:', params);
-      const token = params['token'];
-      const refreshToken = params['refresh'];
+      this.token = params['token'] || '';
+      this.refreshToken = params['refresh'] || '';
+      this.hasToken = !!this.token;
 
-      console.log('Token received:', token ? 'yes' : 'no');
-
-      if (token) {
-        // Store the tokens and authenticate
-        console.log('Storing tokens...');
-        this.authService.handleSSOTokens(token, refreshToken);
-        console.log('Tokens stored, navigating to dashboard...');
-        this.router.navigate(['/dashboard']);
+      if (this.hasToken) {
+        this.status = 'Token received! Click button to continue.';
+        this.authService.handleSSOTokens(this.token, this.refreshToken);
       } else {
-        // No token, redirect to login
-        console.error('No token received from SSO callback');
-        this.router.navigate(['/login']);
+        this.status = 'No token in URL';
       }
     });
+  }
+
+  proceed(): void {
+    this.router.navigate(['/dashboard']);
   }
 }
