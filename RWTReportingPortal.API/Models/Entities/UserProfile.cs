@@ -6,10 +6,6 @@ public class UserProfile
     public int UserId { get; set; }
     public string? DisplayName { get; set; }
     public string? AvatarId { get; set; }
-    public string? Bio { get; set; }
-    public string? JobTitle { get; set; }
-    public string? Department { get; set; }
-    public string? Phone { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

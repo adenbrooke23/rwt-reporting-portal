@@ -89,8 +89,8 @@ public class UserRepository : IUserRepository
             search = search.ToLower();
             query = query.Where(u =>
                 u.Email.ToLower().Contains(search) ||
-                u.FirstName.ToLower().Contains(search) ||
-                u.LastName.ToLower().Contains(search));
+                (u.FirstName != null && u.FirstName.ToLower().Contains(search)) ||
+                (u.LastName != null && u.LastName.ToLower().Contains(search)));
         }
 
         return await query
@@ -115,8 +115,8 @@ public class UserRepository : IUserRepository
             search = search.ToLower();
             query = query.Where(u =>
                 u.Email.ToLower().Contains(search) ||
-                u.FirstName.ToLower().Contains(search) ||
-                u.LastName.ToLower().Contains(search));
+                (u.FirstName != null && u.FirstName.ToLower().Contains(search)) ||
+                (u.LastName != null && u.LastName.ToLower().Contains(search)));
         }
 
         return await query.CountAsync();
@@ -142,7 +142,7 @@ public class UserRepository : IUserRepository
         var user = await _context.Users.FindAsync(userId);
         if (user != null)
         {
-            user.LastActivityAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
     }

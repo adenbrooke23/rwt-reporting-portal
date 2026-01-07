@@ -65,8 +65,9 @@ public class AuthService : IAuthService
                 if (existingUser.FailedLoginAttempts + 1 >= maxAttempts)
                 {
                     existingUser.IsLockedOut = true;
-                    existingUser.LockoutEnd = DateTime.UtcNow.AddMinutes(
+                    existingUser.LockedOutUntil = DateTime.UtcNow.AddMinutes(
                         _configuration.GetValue<int>("Security:LockoutDurationMinutes", 30));
+                    existingUser.LockedOutAt = DateTime.UtcNow;
                     await _userRepository.UpdateAsync(existingUser);
                 }
             }
@@ -91,7 +92,6 @@ public class AuthService : IAuthService
                 Email = entraUserInfo.Email,
                 FirstName = entraUserInfo.FirstName,
                 LastName = entraUserInfo.LastName,
-                DisplayName = entraUserInfo.DisplayName,
                 CompanyId = 1, // Default company - you may want to derive this from Entra
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -142,7 +142,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Your account has been deactivated. Please contact an administrator.");
         }
 
-        if (user.IsLockedOut && (user.LockoutEnd == null || user.LockoutEnd > DateTime.UtcNow))
+        if (user.IsLockedOut && (user.LockedOutUntil == null || user.LockedOutUntil > DateTime.UtcNow))
         {
             throw new UnauthorizedAccessException("Your account is locked. Please try again later or contact an administrator.");
         }
@@ -218,7 +218,6 @@ public class AuthService : IAuthService
                 Email = entraUserInfo.Email,
                 FirstName = entraUserInfo.FirstName,
                 LastName = entraUserInfo.LastName,
-                DisplayName = entraUserInfo.DisplayName,
                 CompanyId = 1,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -378,7 +377,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            DisplayName = user.Profile?.DisplayName ?? user.DisplayName,
+            DisplayName = user.Profile?.DisplayName ?? $"{user.FirstName} {user.LastName}".Trim(),
             AvatarId = user.Profile?.AvatarId,
             Company = user.Company?.CompanyName ?? "",
             CompanyId = user.CompanyId,
@@ -412,7 +411,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            DisplayName = user.Profile?.DisplayName ?? user.DisplayName,
+            DisplayName = user.Profile?.DisplayName ?? $"{user.FirstName} {user.LastName}".Trim(),
             AvatarId = user.Profile?.AvatarId,
             Company = user.Company?.CompanyName ?? "",
             CompanyId = user.CompanyId,
