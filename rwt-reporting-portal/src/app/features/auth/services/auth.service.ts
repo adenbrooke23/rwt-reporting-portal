@@ -92,6 +92,65 @@ export class AuthService {
   }
 
   /**
+   * Handle SSO tokens from URL callback
+   */
+  handleSSOTokens(accessToken: string, refreshToken?: string): void {
+    // Create token object
+    const token: AuthToken = {
+      accessToken,
+      refreshToken,
+      expiresIn: 900, // 15 minutes default
+      tokenType: 'Bearer'
+    };
+
+    // Decode JWT to get user info
+    const user = this.decodeJwtUser(accessToken);
+
+    // Store and update state
+    this.storeToken(token, true); // Use localStorage for SSO
+    this.storeUser(user, true);
+
+    this.authState.next({
+      isAuthenticated: true,
+      user,
+      token,
+      isLoading: false,
+      error: null
+    });
+  }
+
+  /**
+   * Decode JWT token to extract user info
+   */
+  private decodeJwtUser(token: string): User {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        id: payload.sub || payload.nameid || '',
+        username: payload.unique_name || payload.email || '',
+        email: payload.email || '',
+        firstName: payload.given_name || '',
+        lastName: payload.family_name || '',
+        roles: payload.role ? (Array.isArray(payload.role) ? payload.role : [payload.role]) : [],
+        permissions: [],
+        accountStatus: 'active',
+        failedLoginAttempts: 0
+      };
+    } catch {
+      // Return minimal user if decode fails
+      return {
+        id: '',
+        username: 'user',
+        email: '',
+        roles: [],
+        permissions: [],
+        accountStatus: 'active',
+        failedLoginAttempts: 0
+      };
+    }
+  }
+
+  /**
    * Logout user
    */
   logout(): Observable<void> {
