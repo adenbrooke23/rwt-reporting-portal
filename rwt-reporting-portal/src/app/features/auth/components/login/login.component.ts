@@ -132,6 +132,10 @@ export class LoginComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  loginWithSSO(): void {
+    window.location.href = 'https://erpqaapi.redwoodtrust.com/api/auth/login';
+  }
+
   get username() {
     return this.loginForm.get('username');
   }
