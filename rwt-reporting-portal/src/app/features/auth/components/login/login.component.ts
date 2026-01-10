@@ -99,13 +99,18 @@ export class LoginComponent implements OnInit {
 
             // Add admin role if logging in via admin mode
             if (this.isAdminLogin && response.user.email.toLowerCase() === this.ADMIN_EMAIL.toLowerCase()) {
-              // Ensure user has admin role
-              if (!response.user.roles.includes('admin')) {
+              // Ensure user has admin role (case-insensitive check)
+              const hasAdminRole = response.user.roles.some(
+                role => role.toLowerCase() === 'admin'
+              );
+              if (!hasAdminRole) {
                 response.user.roles = [...response.user.roles, 'admin'];
               }
             } else {
-              // Remove admin role if not logging in via admin mode
-              response.user.roles = response.user.roles.filter(role => role !== 'admin');
+              // Remove admin role if not logging in via admin mode (case-insensitive filter)
+              response.user.roles = response.user.roles.filter(
+                role => role.toLowerCase() !== 'admin'
+              );
             }
 
             this.authService.handleSSOCallback(response.token, response.user);

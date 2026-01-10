@@ -102,7 +102,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   isRestoring = false;
 
   ngOnInit(): void {
-    if (!this.currentUser || !this.currentUser.roles.includes('admin')) {
+    // Case-insensitive check for admin role
+    const hasAdminRole = this.currentUser?.roles?.some(
+      role => role.toLowerCase() === 'admin'
+    );
+    if (!this.currentUser || !hasAdminRole) {
       this.router.navigate(['/dashboard']);
       return;
     }
@@ -435,7 +439,9 @@ export class AdminComponent implements OnInit, OnDestroy {
     const user = this.users.find(u => u.id === userId);
     if (!user) return;
 
-    if (user.roles.includes('admin') && user.id === this.currentUser?.id) {
+    // Case-insensitive check for admin role
+    const userIsAdmin = user.roles.some(role => role.toLowerCase() === 'admin');
+    if (userIsAdmin && user.id === this.currentUser?.id) {
       this.notificationService.warning(
         'Action Not Allowed',
         'You cannot expire your own admin account.'
@@ -535,5 +541,12 @@ export class AdminComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  /**
+   * Helper method for template - case-insensitive admin role check
+   */
+  isUserAdmin(user: { roles: string[] }): boolean {
+    return user.roles?.some(role => role.toLowerCase() === 'admin') || false;
   }
 }

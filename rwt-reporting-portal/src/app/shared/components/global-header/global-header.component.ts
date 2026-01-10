@@ -200,7 +200,10 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
 
   isAdmin(): boolean {
     if (!this.currentUser) return false;
-    return this.currentUser.roles?.includes('admin') || false;
+    // Case-insensitive check for admin role
+    return this.currentUser.roles?.some(
+      role => role.toLowerCase() === 'admin'
+    ) || false;
   }
 
   getUserRole(): string {

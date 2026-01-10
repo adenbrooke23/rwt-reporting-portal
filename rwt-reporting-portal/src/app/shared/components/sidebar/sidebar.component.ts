@@ -71,9 +71,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.buildQuickAccessMenu();
     });
 
-    // Check if user is admin
+    // Check if user is admin (case-insensitive)
     const authSub = this.authService.authState$.subscribe(state => {
-      this.isAdmin = state.user?.roles?.includes('admin') || false;
+      this.isAdmin = state.user?.roles?.some(
+        role => role.toLowerCase() === 'admin'
+      ) || false;
     });
     this.subscriptions.push(authSub);
 

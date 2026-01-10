@@ -20,7 +20,12 @@ export const adminGuard: CanActivateFn = (route, state) => {
 
   const currentUser = authService.getCurrentUser();
 
-  if (currentUser && currentUser.roles.includes('admin')) {
+  // Case-insensitive check for admin role
+  const hasAdminRole = currentUser?.roles?.some(
+    role => role.toLowerCase() === 'admin'
+  );
+
+  if (currentUser && hasAdminRole) {
     return true;
   }
 

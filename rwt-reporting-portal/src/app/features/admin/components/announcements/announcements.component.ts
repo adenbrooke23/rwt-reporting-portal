@@ -114,7 +114,11 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
   showDeleted = false;
 
   ngOnInit(): void {
-    if (!this.currentUser || !this.currentUser.roles.includes('admin')) {
+    // Case-insensitive check for admin role
+    const hasAdminRole = this.currentUser?.roles?.some(
+      role => role.toLowerCase() === 'admin'
+    );
+    if (!this.currentUser || !hasAdminRole) {
       this.router.navigate(['/dashboard']);
       return;
     }

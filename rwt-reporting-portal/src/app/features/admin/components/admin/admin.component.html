@@ -73,7 +73,7 @@
                     Expired
                   </ibm-tag>
                   <ibm-tag
-                    *ngIf="user.roles.includes('admin')"
+                    *ngIf="isUserAdmin(user)"
                     type="purple"
                     title="Administrator">
                     Admin
@@ -149,8 +149,8 @@
                     cdsButton="danger"
                     size="sm"
                     (click)="openExpireModal(selectedUser.id)"
-                    [disabled]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id"
-                    [attr.title]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
+                    [disabled]="isUserAdmin(selectedUser) && selectedUser.id === currentUser?.id"
+                    [attr.title]="isUserAdmin(selectedUser) && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
                   >
                     <svg cdsIcon="time" size="16" class="cds--btn__icon"></svg>
                     Expire User
@@ -173,8 +173,8 @@
                     cdsButton="danger"
                     size="sm"
                     (click)="openExpireModal(selectedUser.id)"
-                    [disabled]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id"
-                    [attr.title]="selectedUser.roles.includes('admin') && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
+                    [disabled]="isUserAdmin(selectedUser) && selectedUser.id === currentUser?.id"
+                    [attr.title]="isUserAdmin(selectedUser) && selectedUser.id === currentUser?.id ? 'You cannot expire your own admin account' : 'Expire this user account'"
                   >
                     <svg cdsIcon="time" size="16" class="cds--btn__icon"></svg>
                     Expire User
