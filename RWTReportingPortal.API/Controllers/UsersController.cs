@@ -27,6 +27,24 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Get user profile (includes avatar)
+    /// </summary>
+    [HttpGet("profile")]
+    public async Task<ActionResult<UserProfileDto>> GetProfile()
+    {
+        var userId = GetUserId();
+        var user = await _userService.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+        return Ok(new UserProfileDto
+        {
+            AvatarId = user.Profile?.AvatarId
+        });
+    }
+
+    /// <summary>
     /// Update user avatar
     /// </summary>
     [HttpPut("profile/avatar")]

@@ -105,13 +105,13 @@ export class AuthService {
       tokenType: 'Bearer'
     };
 
-    // Decode JWT to get user info
+    // Decode JWT to get basic user info
     const user = this.decodeJwtUser(accessToken);
 
-    // Store and update state
+    // Store token first (needed for API calls)
     this.storeToken(token, true); // Use localStorage for SSO
-    this.storeUser(user, true);
 
+    // Set initial auth state
     this.authState.next({
       isAuthenticated: true,
       user,
@@ -119,6 +119,35 @@ export class AuthService {
       isLoading: false,
       error: null
     });
+
+    // Fetch full user profile from API (includes avatar)
+    this.fetchUserProfile().subscribe({
+      next: (profile) => {
+        const updatedUser: User = {
+          ...user,
+          avatarId: profile.avatarId
+        };
+        this.storeUser(updatedUser, true);
+        this.authState.next({
+          ...this.authState.value,
+          user: updatedUser
+        });
+      },
+      error: (err) => {
+        console.error('Failed to fetch user profile:', err);
+        // Still store the basic user info
+        this.storeUser(user, true);
+      }
+    });
+  }
+
+  /**
+   * Fetch user profile from API (includes avatar)
+   */
+  private fetchUserProfile(): Observable<{ avatarId?: string }> {
+    return this.http.get<{ avatarId?: string }>(`${this.USERS_API_URL}/profile`).pipe(
+      catchError(() => of({}))
+    );
   }
 
   /**

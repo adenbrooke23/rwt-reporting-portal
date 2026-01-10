@@ -10,3 +10,8 @@ public class UpdateAvatarResponse
     public bool Success { get; set; }
     public string AvatarId { get; set; } = string.Empty;
 }
+
+public class UserProfileDto
+{
+    public string? AvatarId { get; set; }
+}
