@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RWTReportingPortal.API.Data;
 using RWTReportingPortal.API.Models.DTOs.Users;
 using RWTReportingPortal.API.Models.DTOs.Statistics;
 using RWTReportingPortal.API.Services.Interfaces;
@@ -14,15 +16,18 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IUserStatsService _userStatsService;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         IUserService userService,
         IUserStatsService userStatsService,
+        ApplicationDbContext context,
         ILogger<UsersController> logger)
     {
         _userService = userService;
         _userStatsService = userStatsService;
+        _context = context;
         _logger = logger;
     }
 
@@ -33,14 +38,10 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserProfileDto>> GetProfile()
     {
         var userId = GetUserId();
-        var user = await _userService.GetByIdAsync(userId);
-        if (user == null)
-        {
-            return NotFound();
-        }
+        var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
         return Ok(new UserProfileDto
         {
-            AvatarId = user.Profile?.AvatarId
+            AvatarId = profile?.AvatarId
         });
     }
 
