@@ -111,9 +111,8 @@ export class AuthService {
     // Decode JWT to get basic user info
     const user = this.decodeJwtUser(accessToken);
 
-    // Store token and user immediately (needed for API calls and page refreshes)
+    // Store token first (needed for API calls)
     this.storeToken(token, true); // Use localStorage for SSO
-    this.storeUser(user, true);   // Store user immediately with roles
 
     // Set initial auth state
     this.authState.next({
