@@ -121,29 +121,46 @@ export class AuthService {
 
   /**
    * Decode JWT token to extract user info
-   * Microsoft Entra tokens include claims like: name, email, given_name, family_name, preferred_username
+   * Handles both short claim names and full XML schema claim names from .NET
    */
   private decodeJwtUser(token: string): User {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
 
-      const firstName = payload.given_name || '';
-      const lastName = payload.family_name || '';
+      // .NET uses full XML schema claim names
+      const CLAIMS = {
+        nameId: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+        email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+        givenName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+        surname: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+        role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+      };
 
-      // Build display name: use 'name' claim, or construct from first/last name
-      let displayName = payload.name || '';
-      if (!displayName && (firstName || lastName)) {
-        displayName = `${firstName} ${lastName}`.trim();
-      }
+      // Extract claims (check both short and long names)
+      const firstName = payload[CLAIMS.givenName] || payload.given_name || '';
+      const lastName = payload[CLAIMS.surname] || payload.family_name || '';
+      const email = payload[CLAIMS.email] || payload.email || payload.preferred_username || '';
+      const id = payload[CLAIMS.nameId] || payload.sub || payload.oid || payload.nameid || '';
+
+      // Build display name from first/last name
+      const displayName = (firstName && lastName)
+        ? `${firstName} ${lastName}`
+        : payload.name || email.split('@')[0] || '';
+
+      // Handle roles (can be string or array)
+      const rolesClaim = payload[CLAIMS.role] || payload.role;
+      const roles = rolesClaim
+        ? (Array.isArray(rolesClaim) ? rolesClaim : [rolesClaim])
+        : [];
 
       return {
-        id: payload.sub || payload.oid || payload.nameid || '',
-        username: payload.preferred_username || payload.unique_name || payload.email || '',
-        email: payload.email || payload.preferred_username || '',
+        id,
+        username: email,
+        email,
         firstName,
         lastName,
-        displayName, // Add displayName to user object
-        roles: payload.role ? (Array.isArray(payload.role) ? payload.role : [payload.role]) : [],
+        displayName,
+        roles,
         permissions: [],
         accountStatus: 'active',
         failedLoginAttempts: 0
