@@ -3,8 +3,8 @@
     <div class="login-form-section">
       <!-- Logo/Header Section -->
       <div class="login-header">
-        <h1 class="login-title">RWT Reporting Portal</h1>
-        <p class="login-subtitle">Sign in with your corporate account</p>
+        <h1 class="login-title">{{ isAdminLogin ? 'Admin Portal' : 'RWT Reporting Portal' }}</h1>
+        <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'Sign in with your corporate account' }}</p>
       </div>
 
       <!-- SSO Login Button -->
@@ -12,6 +12,20 @@
         <a href="https://erpqaapi.redwoodtrust.com/api/auth/login" class="sso-button">
           <svg ibmIcon="login" size="16" class="icon"></svg>
           Sign in with SSO
+        </a>
+      </div>
+
+      <!-- Admin/Regular Login Link -->
+      <div class="admin-login-section" *ngIf="!isAdminLogin">
+        <a href="#" (click)="navigateToAdminLogin(); $event.preventDefault()" class="admin-login-link">
+          <svg ibmIcon="user--admin" size="16"></svg>
+          <span>Administrator Login</span>
+        </a>
+      </div>
+      <div class="admin-login-section" *ngIf="isAdminLogin">
+        <a href="#" (click)="navigateToRegularLogin(); $event.preventDefault()" class="admin-login-link">
+          <svg ibmIcon="login" size="16"></svg>
+          <span>Regular User Login</span>
         </a>
       </div>
     </div>

@@ -85,6 +85,40 @@
   }
 }
 
+.admin-login-section {
+  margin-top: spacing.$spacing-05;
+  padding-top: spacing.$spacing-05;
+  border-top: 1px solid #e0e0e0;
+  width: 100%;
+  text-align: center;
+}
+
+.admin-login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  font-size: 13px;
+  color: #525252;
+  text-decoration: none;
+  padding: spacing.$spacing-02 spacing.$spacing-03;
+  transition: color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    color: #0f62fe;
+  }
+
+  &:focus {
+    outline: 2px solid #0f62fe;
+    outline-offset: 2px;
+  }
+}
+
 /* Hide unused sections */
 .divider,
 .branding-section {
