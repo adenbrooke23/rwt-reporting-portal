@@ -6,6 +6,7 @@ import { Subject, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
 import { MockUserService } from '../../../auth/services/mock-user.service';
+import { AdminUserService } from '../../services/admin-user.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmationNotificationService } from '../../../../core/services/confirmation.service';
 import { ContentManagementService } from '../../services/content-management.service';
@@ -62,6 +63,7 @@ import User from '@carbon/icons/es/user/32';
 export class AdminComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private mockUserService = inject(MockUserService);
+  private adminUserService = inject(AdminUserService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationNotificationService);
   private contentService = inject(ContentManagementService);
@@ -168,9 +170,18 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   loadUsers(): void {
-    this.mockUserService.getAllUsers().subscribe(users => {
-      this.users = users;
-      this.applyFilters();
+    this.adminUserService.getAllUsers(1, 1000, '', true, true).subscribe({
+      next: (response) => {
+        this.users = response.users;
+        this.applyFilters();
+      },
+      error: (error) => {
+        console.error('Error loading users from API:', error);
+        this.notificationService.error(
+          'Load Failed',
+          'Failed to load users from database. Please try again.'
+        );
+      }
     });
   }
 

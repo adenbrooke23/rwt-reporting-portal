@@ -9,8 +9,8 @@ public interface IUserRepository
     Task<User?> GetByIdWithDetailsAsync(int userId);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByEntraObjectIdAsync(string entraObjectId);
-    Task<List<User>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true);
-    Task<int> GetTotalCountAsync(string? search = null, bool includeInactive = true);
+    Task<List<User>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true, bool includeExpired = false);
+    Task<int> GetTotalCountAsync(string? search = null, bool includeInactive = true, bool includeExpired = false);
     Task<User> CreateAsync(User user);
     Task UpdateAsync(User user);
     Task UpdateLastActivityAsync(int userId);
@@ -71,13 +71,18 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.EntraObjectId == entraObjectId && !u.IsExpired);
     }
 
-    public async Task<List<User>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true)
+    public async Task<List<User>> GetAllAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true, bool includeExpired = false)
     {
         var query = _context.Users
             .Include(u => u.Company)
             .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-            .Where(u => !u.IsExpired);
+            .AsQueryable();
+
+        if (!includeExpired)
+        {
+            query = query.Where(u => !u.IsExpired);
+        }
 
         if (!includeInactive)
         {
@@ -101,9 +106,14 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
-    public async Task<int> GetTotalCountAsync(string? search = null, bool includeInactive = true)
+    public async Task<int> GetTotalCountAsync(string? search = null, bool includeInactive = true, bool includeExpired = false)
     {
-        var query = _context.Users.Where(u => !u.IsExpired);
+        var query = _context.Users.AsQueryable();
+
+        if (!includeExpired)
+        {
+            query = query.Where(u => !u.IsExpired);
+        }
 
         if (!includeInactive)
         {

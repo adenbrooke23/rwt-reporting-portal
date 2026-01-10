@@ -32,15 +32,47 @@ public class AdminUsersController : ControllerBase
     /// Get all users (paginated)
     /// </summary>
     [HttpGet]
-    public Task<ActionResult<AdminUserListResponse>> GetUsers(
+    public async Task<ActionResult<AdminUserListResponse>> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         [FromQuery] string? search = null,
         [FromQuery] bool includeInactive = true,
         [FromQuery] bool includeExpired = false)
     {
-        // TODO: Implement with UserService
-        return Task.FromResult<ActionResult<AdminUserListResponse>>(Ok(new AdminUserListResponse()));
+        var users = await _userService.GetAllUsersAsync(page, pageSize, search, includeInactive, includeExpired);
+        var totalCount = await _userService.GetUserCountAsync(search, includeInactive, includeExpired);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var response = new AdminUserListResponse
+        {
+            Users = users.Select(u => new AdminUserDto
+            {
+                UserId = u.UserId,
+                Email = u.Email,
+                FirstName = u.FirstName ?? "",
+                LastName = u.LastName ?? "",
+                DisplayName = $"{u.FirstName} {u.LastName}".Trim(),
+                Company = u.Company?.CompanyName ?? "",
+                Roles = u.UserRoles?.Select(ur => ur.Role.RoleName).ToList() ?? new List<string>(),
+                IsActive = u.IsActive,
+                IsExpired = u.IsExpired,
+                ExpiredAt = u.ExpiredAt,
+                ExpirationReason = u.ExpirationReason,
+                IsLockedOut = u.IsLockedOut,
+                LastLoginAt = u.LastLoginAt,
+                LoginCount = u.LoginCount,
+                CreatedAt = u.CreatedAt
+            }).ToList(),
+            Pagination = new PaginationInfo
+            {
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            }
+        };
+
+        return Ok(response);
     }
 
     /// <summary>

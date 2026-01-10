@@ -9,6 +9,8 @@ public interface IUserService
     Task<User?> GetByIdAsync(int userId);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByEntraObjectIdAsync(string entraObjectId);
+    Task<List<User>> GetAllUsersAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true, bool includeExpired = false);
+    Task<int> GetUserCountAsync(string? search = null, bool includeInactive = true, bool includeExpired = false);
     Task<User> CreateAsync(User user);
     Task UpdateAsync(User user);
     Task UpdateLastActivityAsync(int userId);
