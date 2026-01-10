@@ -458,11 +458,13 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<UserService> _logger;
 
-    public UserService(IUserRepository userRepository, ApplicationDbContext context)
+    public UserService(IUserRepository userRepository, ApplicationDbContext context, ILogger<UserService> logger)
     {
         _userRepository = userRepository;
         _context = context;
+        _logger = logger;
     }
 
     public Task<User?> GetByIdAsync(int userId) => _userRepository.GetByIdAsync(userId);
@@ -471,8 +473,83 @@ public class UserService : IUserService
     public Task<User> CreateAsync(User user) => _userRepository.CreateAsync(user);
     public Task UpdateAsync(User user) => _userRepository.UpdateAsync(user);
     public Task UpdateLastActivityAsync(int userId) => _userRepository.UpdateLastActivityAsync(userId);
-    public Task<UpdateAvatarResponse> UpdateAvatarAsync(int userId, string avatarId) => throw new NotImplementedException();
-    public Task<UpdatePreferencesResponse> UpdatePreferencesAsync(int userId, UpdatePreferencesRequest request) => throw new NotImplementedException();
+
+    public async Task<UpdateAvatarResponse> UpdateAvatarAsync(int userId, string avatarId)
+    {
+        _logger.LogInformation("Updating avatar for user {UserId} to {AvatarId}", userId, avatarId);
+
+        var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null)
+        {
+            // Create profile if it doesn't exist
+            profile = new UserProfile
+            {
+                UserId = userId,
+                AvatarId = avatarId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.UserProfiles.Add(profile);
+        }
+        else
+        {
+            profile.AvatarId = avatarId;
+            profile.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Avatar updated successfully for user {UserId}", userId);
+
+        return new UpdateAvatarResponse
+        {
+            Success = true,
+            AvatarId = avatarId
+        };
+    }
+
+    public async Task<UpdatePreferencesResponse> UpdatePreferencesAsync(int userId, UpdatePreferencesRequest request)
+    {
+        _logger.LogInformation("Updating preferences for user {UserId}", userId);
+
+        var preferences = await _context.UserPreferences.FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (preferences == null)
+        {
+            // Create preferences if they don't exist
+            preferences = new UserPreferences
+            {
+                UserId = userId,
+                ThemeId = request.ThemeId ?? "white",
+                TableRowSize = request.TableRowSize ?? "md",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.UserPreferences.Add(preferences);
+        }
+        else
+        {
+            if (request.ThemeId != null)
+                preferences.ThemeId = request.ThemeId;
+            if (request.TableRowSize != null)
+                preferences.TableRowSize = request.TableRowSize;
+            preferences.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Preferences updated successfully for user {UserId}", userId);
+
+        return new UpdatePreferencesResponse
+        {
+            Success = true,
+            Preferences = new PreferencesDto
+            {
+                ThemeId = preferences.ThemeId ?? "white",
+                TableRowSize = preferences.TableRowSize ?? "md"
+            }
+        };
+    }
+
     public Task<UserStatsResponse> GetUserStatsAsync(int userId) => throw new NotImplementedException();
 }
 

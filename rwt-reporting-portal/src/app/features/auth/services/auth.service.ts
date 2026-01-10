@@ -244,9 +244,43 @@ export class AuthService {
 
   /**
    * Update user preferences (avatar, etc.)
-   * Persists to localStorage and updates auth state
+   * Calls API to persist to database and updates local state
    */
   updateUserPreferences(updates: Partial<User>): void {
+    const currentUser = this.authState.value.user;
+    if (!currentUser) return;
+
+    // If avatar is being updated, call the API
+    if (updates.avatarId) {
+      this.updateAvatarOnServer(updates.avatarId).subscribe({
+        next: () => {
+          this.updateLocalUserState(updates);
+        },
+        error: (err) => {
+          console.error('Failed to update avatar on server:', err);
+          // Still update locally as fallback
+          this.updateLocalUserState(updates);
+        }
+      });
+    } else {
+      this.updateLocalUserState(updates);
+    }
+  }
+
+  /**
+   * Update avatar on the server
+   */
+  private updateAvatarOnServer(avatarId: string): Observable<{ success: boolean; avatarId: string }> {
+    return this.http.put<{ success: boolean; avatarId: string }>(
+      '/api/users/profile/avatar',
+      { avatarId }
+    );
+  }
+
+  /**
+   * Update local user state and storage
+   */
+  private updateLocalUserState(updates: Partial<User>): void {
     const currentUser = this.authState.value.user;
     if (!currentUser) return;
 
