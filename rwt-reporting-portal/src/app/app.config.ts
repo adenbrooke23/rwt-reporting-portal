@@ -4,6 +4,7 @@ import { provideHttpClient, withFetch, withInterceptorsFromDi } from '@angular/c
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { authInterceptorProvider } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,6 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(), // Enable fetch API for better SSR performance
       withInterceptorsFromDi() // Support for HTTP interceptors
-    )
+    ),
+    authInterceptorProvider // Add JWT token to API requests
   ]
 };
