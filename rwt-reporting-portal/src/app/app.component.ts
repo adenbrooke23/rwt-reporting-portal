@@ -60,6 +60,7 @@ export class AppComponent implements OnInit {
 
     // Auth and idle timeout setup
     this.authService.authState$.subscribe(state => {
+      console.log('APP-COMPONENT: authState$ received, isAuthenticated:', state.isAuthenticated, 'roles:', state.user?.roles);
       this.isAuthenticated = state.isAuthenticated;
 
       if (state.isAuthenticated) {
