@@ -48,6 +48,9 @@ export class AuthService {
         error: null
       });
 
+      // Load user's theme preference from API
+      this.themeService.loadThemeFromApi();
+
       // Apply business theme if user has a business branch
       if ('businessBranch' in user) {
         this.themeService.setBusinessTheme((user as any).businessBranch);
@@ -139,6 +142,9 @@ export class AuthService {
         this.storeUser(user, true);
       }
     });
+
+    // Load user's theme preference from API
+    this.themeService.loadThemeFromApi();
   }
 
   /**

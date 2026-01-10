@@ -63,15 +63,15 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<PreferencesDto>> GetPreferences()
     {
         var userId = GetUserId();
-        var user = await _userService.GetByIdAsync(userId);
-        if (user?.Preferences == null)
+        var preferences = await _context.UserPreferences.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (preferences == null)
         {
             return Ok(new PreferencesDto());
         }
         return Ok(new PreferencesDto
         {
-            ThemeId = user.Preferences.ThemeId,
-            TableRowSize = user.Preferences.TableRowSize
+            ThemeId = preferences.ThemeId ?? "white",
+            TableRowSize = preferences.TableRowSize ?? "md"
         });
     }
 

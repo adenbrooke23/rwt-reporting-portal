@@ -1,6 +1,8 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 // Carbon Design System themes + Business themes
 export type Theme = 'white' | 'g10' | 'g90' | 'g100' | 'sequoia' | 'corevest' | 'enterprise';
@@ -31,8 +33,11 @@ export const AVAILABLE_THEMES: ThemeInfo[] = [
 })
 export class ThemeService {
   private platformId = inject(PLATFORM_ID);
+  private http = inject(HttpClient);
+
   private readonly STORAGE_KEY = 'theme-preference';
   private readonly BUSINESS_THEME_STORAGE_KEY = 'business-theme';
+  private readonly API_URL = 'https://erpqaapi.redwoodtrust.com/api/users';
 
   private themeSubject: BehaviorSubject<Theme>;
   public theme$: Observable<Theme>;
@@ -89,9 +94,9 @@ export class ThemeService {
   }
 
   /**
-   * Set theme and persist to localStorage
+   * Set theme and persist to localStorage and API
    */
-  setTheme(theme: Theme): void {
+  setTheme(theme: Theme, saveToApi = true): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
@@ -99,6 +104,36 @@ export class ThemeService {
     this.themeSubject.next(theme);
     localStorage.setItem(this.STORAGE_KEY, theme);
     this.applyTheme(theme);
+
+    // Save to API if user is authenticated
+    if (saveToApi) {
+      this.saveThemeToApi(theme);
+    }
+  }
+
+  /**
+   * Save theme preference to API
+   */
+  private saveThemeToApi(theme: Theme): void {
+    this.http.put(`${this.API_URL}/preferences`, { themeId: theme }).pipe(
+      catchError(err => {
+        console.error('Failed to save theme to API:', err);
+        return of(null);
+      })
+    ).subscribe();
+  }
+
+  /**
+   * Load theme from API (call after login)
+   */
+  loadThemeFromApi(): void {
+    this.http.get<{ themeId: string; tableRowSize: string }>(`${this.API_URL}/preferences`).pipe(
+      catchError(() => of({ themeId: 'white', tableRowSize: 'md' }))
+    ).subscribe(prefs => {
+      if (prefs.themeId && AVAILABLE_THEMES.some(t => t.id === prefs.themeId)) {
+        this.setTheme(prefs.themeId as Theme, false); // Don't save back to API
+      }
+    });
   }
 
   /**
