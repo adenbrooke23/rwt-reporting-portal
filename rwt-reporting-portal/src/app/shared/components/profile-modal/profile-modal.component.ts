@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ModalModule, ButtonModule, IconModule, IconService } from 'carbon-components-angular';
 import { AuthService } from '../../../features/auth/services/auth.service';
-import { MockUserService } from '../../../features/auth/services/mock-user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AVATAR_OPTIONS, AvatarOption, getAvatarById } from '../../../core/config/avatars.config';
 import { User } from '../../../features/auth/models/auth.models';
@@ -19,7 +18,6 @@ import Close from '@carbon/icons/es/close/20';
 })
 export class ProfileModalComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
-  private mockUserService = inject(MockUserService);
   private notificationService = inject(NotificationService);
   private iconService = inject(IconService);
 
@@ -128,28 +126,17 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     const selectedAvatar = getAvatarById(this.selectedAvatarId);
     const avatarName = selectedAvatar?.name || 'Avatar';
 
-    this.mockUserService.updateUserAvatar(this.currentUser.id, this.selectedAvatarId).subscribe({
-      next: () => {
-        if (this.currentUser && this.selectedAvatarId) {
-          this.currentUser.avatarId = this.selectedAvatarId;
-          this.originalAvatarId = this.selectedAvatarId;
+    // Update user preferences via AuthService (persists to localStorage)
+    this.authService.updateUserPreferences({ avatarId: this.selectedAvatarId });
 
-          this.notificationService.success(
-            'Profile updated',
-            `Your avatar has been changed to ${avatarName}`
-          );
+    this.originalAvatarId = this.selectedAvatarId;
 
-          this.closeModal.emit();
-        }
-      },
-      error: (err) => {
-        console.error('Failed to update avatar:', err);
-        this.notificationService.error(
-          'Update failed',
-          'Failed to update your profile. Please try again.'
-        );
-      }
-    });
+    this.notificationService.success(
+      'Profile updated',
+      `Your avatar has been changed to ${avatarName}`
+    );
+
+    this.closeModal.emit();
   }
 
   onOverlayClick(): void {

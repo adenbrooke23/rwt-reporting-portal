@@ -243,6 +243,29 @@ export class AuthService {
   }
 
   /**
+   * Update user preferences (avatar, etc.)
+   * Persists to localStorage and updates auth state
+   */
+  updateUserPreferences(updates: Partial<User>): void {
+    const currentUser = this.authState.value.user;
+    if (!currentUser) return;
+
+    const updatedUser: User = {
+      ...currentUser,
+      ...updates
+    };
+
+    // Update storage
+    this.storeUser(updatedUser, true);
+
+    // Update auth state
+    this.authState.next({
+      ...this.authState.value,
+      user: updatedUser
+    });
+  }
+
+  /**
    * Get current auth token
    */
   getCurrentToken(): AuthToken | null {
