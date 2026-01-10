@@ -12,8 +12,10 @@ export class AuthService {
   private http = inject(HttpClient);
   private themeService = inject(ThemeService);
 
-  // TODO: Replace with actual .NET API endpoint
-  private readonly API_URL = '/api/auth';
+  // .NET API base URL
+  private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
+  private readonly AUTH_API_URL = `${this.API_BASE_URL}/auth`;
+  private readonly USERS_API_URL = `${this.API_BASE_URL}/users`;
 
   private authState = new BehaviorSubject<AuthState>({
     isAuthenticated: false,
@@ -61,7 +63,7 @@ export class AuthService {
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     this.setLoading(true);
 
-    return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
+    return this.http.post<AuthResponse>(`${this.AUTH_API_URL}/login`, credentials).pipe(
       tap(response => {
         if (response.success && response.token && response.user) {
           this.handleSuccessfulAuth(response.token, response.user, credentials.rememberMe);
@@ -81,7 +83,7 @@ export class AuthService {
    */
   loginWithSSO(provider: string): void {
     // Redirect to .NET SSO endpoint
-    window.location.href = `${this.API_URL}/sso/${provider}`;
+    window.location.href = `${this.AUTH_API_URL}/sso/${provider}`;
   }
 
   /**
@@ -199,7 +201,7 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
 
-    return this.http.post<AuthToken>(`${this.API_URL}/refresh`, {
+    return this.http.post<AuthToken>(`${this.AUTH_API_URL}/refresh`, {
       refreshToken: currentToken.refreshToken
     }).pipe(
       tap(newToken => {
@@ -223,7 +225,7 @@ export class AuthService {
    * Get available SSO providers from .NET
    */
   getSSOProviders(): Observable<SSOProvider[]> {
-    return this.http.get<SSOProvider[]>(`${this.API_URL}/sso/providers`).pipe(
+    return this.http.get<SSOProvider[]>(`${this.AUTH_API_URL}/sso/providers`).pipe(
       catchError(() => of([]))
     );
   }
@@ -272,7 +274,7 @@ export class AuthService {
    */
   private updateAvatarOnServer(avatarId: string): Observable<{ success: boolean; avatarId: string }> {
     return this.http.put<{ success: boolean; avatarId: string }>(
-      '/api/users/profile/avatar',
+      `${this.USERS_API_URL}/profile/avatar`,
       { avatarId }
     );
   }
