@@ -100,8 +100,6 @@ export class AuthService {
    * Handle SSO tokens from URL callback
    */
   handleSSOTokens(accessToken: string, refreshToken?: string): void {
-    console.log('AUTH-SERVICE: handleSSOTokens called');
-
     // Create token object
     const token: AuthToken = {
       accessToken,
@@ -112,15 +110,11 @@ export class AuthService {
 
     // Decode JWT to get basic user info
     const user = this.decodeJwtUser(accessToken);
-    console.log('AUTH-SERVICE: Decoded user from JWT:', user);
-    console.log('AUTH-SERVICE: User roles:', user.roles);
 
     // Store token first (needed for API calls)
     this.storeToken(token, true); // Use localStorage for SSO
-    console.log('AUTH-SERVICE: Token stored');
 
     // Set initial auth state
-    console.log('AUTH-SERVICE: About to call authState.next()');
     this.authState.next({
       isAuthenticated: true,
       user,
@@ -128,7 +122,6 @@ export class AuthService {
       isLoading: false,
       error: null
     });
-    console.log('AUTH-SERVICE: authState.next() completed, isAuthenticated:', this.authState.value.isAuthenticated);
 
     // Fetch full user profile from API (includes avatar)
     this.fetchUserProfile().subscribe({

@@ -45,19 +45,14 @@ export class AuthCallbackComponent implements OnInit {
   private authService = inject(AuthService);
 
   ngOnInit(): void {
-    console.log('AUTH-CALLBACK: ngOnInit started');
     this.route.queryParams.subscribe(params => {
-      console.log('AUTH-CALLBACK: queryParams received', params);
       const token = params['token'];
       const refreshToken = params['refresh'];
 
       if (token) {
-        console.log('AUTH-CALLBACK: Token found, calling handleSSOTokens');
         this.authService.handleSSOTokens(token, refreshToken);
-        console.log('AUTH-CALLBACK: handleSSOTokens completed, navigating to dashboard');
         this.router.navigate(['/dashboard']);
       } else {
-        console.log('AUTH-CALLBACK: No token, redirecting to login');
         this.router.navigate(['/login']);
       }
     });
