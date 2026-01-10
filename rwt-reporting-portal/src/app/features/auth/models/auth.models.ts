@@ -21,6 +21,8 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  displayName?: string;
+  avatarId?: string;
   roles: string[];
   permissions: string[];
   lastLogin?: Date;

@@ -121,16 +121,28 @@ export class AuthService {
 
   /**
    * Decode JWT token to extract user info
+   * Microsoft Entra tokens include claims like: name, email, given_name, family_name, preferred_username
    */
   private decodeJwtUser(token: string): User {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
+
+      const firstName = payload.given_name || '';
+      const lastName = payload.family_name || '';
+
+      // Build display name: use 'name' claim, or construct from first/last name
+      let displayName = payload.name || '';
+      if (!displayName && (firstName || lastName)) {
+        displayName = `${firstName} ${lastName}`.trim();
+      }
+
       return {
-        id: payload.sub || payload.nameid || '',
-        username: payload.unique_name || payload.email || '',
-        email: payload.email || '',
-        firstName: payload.given_name || '',
-        lastName: payload.family_name || '',
+        id: payload.sub || payload.oid || payload.nameid || '',
+        username: payload.preferred_username || payload.unique_name || payload.email || '',
+        email: payload.email || payload.preferred_username || '',
+        firstName,
+        lastName,
+        displayName, // Add displayName to user object
         roles: payload.role ? (Array.isArray(payload.role) ? payload.role : [payload.role]) : [],
         permissions: [],
         accountStatus: 'active',
@@ -152,16 +164,12 @@ export class AuthService {
 
   /**
    * Logout user
+   * Note: For SSO, we just clear the local session. Backend logout endpoint
+   * can be added later if server-side session invalidation is needed.
    */
   logout(): Observable<void> {
-    return this.http.post<void>(`${this.API_URL}/logout`, {}).pipe(
-      tap(() => this.clearSession()),
-      catchError(() => {
-        // Clear session even if API call fails
-        this.clearSession();
-        return of(void 0);
-      })
-    );
+    this.clearSession();
+    return of(void 0);
   }
 
   /**

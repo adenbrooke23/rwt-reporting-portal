@@ -49,12 +49,26 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
       Notification
     ]);
 
+    // Subscribe to auth state changes to update user info
+    const authSub = this.authService.authState$.subscribe(state => {
+      this.currentUser = state.user;
+      if (state.user?.id) {
+        this.loadUnreadCount(state.user.id);
+      }
+    });
+    this.subscriptions.push(authSub);
+
+    // Initial load of unread count
     if (this.currentUser?.id) {
-      const sub = this.announcementService.getUnreadCount(this.currentUser.id).subscribe(count => {
-        this.unreadCount = count;
-      });
-      this.subscriptions.push(sub);
+      this.loadUnreadCount(this.currentUser.id);
     }
+  }
+
+  private loadUnreadCount(userId: string): void {
+    const sub = this.announcementService.getUnreadCount(userId).subscribe(count => {
+      this.unreadCount = count;
+    });
+    this.subscriptions.push(sub);
   }
 
   ngOnDestroy(): void {
@@ -148,11 +162,9 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
   getFullName(): string {
     if (!this.currentUser) return 'Guest';
 
-    const userProfile = this.currentUser as UserProfile;
-
-    // Use displayName if available
-    if (userProfile.displayName) {
-      return userProfile.displayName;
+    // Use displayName if available (from JWT 'name' claim or constructed)
+    if (this.currentUser.displayName) {
+      return this.currentUser.displayName;
     }
 
     const firstName = this.currentUser.firstName || '';
@@ -162,8 +174,11 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
       return `${firstName} ${lastName}`;
     } else if (firstName) {
       return firstName;
+    } else if (this.currentUser.email) {
+      // Fall back to email prefix if no name available
+      return this.currentUser.email.split('@')[0];
     } else {
-      return this.currentUser.username;
+      return this.currentUser.username || 'User';
     }
   }
 

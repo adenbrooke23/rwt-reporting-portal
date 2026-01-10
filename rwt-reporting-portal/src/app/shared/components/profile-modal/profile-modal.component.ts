@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { ModalModule, ButtonModule, IconModule, IconService } from 'carbon-components-angular';
 import { AuthService } from '../../../features/auth/services/auth.service';
 import { MockUserService } from '../../../features/auth/services/mock-user.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AVATAR_OPTIONS, AvatarOption, getAvatarById } from '../../../core/config/avatars.config';
-import { UserProfile } from '../../../features/auth/models/user-management.models';
+import { User } from '../../../features/auth/models/auth.models';
 import UserAvatar from '@carbon/icons/es/user--avatar/20';
 import Checkmark from '@carbon/icons/es/checkmark/16';
 import Close from '@carbon/icons/es/close/20';
@@ -16,16 +17,18 @@ import Close from '@carbon/icons/es/close/20';
   templateUrl: './profile-modal.component.html',
   styleUrl: './profile-modal.component.scss'
 })
-export class ProfileModalComponent implements OnInit {
+export class ProfileModalComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private mockUserService = inject(MockUserService);
   private notificationService = inject(NotificationService);
   private iconService = inject(IconService);
 
+  private authSubscription?: Subscription;
+
   @Input() open = false;
   @Output() closeModal = new EventEmitter<void>();
 
-  currentUser: UserProfile | null = null;
+  currentUser: User | null = null;
   selectedAvatarId: string | undefined;
   originalAvatarId: string | undefined;
 
@@ -33,16 +36,20 @@ export class ProfileModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.iconService.registerAll([UserAvatar, Checkmark, Close]);
-    this.loadUserData();
+
+    // Subscribe to auth state changes
+    this.authSubscription = this.authService.authState$.subscribe(state => {
+      if (state.user) {
+        this.currentUser = state.user;
+        // Use stored avatar or default to first option
+        this.selectedAvatarId = state.user.avatarId || AVATAR_OPTIONS[0].id;
+        this.originalAvatarId = this.selectedAvatarId;
+      }
+    });
   }
 
-  loadUserData(): void {
-    const user = this.authService.getCurrentUser();
-    if (user && 'displayName' in user) {
-      this.currentUser = user as UserProfile;
-      this.selectedAvatarId = this.currentUser.avatarId || AVATAR_OPTIONS[0].id;
-      this.originalAvatarId = this.selectedAvatarId;
-    }
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
   }
 
   getCurrentAvatar(): AvatarOption | undefined {
@@ -60,9 +67,7 @@ export class ProfileModalComponent implements OnInit {
   getUserInitials(): string {
     if (!this.currentUser) return '??';
 
-    const displayName = this.currentUser.displayName ||
-                       `${this.currentUser.firstName} ${this.currentUser.lastName}`;
-
+    const displayName = this.getFullName();
     const parts = displayName.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -72,20 +77,36 @@ export class ProfileModalComponent implements OnInit {
 
   getFullName(): string {
     if (!this.currentUser) return '';
-    return this.currentUser.displayName ||
-           `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+
+    if (this.currentUser.displayName) {
+      return this.currentUser.displayName;
+    }
+
+    const firstName = this.currentUser.firstName || '';
+    const lastName = this.currentUser.lastName || '';
+
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    } else if (firstName) {
+      return firstName;
+    } else if (this.currentUser.email) {
+      return this.currentUser.email.split('@')[0];
+    }
+
+    return this.currentUser.username || 'User';
   }
 
   getCompany(): string {
-    // Determine company based on user's groups or a default
+    // For SSO users, default to Redwood Trust
+    // Company affiliation could be determined from email domain or JWT claims in the future
     if (!this.currentUser) return 'Redwood Trust';
 
-    // Check user's groups for company affiliation
-    const groups = this.currentUser.groups || [];
-    if (groups.some(g => g.toLowerCase().includes('corevest'))) {
+    // Check email domain for company affiliation
+    const email = this.currentUser.email?.toLowerCase() || '';
+    if (email.includes('corevest')) {
       return 'CoreVest';
     }
-    if (groups.some(g => g.toLowerCase().includes('aspire'))) {
+    if (email.includes('aspire')) {
       return 'Aspire';
     }
     return 'Redwood Trust';
