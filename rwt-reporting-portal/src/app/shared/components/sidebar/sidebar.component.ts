@@ -73,9 +73,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     // Check if user is admin (case-insensitive)
     const authSub = this.authService.authState$.subscribe(state => {
+      console.log('SIDEBAR RECEIVED:', state.user?.roles);
       this.isAdmin = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       ) || false;
+      console.log('SIDEBAR isAdmin:', this.isAdmin);
     });
     this.subscriptions.push(authSub);
 
