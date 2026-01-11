@@ -1,10 +1,12 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../../features/auth/services/auth.service';
 import { QuickAccessService } from '../../../core/services/quick-access.service';
 import { AnnouncementService } from '../../../core/services/announcement.service';
+import { User } from '../../../features/auth/models/auth.models';
 import { SideNavModule, IconModule, IconService } from 'carbon-components-angular';
 import Home from '@carbon/icons/es/home/16';
 import Star from '@carbon/icons/es/star/16';
@@ -29,6 +31,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private announcementService = inject(AnnouncementService);
   private router = inject(Router);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   private subscriptions: Subscription[] = [];
 
@@ -36,7 +39,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   isExpanded = true; // Start expanded (Carbon pattern)
   isAdmin = false;
-  currentUser = this.authService.getCurrentUser();
+  currentUser: User | null = null; // Initialize as null, set via subscription
   unreadCount = 0;
 
   quickAccessItems: { label: string; route: string }[] = [];
@@ -71,21 +74,26 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.buildQuickAccessMenu();
     });
 
-    // Check if user is admin (case-insensitive)
+    // Subscribe to auth state for user info and admin check
     const authSub = this.authService.authState$.subscribe(state => {
+      this.currentUser = state.user;
       this.isAdmin = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       ) || false;
+
+      // Load unread count when user is available
+      if (state.user?.id) {
+        this.loadUnreadCount(state.user.id);
+      }
     });
     this.subscriptions.push(authSub);
+  }
 
-    // Subscribe to unread announcement count
-    if (this.currentUser?.id) {
-      const unreadSub = this.announcementService.getUnreadCount(this.currentUser.id).subscribe(count => {
-        this.unreadCount = count;
-      });
-      this.subscriptions.push(unreadSub);
-    }
+  private loadUnreadCount(userId: string): void {
+    const unreadSub = this.announcementService.getUnreadCount(userId).subscribe(count => {
+      this.unreadCount = count;
+    });
+    this.subscriptions.push(unreadSub);
   }
 
   ngOnDestroy(): void {

@@ -62,7 +62,7 @@ This document outlines the backend implementation tasks required to connect the 
    ng serve
    ```
 
-### What Needs Implementation
+### What's Implemented
 
 The .NET project has:
 - ✅ Complete project structure
@@ -70,15 +70,19 @@ The .NET project has:
 - ✅ All DTOs
 - ✅ All controllers with endpoints
 - ✅ Service interfaces
-- ⚠️ Service implementations (stub - need actual logic)
-- ⚠️ Repository implementations (stub - need actual logic)
+- ✅ `AuthService` - SSO callback, ROPC password login, JWT token generation (WORKING)
+- ✅ `UserService` - User lookup, profile updates, avatar, preferences, theme persistence (WORKING)
+- ✅ `AdminUserService` - User list, lock/unlock, expire/restore, department assignments, admin role management (WORKING)
+- ✅ `DepartmentService` - Department CRUD, user-department mappings (WORKING)
+- ✅ `PermissionService` - Admin role grant/revoke, department-based access (WORKING)
+- ⚠️ `HubService` / `ReportService` - Core data retrieval (stub - needs implementation)
+- ⚠️ `FavoritesService` - Quick access/pinned reports (stub - needs implementation)
+- ⚠️ Power BI embed token generation (stub - needs implementation)
 
-**Priority implementation order:**
-1. `AuthService` - SSO callback and JWT token generation
-2. `UserService` - User lookup and profile updates
-3. `PermissionService` - Access checks (uses stored procedures)
-4. `HubService` / `ReportService` - Core data retrieval
-5. `DepartmentService` - Department management
+**Priority for remaining implementation:**
+1. `HubService` / `ReportService` - Connect content management to real data
+2. `FavoritesService` - Connect My Dashboard to real data
+3. Power BI/SSRS integration for report embedding
 
 ---
 
@@ -558,33 +562,44 @@ The application uses a **dual permission model** combining:
 8. ✅ Angular frontend 100% complete (`/rwt-reporting-portal/`)
 
 ### Remaining Implementation Tasks
-1. [ ] **Set up SQL Server database**
+
+#### Completed ✅
+1. [x] **Set up SQL Server database**
    - Run CREATE TABLE scripts from `DATABASE_TABLES.md`
    - Run seed data from `DATABASE_SEED_DATA.md`
    - Run stored procedures from `DATABASE_STORED_PROCEDURES.md`
 
-2. [ ] **Configure Entra ID (Azure AD)**
+2. [x] **Configure Entra ID (Azure AD)**
    - Register application in Entra
    - Create security groups: `RWT-ReportingPortal-Access`, `RWT-ReportingPortal-Admins`
    - Configure redirect URIs
    - Enable public client flows for ROPC
 
-3. [ ] **Configure .NET project**
+3. [x] **Configure .NET project**
    - Update `appsettings.json` with connection string
    - Add Entra credentials (TenantId, ClientId, ClientSecret)
    - Set JWT secret key
 
-4. [ ] **Implement service logic**
-   - Replace stub implementations with actual business logic
-   - Start with `AuthService` (critical path)
-   - Then `PermissionService`, `HubService`, `ReportService`
+4. [x] **Implement core service logic**
+   - Authentication (SSO, ROPC password, JWT tokens)
+   - User profile and preferences
+   - User management (lock/unlock/expire/restore)
+   - Department assignments
+   - Admin role management
 
-5. [ ] **Configure Power BI Embedded** (if using Power BI)
+#### In Progress ⚠️
+5. [ ] **Implement content services**
+   - `HubService` - CRUD for reporting hubs
+   - `ReportGroupService` - CRUD for report categories
+   - `ReportService` - CRUD for reports, department tagging
+   - `FavoritesService` - User quick access/pinned reports
+
+6. [ ] **Configure Power BI Embedded** (if using Power BI)
    - Register service principal for Power BI API
    - Configure workspace access
    - Implement embed token generation
 
-6. [ ] **Configure SSRS** (if using SSRS)
+7. [ ] **Configure SSRS** (if using SSRS)
    - Set report server URL
    - Configure service account credentials
 

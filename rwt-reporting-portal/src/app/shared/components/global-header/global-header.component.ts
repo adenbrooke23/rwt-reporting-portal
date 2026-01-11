@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, ViewEncapsulation, Input, HostListener } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, ViewEncapsulation, Input, HostListener, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -15,6 +16,7 @@ import Menu from '@carbon/icons/es/menu/20';
 import Notification from '@carbon/icons/es/notification/20';
 import { getAvatarById } from '../../../core/config/avatars.config';
 import { UserProfile } from '../../../features/auth/models/user-management.models';
+import { User } from '../../../features/auth/models/auth.models';
 
 @Component({
   selector: 'app-global-header',
@@ -29,13 +31,14 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
   private iconService = inject(IconService);
   private notificationService = inject(NotificationService);
   private announcementService = inject(AnnouncementService);
+  private platformId = inject(PLATFORM_ID);
 
   private subscriptions: Subscription[] = [];
 
   @Input() sidebarOpen = false;
   @Output() menuToggled = new EventEmitter<void>();
 
-  currentUser = this.authService.getCurrentUser();
+  currentUser: User | null = null; // Initialize as null, set via subscription
   showUserMenu = false;
   profileModalOpen = false;
   themeModalOpen = false;
@@ -106,8 +109,7 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
 
   closeProfileModal(): void {
     this.profileModalOpen = false;
-    // Refresh user data in case avatar was changed
-    this.currentUser = this.authService.getCurrentUser();
+    // User data will be refreshed via authState$ subscription when avatar changes
   }
 
   openThemeModal(): void {

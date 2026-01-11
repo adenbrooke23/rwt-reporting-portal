@@ -144,17 +144,20 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: (apiDepartments) => {
         console.log('[DEBUG] Departments loaded:', apiDepartments);
         // Map API response to existing Department interface format
-        this.departments = apiDepartments.map(d => ({
-          id: d.departmentId.toString(),
-          name: d.departmentName,
-          description: d.description || '',
-          sortOrder: d.sortOrder,
-          isActive: d.isActive,
-          createdAt: new Date(d.createdAt),
-          updatedAt: new Date(),
-          createdBy: d.createdByEmail || ''
-        }));
-        console.log('[DEBUG] Mapped departments:', this.departments);
+        // Filter out "Admin" department since we now have a dedicated Administrator Access section
+        this.departments = apiDepartments
+          .filter(d => d.departmentName.toLowerCase() !== 'admin')
+          .map(d => ({
+            id: d.departmentId.toString(),
+            name: d.departmentName,
+            description: d.description || '',
+            sortOrder: d.sortOrder,
+            isActive: d.isActive,
+            createdAt: new Date(d.createdAt),
+            updatedAt: new Date(),
+            createdBy: d.createdByEmail || ''
+          }));
+        console.log('[DEBUG] Mapped departments (Admin filtered):', this.departments);
       },
       error: (err) => {
         console.error('[DEBUG] Error loading departments:', err);

@@ -185,6 +185,53 @@ public async Task<User?> GetByIdIncludeExpiredAsync(int userId)
 - `IsLockedOut` is checked after IsExpired
 - Lock operation should set both `IsLockedOut = true` AND `IsActive = false`
 
+### Issue 7: Admin Role Management vs Department Assignment
+**Pattern Difference**: Admin role uses immediate save (toggling checkbox calls API directly), while departments use deferred save (changes are batched and saved with "Save Changes" button).
+
+**Admin Role Flow** (Immediate):
+```typescript
+// Frontend: Toggle calls API immediately
+async toggleAdminRole(): Promise<void> {
+  const confirmed = await this.confirmationService.confirm(...);
+  if (!confirmed) return;
+
+  this.adminUserService.updateUserAdminRole(userId, newAdminStatus).subscribe({
+    next: () => {
+      // Update local user's roles array
+      if (newAdminStatus) {
+        this.selectedUser.roles = [...this.selectedUser.roles, 'Admin'];
+      } else {
+        this.selectedUser.roles = this.selectedUser.roles.filter(r => r.toLowerCase() !== 'admin');
+      }
+    }
+  });
+}
+```
+
+**Backend Implementation** (Uses UserRoles table):
+```csharp
+public async Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int grantedBy)
+{
+    var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
+    var existingUserRole = await _context.UserRoles
+        .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == adminRole.RoleId);
+
+    if (isAdmin && existingUserRole == null)
+    {
+        // Add Admin role
+        _context.UserRoles.Add(new UserRole { UserId = userId, RoleId = adminRole.RoleId, ... });
+    }
+    else if (!isAdmin && existingUserRole != null)
+    {
+        // Remove Admin role
+        _context.UserRoles.Remove(existingUserRole);
+    }
+    await _context.SaveChangesAsync();
+}
+```
+
+**Security Note**: Users cannot modify their own admin status (enforced in both frontend and backend).
+
 ### Issue 5: Data Saved But Not Fetched on Login
 **Cause**: JWT token doesn't contain database-stored values (like avatar). Must fetch from API after login.
 
@@ -317,6 +364,7 @@ Navigate to `https://erpqaapi.redwoodtrust.com/swagger` (if enabled in developme
 | GET | `/api/admin/users/{userId}/departments` | Get user's departments | Working |
 | POST | `/api/admin/users/{userId}/departments` | Assign user to department | Working |
 | DELETE | `/api/admin/users/{userId}/departments/{departmentId}` | Remove from department | Working |
+| PUT | `/api/admin/users/{userId}/roles/admin` | Grant/revoke admin role | Working |
 | POST | `/api/admin/users/{userId}/permissions/hub` | Grant hub access | Working |
 
 ---
@@ -369,6 +417,21 @@ When implementing new features, follow this pattern:
 | `admin.component.ts` | User Management UI (uses AdminUserService) |
 | `auth.interceptor.ts` | Adds JWT token to API requests |
 | `auth.service.ts` | Authentication and token management |
+
+### AdminUserService Methods
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `getAllUsers(...)` | GET `/api/admin/users` | Paginated user list with search |
+| `lockUser(userId, reason?)` | PUT `/api/admin/users/{id}/lock` | Lock user account |
+| `unlockUser(userId)` | PUT `/api/admin/users/{id}/unlock` | Unlock user account |
+| `expireUser(userId, reason?)` | PUT `/api/admin/users/{id}/expire` | Expire user account |
+| `restoreUser(userId)` | PUT `/api/admin/users/{id}/restore` | Restore expired account |
+| `getAllDepartments()` | GET `/api/admin/departments` | Get all departments |
+| `getUserDepartments(userId)` | GET `/api/admin/users/{id}/departments` | Get user's departments |
+| `assignUserToDepartment(...)` | POST `/api/admin/users/{id}/departments` | Assign to department |
+| `removeUserFromDepartment(...)` | DELETE `/api/admin/users/{id}/departments/{deptId}` | Remove from department |
+| `updateUserAdminRole(userId, isAdmin)` | PUT `/api/admin/users/{id}/roles/admin` | Grant/revoke admin role |
 
 ---
 

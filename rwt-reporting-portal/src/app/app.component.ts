@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { IdleTimeoutService } from './core/services/idle-timeout.service';
@@ -21,6 +22,7 @@ export class AppComponent implements OnInit {
   private authService = inject(AuthService);
   private themeService = inject(ThemeService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   @ViewChild(SidebarComponent) sidebarComponent!: SidebarComponent;
 
@@ -33,8 +35,11 @@ export class AppComponent implements OnInit {
 
   constructor() {
     // Initialize auth state synchronously to prevent flash
-    const authState = this.authService.getCurrentAuthState();
-    this.isAuthenticated = authState.isAuthenticated;
+    // Only check in browser - during SSR, auth state is always false
+    if (isPlatformBrowser(this.platformId)) {
+      const authState = this.authService.getCurrentAuthState();
+      this.isAuthenticated = authState.isAuthenticated;
+    }
   }
 
   get showHeader(): boolean {
