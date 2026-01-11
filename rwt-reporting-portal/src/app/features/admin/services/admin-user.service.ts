@@ -267,7 +267,7 @@ export class AdminUserService {
       roles: dto.roles || [],
       permissions: [],
       groups: [],
-      createdAt: dto.createdAt ? new Date(dto.createdAt) : undefined,
+      createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
       accountStatus,
       failedLoginAttempts: 0
     };
