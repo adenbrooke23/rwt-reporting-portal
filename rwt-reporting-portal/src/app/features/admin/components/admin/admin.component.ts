@@ -320,11 +320,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   toggleDepartment(departmentId: string): void {
+    console.log('[DEBUG] toggleDepartment called with:', departmentId);
+    console.log('[DEBUG] userDepartments before:', Array.from(this.userDepartments));
     if (this.userDepartments.has(departmentId)) {
       this.userDepartments.delete(departmentId);
     } else {
       this.userDepartments.add(departmentId);
     }
+    console.log('[DEBUG] userDepartments after:', Array.from(this.userDepartments));
   }
 
   hasPermission(reportId: string): boolean {
