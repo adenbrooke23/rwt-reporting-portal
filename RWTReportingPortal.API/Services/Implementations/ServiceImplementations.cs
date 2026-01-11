@@ -571,7 +571,46 @@ public class HubService : IHubService
 
     public Task<HubListResponse> GetAccessibleHubsAsync(int userId) => throw new NotImplementedException();
     public Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId) => throw new NotImplementedException();
-    public Task<List<HubDto>> GetAllHubsAsync(bool includeInactive = false) => throw new NotImplementedException();
+
+    public async Task<List<HubDto>> GetAllHubsAsync(bool includeInactive = false)
+    {
+        var hubs = await _hubRepository.GetAllAsync(includeInactive);
+        return hubs.Select(h => new HubDto
+        {
+            HubId = h.HubId,
+            HubCode = h.HubCode,
+            HubName = h.HubName,
+            Description = h.Description,
+            IconName = h.IconName,
+            BackgroundImage = h.BackgroundImage,
+            ReportCount = h.ReportGroups?.Sum(rg => rg.Reports?.Count ?? 0) ?? 0
+        }).ToList();
+    }
+
+    public async Task<List<HubWithReportsDto>> GetAllHubsWithReportsAsync(bool includeInactive = false)
+    {
+        var hubs = await _hubRepository.GetAllAsync(includeInactive);
+        return hubs.Select(h => new HubWithReportsDto
+        {
+            HubId = h.HubId,
+            HubCode = h.HubCode,
+            HubName = h.HubName,
+            Description = h.Description,
+            Reports = h.ReportGroups?
+                .Where(rg => rg.IsActive)
+                .SelectMany(rg => rg.Reports ?? new List<Models.Entities.Report>())
+                .Where(r => r.IsActive)
+                .Select(r => new HubReportSimpleDto
+                {
+                    ReportId = r.ReportId,
+                    ReportName = r.ReportName,
+                    Description = r.Description
+                })
+                .OrderBy(r => r.ReportName)
+                .ToList() ?? new List<HubReportSimpleDto>()
+        }).ToList();
+    }
+
     public Task<HubDto> CreateHubAsync(HubDto hub, int createdBy) => throw new NotImplementedException();
     public Task<HubDto> UpdateHubAsync(int hubId, HubDto hub, int updatedBy) => throw new NotImplementedException();
     public Task DeleteHubAsync(int hubId, bool hardDelete = false) => throw new NotImplementedException();
@@ -715,6 +754,12 @@ public class PermissionService : IPermissionService
         var user = await _context.Users
             .Include(u => u.UserDepartments)
                 .ThenInclude(ud => ud.Department)
+            .Include(u => u.HubAccess)
+                .ThenInclude(ha => ha.Hub)
+            .Include(u => u.ReportAccess)
+                .ThenInclude(ra => ra.Report)
+                    .ThenInclude(r => r.ReportGroup)
+                        .ThenInclude(rg => rg.Hub)
             .FirstOrDefaultAsync(u => u.UserId == userId);
 
         if (user == null)
@@ -741,19 +786,134 @@ public class PermissionService : IPermissionService
             GrantedBy = null // Could lookup admin name if needed
         }).ToList() ?? new List<UserDepartmentPermissionDto>();
 
+        // Get hub permissions (ad-hoc access)
+        var hubPermissions = user.HubAccess?
+            .Where(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow)
+            .Select(ha => new HubPermissionDto
+            {
+                PermissionId = ha.UserHubAccessId,
+                HubId = ha.HubId,
+                HubName = ha.Hub?.HubName ?? "",
+                GrantedAt = ha.GrantedAt,
+                GrantedBy = null,
+                ExpiresAt = ha.ExpiresAt
+            }).ToList() ?? new List<HubPermissionDto>();
+
+        // Get report permissions (ad-hoc access)
+        var reportPermissions = user.ReportAccess?
+            .Where(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow)
+            .Select(ra => new ReportPermissionDto
+            {
+                PermissionId = ra.UserReportAccessId,
+                ReportId = ra.ReportId,
+                ReportName = ra.Report?.ReportName ?? "",
+                GroupName = ra.Report?.ReportGroup?.GroupName ?? "",
+                HubId = ra.Report?.ReportGroup?.HubId ?? 0,
+                HubName = ra.Report?.ReportGroup?.Hub?.HubName ?? "",
+                GrantedAt = ra.GrantedAt,
+                GrantedBy = null,
+                ExpiresAt = ra.ExpiresAt
+            }).ToList() ?? new List<ReportPermissionDto>();
+
         return new UserPermissionsResponse
         {
             UserId = userId,
             Email = user.Email,
             IsAdmin = isAdmin,
             Departments = departments,
-            Permissions = new PermissionsDto() // Hub/Report permissions not implemented yet
+            Permissions = new PermissionsDto
+            {
+                Hubs = hubPermissions,
+                ReportGroups = new List<ReportGroupPermissionDto>(), // Not used for now
+                Reports = reportPermissions
+            }
         };
     }
 
-    public Task GrantHubAccessAsync(int userId, int hubId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
+    public async Task GrantHubAccessAsync(int userId, int hubId, int grantedBy, DateTime? expiresAt = null)
+    {
+        // Check if access already exists
+        var existingAccess = await _context.UserHubAccess
+            .FirstOrDefaultAsync(uha => uha.UserId == userId && uha.HubId == hubId);
+
+        if (existingAccess != null)
+        {
+            // Update expiration if needed
+            existingAccess.ExpiresAt = expiresAt;
+            existingAccess.GrantedAt = DateTime.UtcNow;
+            existingAccess.GrantedBy = grantedBy;
+        }
+        else
+        {
+            var hubAccess = new UserHubAccess
+            {
+                UserId = userId,
+                HubId = hubId,
+                GrantedBy = grantedBy,
+                GrantedAt = DateTime.UtcNow,
+                ExpiresAt = expiresAt
+            };
+            _context.UserHubAccess.Add(hubAccess);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     public Task GrantReportGroupAccessAsync(int userId, int reportGroupId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
-    public Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
+
+    public async Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null)
+    {
+        // Check if access already exists
+        var existingAccess = await _context.UserReportAccess
+            .FirstOrDefaultAsync(ura => ura.UserId == userId && ura.ReportId == reportId);
+
+        if (existingAccess != null)
+        {
+            // Update expiration if needed
+            existingAccess.ExpiresAt = expiresAt;
+            existingAccess.GrantedAt = DateTime.UtcNow;
+            existingAccess.GrantedBy = grantedBy;
+        }
+        else
+        {
+            var reportAccess = new UserReportAccess
+            {
+                UserId = userId,
+                ReportId = reportId,
+                GrantedBy = grantedBy,
+                GrantedAt = DateTime.UtcNow,
+                ExpiresAt = expiresAt
+            };
+            _context.UserReportAccess.Add(reportAccess);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RevokeHubAccessAsync(int userId, int hubId)
+    {
+        var access = await _context.UserHubAccess
+            .FirstOrDefaultAsync(uha => uha.UserId == userId && uha.HubId == hubId);
+
+        if (access != null)
+        {
+            _context.UserHubAccess.Remove(access);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task RevokeReportAccessAsync(int userId, int reportId)
+    {
+        var access = await _context.UserReportAccess
+            .FirstOrDefaultAsync(ura => ura.UserId == userId && ura.ReportId == reportId);
+
+        if (access != null)
+        {
+            _context.UserReportAccess.Remove(access);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public Task RevokePermissionAsync(int permissionId, string permissionType) => throw new NotImplementedException();
 
     public async Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int grantedBy)

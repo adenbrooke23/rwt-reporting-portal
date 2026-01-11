@@ -11,6 +11,8 @@ public interface IPermissionService
     Task GrantHubAccessAsync(int userId, int hubId, int grantedBy, DateTime? expiresAt = null);
     Task GrantReportGroupAccessAsync(int userId, int reportGroupId, int grantedBy, DateTime? expiresAt = null);
     Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null);
+    Task RevokeHubAccessAsync(int userId, int hubId);
+    Task RevokeReportAccessAsync(int userId, int reportId);
     Task RevokePermissionAsync(int permissionId, string permissionType);
     Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int grantedBy);
 }

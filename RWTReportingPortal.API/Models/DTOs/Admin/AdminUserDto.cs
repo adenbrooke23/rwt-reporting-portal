@@ -18,6 +18,8 @@ public class AdminUserDto
     public int LoginCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public int DepartmentCount { get; set; }
+    public int ReportCount { get; set; }
+    public int HubCount { get; set; }
 }
 
 public class AdminUserListResponse
@@ -87,6 +89,8 @@ public class ReportPermissionDto
     public int ReportId { get; set; }
     public string ReportName { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
+    public int HubId { get; set; }
+    public string HubName { get; set; } = string.Empty;
     public DateTime GrantedAt { get; set; }
     public string? GrantedBy { get; set; }
     public DateTime? ExpiresAt { get; set; }
@@ -126,4 +130,10 @@ public class ReplaceReportDepartmentsRequest
 public class UpdateAdminRoleRequest
 {
     public bool IsAdmin { get; set; }
+}
+
+public class GrantReportAccessRequest
+{
+    public int ReportId { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 }

@@ -237,20 +237,23 @@
               <h3>Report Access Permissions</h3>
               <p class="section-description">Select which specific reports this user can access</p>
 
-              <div class="categories-list">
+              <div class="categories-list" *ngIf="!isLoadingPermissions; else loadingPermissions">
                 <div *ngFor="let category of reportCategories" class="category-section">
                   <div class="category-header">
                     <div class="category-label">
                       <ibm-checkbox
                         [checked]="isCategoryFullySelected(category)"
                         [indeterminate]="isCategoryPartiallySelected(category)"
-                        (change)="toggleCategoryPermissions(category)"
+                        (checkedChange)="toggleCategoryPermissions(category)"
                         [hideLabel]="true"
                         class="category-checkbox">
                       </ibm-checkbox>
                       <div class="category-info">
                         <div class="category-name">{{ category.name }}</div>
                         <div class="category-description">{{ category.description }}</div>
+                        <div class="category-hint" *ngIf="hasHubPermission(category.id)">
+                          <ibm-tag type="blue" size="sm">Full Hub Access</ibm-tag>
+                        </div>
                       </div>
                     </div>
                     <button
@@ -269,10 +272,12 @@
                     <div
                       *ngFor="let report of category.reports"
                       class="report-item"
+                      [class.disabled]="hasHubPermission(category.id)"
                     >
                       <ibm-checkbox
-                        [checked]="hasPermission(report.id)"
-                        (change)="togglePermission(report.id)"
+                        [checked]="hasPermission(report.id) || hasHubPermission(category.id)"
+                        (checkedChange)="togglePermission(report.id)"
+                        [disabled]="hasHubPermission(category.id)"
                         [hideLabel]="true"
                         class="report-checkbox">
                       </ibm-checkbox>
@@ -284,6 +289,11 @@
                   </div>
                 </div>
               </div>
+              <ng-template #loadingPermissions>
+                <div class="loading-permissions">
+                  <p>Loading permissions...</p>
+                </div>
+              </ng-template>
 
               <div class="editor-actions">
                 <button

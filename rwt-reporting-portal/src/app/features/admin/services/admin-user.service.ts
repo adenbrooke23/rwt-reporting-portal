@@ -21,6 +21,8 @@ export interface AdminUserDto {
   loginCount: number;
   createdAt: string;
   departmentCount?: number; // Number of departments user belongs to
+  hubCount?: number; // Number of hubs user has access to (ad-hoc)
+  reportCount?: number; // Number of reports user has access to (ad-hoc)
 }
 
 export interface PaginationInfo {
@@ -82,6 +84,8 @@ export interface ReportPermissionDto {
   reportId: number;
   reportName: string;
   groupName: string;
+  hubId: number;
+  hubName: string;
   grantedAt: string;
   grantedBy?: string;
   expiresAt?: string;
@@ -98,6 +102,20 @@ export interface DepartmentDto {
   reportCount: number;
   createdAt: string;
   createdByEmail?: string;
+}
+
+export interface HubWithReportsDto {
+  hubId: number;
+  hubCode: string;
+  hubName: string;
+  description?: string;
+  reports: HubReportSimpleDto[];
+}
+
+export interface HubReportSimpleDto {
+  reportId: number;
+  reportName: string;
+  description?: string;
 }
 
 @Injectable({
@@ -273,6 +291,49 @@ export class AdminUserService {
   }
 
   /**
+   * Revoke hub access from user
+   */
+  revokeHubAccess(userId: number, hubId: number): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.ADMIN_USERS_URL}/${userId}/permissions/hub/${hubId}`
+    ).pipe(
+      catchError(error => {
+        console.error('Error revoking hub access:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Grant report access to user
+   */
+  grantReportAccess(userId: number, reportId: number, expiresAt?: Date): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.ADMIN_USERS_URL}/${userId}/permissions/report`,
+      { reportId, expiresAt: expiresAt?.toISOString() }
+    ).pipe(
+      catchError(error => {
+        console.error('Error granting report access:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Revoke report access from user
+   */
+  revokeReportAccess(userId: number, reportId: number): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.ADMIN_USERS_URL}/${userId}/permissions/report/${reportId}`
+    ).pipe(
+      catchError(error => {
+        console.error('Error revoking report access:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Get all departments
    */
   getAllDepartments(includeInactive = false): Observable<DepartmentDto[]> {
@@ -284,6 +345,23 @@ export class AdminUserService {
       map(response => response.departments),
       catchError(error => {
         console.error('Error fetching departments:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get all hubs with their reports (for permission management UI)
+   */
+  getHubsWithReports(includeInactive = false): Observable<HubWithReportsDto[]> {
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+    return this.http.get<{ hubs: HubWithReportsDto[] }>(
+      `${this.API_BASE_URL}/admin/hubs/with-reports`,
+      { params }
+    ).pipe(
+      map(response => response.hubs),
+      catchError(error => {
+        console.error('Error fetching hubs with reports:', error);
         return of([]);
       })
     );
@@ -324,6 +402,13 @@ export class AdminUserService {
       ? Array(dto.departmentCount).fill('dept')
       : [];
 
+    // Create placeholder array for permissions based on reportCount
+    // Combined hub + report ad-hoc permissions
+    const totalPermissions = (dto.hubCount || 0) + (dto.reportCount || 0);
+    const permissions = totalPermissions > 0
+      ? Array(totalPermissions).fill('permission')
+      : [];
+
     return {
       id: dto.userId.toString(),
       username: dto.email.split('@')[0],
@@ -332,7 +417,7 @@ export class AdminUserService {
       lastName: dto.lastName,
       displayName: dto.displayName || `${dto.firstName} ${dto.lastName}`.trim(),
       roles: dto.roles || [],
-      permissions: [],
+      permissions,
       groups,
       createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
       accountStatus,

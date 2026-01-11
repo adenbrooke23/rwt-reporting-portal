@@ -62,7 +62,9 @@ public class AdminUsersController : ControllerBase
                 LastLoginAt = u.LastLoginAt,
                 LoginCount = u.LoginCount,
                 CreatedAt = u.CreatedAt,
-                DepartmentCount = u.UserDepartments?.Count ?? 0
+                DepartmentCount = u.UserDepartments?.Count ?? 0,
+                HubCount = u.HubAccess?.Count(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow) ?? 0,
+                ReportCount = u.ReportAccess?.Count(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow) ?? 0
             }).ToList(),
             Pagination = new PaginationInfo
             {
@@ -243,6 +245,37 @@ public class AdminUsersController : ControllerBase
         var grantedBy = GetUserId();
         await _permissionService.GrantHubAccessAsync(userId, request.HubId, grantedBy, request.ExpiresAt);
         return Ok(new { success = true, message = "Hub access granted successfully" });
+    }
+
+    /// <summary>
+    /// Revoke hub access from user
+    /// </summary>
+    [HttpDelete("{userId}/permissions/hub/{hubId}")]
+    public async Task<IActionResult> RevokeHubAccess(int userId, int hubId)
+    {
+        await _permissionService.RevokeHubAccessAsync(userId, hubId);
+        return Ok(new { success = true, message = "Hub access revoked successfully" });
+    }
+
+    /// <summary>
+    /// Grant report access to user
+    /// </summary>
+    [HttpPost("{userId}/permissions/report")]
+    public async Task<IActionResult> GrantReportAccess(int userId, [FromBody] GrantReportAccessRequest request)
+    {
+        var grantedBy = GetUserId();
+        await _permissionService.GrantReportAccessAsync(userId, request.ReportId, grantedBy, request.ExpiresAt);
+        return Ok(new { success = true, message = "Report access granted successfully" });
+    }
+
+    /// <summary>
+    /// Revoke report access from user
+    /// </summary>
+    [HttpDelete("{userId}/permissions/report/{reportId}")]
+    public async Task<IActionResult> RevokeReportAccess(int userId, int reportId)
+    {
+        await _permissionService.RevokeReportAccessAsync(userId, reportId);
+        return Ok(new { success = true, message = "Report access revoked successfully" });
     }
 
     /// <summary>

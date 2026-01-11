@@ -31,6 +31,16 @@ public class AdminHubsController : ControllerBase
     }
 
     /// <summary>
+    /// Get all hubs with their reports (for permission management UI)
+    /// </summary>
+    [HttpGet("with-reports")]
+    public async Task<ActionResult<List<HubWithReportsDto>>> GetHubsWithReports([FromQuery] bool includeInactive = false)
+    {
+        var result = await _hubService.GetAllHubsWithReportsAsync(includeInactive);
+        return Ok(new { hubs = result });
+    }
+
+    /// <summary>
     /// Create a new hub
     /// </summary>
     [HttpPost]

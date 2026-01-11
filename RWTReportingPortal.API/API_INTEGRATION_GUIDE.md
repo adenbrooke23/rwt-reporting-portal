@@ -24,17 +24,20 @@ This document captures lessons learned while connecting the Angular frontend to 
 ### Auth Interceptor (Critical)
 Location: `rwt-reporting-portal/src/app/core/interceptors/auth.interceptor.ts`
 
-The interceptor automatically adds the JWT token to requests going to the API:
+The interceptor automatically adds the JWT token to requests going to the API. **Important**: It reads the token directly from localStorage instead of injecting AuthService to avoid a circular dependency (see Issue 8 below).
+
 ```typescript
-if (request.url.startsWith(this.API_BASE)) {
-  const token = this.authService.getCurrentToken();
-  if (token?.accessToken) {
-    request = request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token.accessToken}`
-      }
-    });
+// Reads directly from localStorage - NO service injection
+private getAccessToken(): string | null {
+  if (!isPlatformBrowser(this.platformId)) {
+    return null;
   }
+  const tokenStr = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+  if (tokenStr) {
+    const token = JSON.parse(tokenStr);
+    return token?.accessToken || null;
+  }
+  return null;
 }
 ```
 
@@ -232,6 +235,35 @@ public async Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int granted
 
 **Security Note**: Users cannot modify their own admin status (enforced in both frontend and backend).
 
+### Issue 8: NG0200 InjectionToken Error After Page Refresh
+**Cause**: Circular dependency in Angular's dependency injection:
+`HttpClient` → `HTTP_INTERCEPTORS` → `AuthInterceptor` → `AuthService` → `HttpClient`
+
+When the auth interceptor injected AuthService, and AuthService injected HttpClient, it created a circular dependency. This worked on initial login but caused NG0200 errors after page refresh during hydration.
+
+**Symptoms**:
+- Login works fine
+- After page refresh, console shows: `NG0200: Circular dependency in DI detected for InjectionToken HTTP_INTERCEPTORS`
+- Theme doesn't load, user profile doesn't load, API calls fail
+
+**Solution**: The auth interceptor reads JWT tokens directly from localStorage instead of injecting AuthService:
+```typescript
+// BAD - causes circular dependency
+constructor(private authService: AuthService) { }
+
+// GOOD - reads directly from storage
+private getAccessToken(): string | null {
+  const tokenStr = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+  if (tokenStr) {
+    const token = JSON.parse(tokenStr);
+    return token?.accessToken || null;
+  }
+  return null;
+}
+```
+
+**Key Rule**: HTTP interceptors should NEVER inject services that themselves use HttpClient.
+
 ### Issue 5: Data Saved But Not Fetched on Login
 **Cause**: JWT token doesn't contain database-stored values (like avatar). Must fetch from API after login.
 
@@ -354,7 +386,7 @@ Navigate to `https://erpqaapi.redwoodtrust.com/swagger` (if enabled in developme
 
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
-| GET | `/api/admin/users` | Get paginated user list | Working |
+| GET | `/api/admin/users` | Get paginated user list (includes departmentCount) | Working |
 | GET | `/api/admin/users/{userId}` | Get user details | Working |
 | GET | `/api/admin/users/{userId}/permissions` | Get user permissions | Working |
 | PUT | `/api/admin/users/{userId}/lock` | Lock user account | Working |
@@ -422,7 +454,7 @@ When implementing new features, follow this pattern:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `getAllUsers(...)` | GET `/api/admin/users` | Paginated user list with search |
+| `getAllUsers(...)` | GET `/api/admin/users` | Paginated user list with search and departmentCount |
 | `lockUser(userId, reason?)` | PUT `/api/admin/users/{id}/lock` | Lock user account |
 | `unlockUser(userId)` | PUT `/api/admin/users/{id}/unlock` | Unlock user account |
 | `expireUser(userId, reason?)` | PUT `/api/admin/users/{id}/expire` | Expire user account |
@@ -435,5 +467,43 @@ When implementing new features, follow this pattern:
 
 ---
 
+## AdminUserDto Fields
+
+The `AdminUserDto` returned by `GET /api/admin/users` includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | int | User's ID |
+| `email` | string | User's email |
+| `firstName`, `lastName` | string | User's name |
+| `displayName` | string | Combined first + last name |
+| `company` | string | Company name |
+| `roles` | string[] | Array of role names (e.g., ["Admin", "User"]) |
+| `isActive` | bool | Account is active |
+| `isExpired` | bool | Account is expired |
+| `isLockedOut` | bool | Account is locked |
+| `departmentCount` | int | Number of departments user belongs to |
+| `lastLoginAt` | DateTime? | Last login timestamp |
+| `loginCount` | int | Total login count |
+| `createdAt` | DateTime | Account creation date |
+
+**Backend Implementation Note**: To include `departmentCount`, the `UserRepository.GetAllAsync` method must include `UserDepartments`:
+
+```csharp
+var query = _context.Users
+    .Include(u => u.Company)
+    .Include(u => u.UserRoles)
+        .ThenInclude(ur => ur.Role)
+    .Include(u => u.UserDepartments)  // Required for departmentCount
+    .AsQueryable();
+```
+
+Then in the controller:
+```csharp
+DepartmentCount = u.UserDepartments?.Count ?? 0
+```
+
+---
+
 *Last Updated: January 2026*
-*Based on learnings from user profile/avatar and user management implementations*
+*Based on learnings from user profile/avatar, user management, and circular dependency fix implementations*

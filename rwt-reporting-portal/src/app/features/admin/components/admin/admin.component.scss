@@ -640,6 +640,33 @@
   &:hover {
     background: var(--color-bg-hover);
   }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--color-bg-tertiary);
+
+    &:hover {
+      background: var(--color-bg-tertiary);
+    }
+
+    .report-name {
+      color: var(--color-text-tertiary);
+    }
+  }
+}
+
+.category-hint {
+  margin-top: spacing.$spacing-02;
+}
+
+.loading-permissions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: spacing.$spacing-07;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 .editor-actions {

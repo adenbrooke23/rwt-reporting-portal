@@ -10,7 +10,6 @@ import { MockUserService } from '../../../auth/services/mock-user.service';
 import { AdminUserService } from '../../services/admin-user.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmationNotificationService } from '../../../../core/services/confirmation.service';
-import { ContentManagementService } from '../../services/content-management.service';
 import { UserProfile, SubReport } from '../../../auth/models/user-management.models';
 import { Department } from '../../models/content-management.models';
 
@@ -67,7 +66,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   private adminUserService = inject(AdminUserService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationNotificationService);
-  private contentService = inject(ContentManagementService);
   private router = inject(Router);
   private iconService = inject(IconService);
   private platformId = inject(PLATFORM_ID);
@@ -82,13 +80,20 @@ export class AdminComponent implements OnInit, OnDestroy {
   reportCategories: HubCategory[] = [];
   departments: Department[] = [];
   selectedUser: UserProfile | null = null;
-  userPermissions: Set<string> = new Set();
+  userPermissions: Set<string> = new Set(); // Legacy - still used for mock data
   userDepartments: Set<string> = new Set();
   originalUserDepartments: Set<string> = new Set(); // Track original for diff
+  // Hub permissions (ad-hoc hub access)
+  userHubPermissions: Set<string> = new Set();
+  originalUserHubPermissions: Set<string> = new Set();
+  // Report permissions (ad-hoc report access)
+  userReportPermissions: Set<string> = new Set();
+  originalUserReportPermissions: Set<string> = new Set();
   originalIsAdmin = false; // Track original admin status
   pendingIsAdmin = false; // Track pending admin status change
   isSaving = false;
   isLoadingDepartments = false;
+  isLoadingPermissions = false;
   isSavingAdminRole = false;
   collapsedCategories: Set<string> = new Set();
 
@@ -184,33 +189,31 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   loadReportCategories(): void {
-    // Load hubs and their reports from ContentManagementService
-    this.contentService.getHubs().subscribe(hubs => {
-      // For each hub, load its reports (using undefined for groupId, hub.id for hubId)
-      const hubObservables = hubs.map(hub =>
-        this.contentService.getReports(undefined, hub.id)
-      );
-
-      if (hubObservables.length === 0) {
-        this.reportCategories = [];
-        return;
-      }
-
-      forkJoin(hubObservables).subscribe(reportsArrays => {
-        this.reportCategories = hubs.map((hub, index) => ({
-          id: hub.id,
-          name: hub.name,
-          description: hub.description,
-          reports: reportsArrays[index].map(r => ({
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            type: r.type,
-            route: `/hub/${hub.id}/report/${r.id}`,
-            embedConfig: r.embedConfig
+    // Load hubs with their reports from real API
+    console.log('[DEBUG] Loading hubs with reports from API...');
+    this.adminUserService.getHubsWithReports(false).subscribe({
+      next: (hubsWithReports) => {
+        console.log('[DEBUG] Hubs with reports loaded:', hubsWithReports);
+        this.reportCategories = hubsWithReports.map(hub => ({
+          id: hub.hubId.toString(), // Convert numeric ID to string for consistency
+          name: hub.hubName,
+          description: hub.description || '',
+          reports: hub.reports.map(r => ({
+            id: r.reportId.toString(), // Convert numeric ID to string
+            name: r.reportName,
+            description: r.description || '',
+            type: 'PowerBI' as const, // Default type - could be fetched from API if needed
+            route: `/hub/${hub.hubId}/report/${r.reportId}`,
+            embedConfig: undefined
           }))
         }));
-      });
+        console.log('[DEBUG] Report categories mapped:', this.reportCategories);
+      },
+      error: (err) => {
+        console.error('[DEBUG] Error loading hubs with reports:', err);
+        // Keep empty categories on error
+        this.reportCategories = [];
+      }
     });
   }
 
@@ -308,34 +311,64 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   selectUser(user: UserProfile): void {
     this.selectedUser = user;
-    const permissions = this.mockUserService.getUserPermissions(user.id);
-    this.userPermissions = new Set(permissions);
 
     // Track admin status
     this.originalIsAdmin = this.isUserAdmin(user);
     this.pendingIsAdmin = this.originalIsAdmin;
     console.log('[DEBUG] User admin status:', this.originalIsAdmin);
 
-    // Fetch departments from real API
-    this.isLoadingDepartments = true;
+    // Reset permissions state
     this.userDepartments = new Set();
     this.originalUserDepartments = new Set();
+    this.userHubPermissions = new Set();
+    this.originalUserHubPermissions = new Set();
+    this.userReportPermissions = new Set();
+    this.originalUserReportPermissions = new Set();
 
-    console.log('[DEBUG] Fetching departments for user:', user.id);
-    this.adminUserService.getUserDepartments(parseInt(user.id, 10)).subscribe({
+    // Fetch all permissions (departments, hubs, reports) from real API
+    this.isLoadingDepartments = true;
+    this.isLoadingPermissions = true;
+
+    const userId = parseInt(user.id, 10);
+    console.log('[DEBUG] Fetching permissions for user:', userId);
+
+    // Fetch departments
+    this.adminUserService.getUserDepartments(userId).subscribe({
       next: (departmentIds) => {
         console.log('[DEBUG] User departments loaded:', departmentIds);
         this.userDepartments = new Set(departmentIds);
-        this.originalUserDepartments = new Set(departmentIds); // Store original for diff
+        this.originalUserDepartments = new Set(departmentIds);
         this.isLoadingDepartments = false;
-
-        // Update the user's groups array to reflect department count in the list
         this.updateUserDepartmentCount(user.id, departmentIds.length);
       },
       error: (error) => {
         console.error('[DEBUG] Error loading user departments:', error);
         this.isLoadingDepartments = false;
-        // Still allow editing with empty departments
+      }
+    });
+
+    // Fetch hub and report permissions
+    this.adminUserService.getUserPermissions(userId).subscribe({
+      next: (response) => {
+        console.log('[DEBUG] User permissions loaded:', response);
+
+        // Load hub permissions
+        const hubIds = response.permissions.hubs.map(h => h.hubId.toString());
+        this.userHubPermissions = new Set(hubIds);
+        this.originalUserHubPermissions = new Set(hubIds);
+
+        // Load report permissions
+        const reportIds = response.permissions.reports.map(r => r.reportId.toString());
+        this.userReportPermissions = new Set(reportIds);
+        this.originalUserReportPermissions = new Set(reportIds);
+
+        this.isLoadingPermissions = false;
+        console.log('[DEBUG] Hub permissions:', hubIds);
+        console.log('[DEBUG] Report permissions:', reportIds);
+      },
+      error: (error) => {
+        console.error('[DEBUG] Error loading user permissions:', error);
+        this.isLoadingPermissions = false;
       }
     });
 
@@ -366,10 +399,20 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   togglePermission(reportId: string): void {
-    if (this.userPermissions.has(reportId)) {
-      this.userPermissions.delete(reportId);
+    // Toggle individual report permission
+    if (this.userReportPermissions.has(reportId)) {
+      this.userReportPermissions.delete(reportId);
     } else {
-      this.userPermissions.add(reportId);
+      this.userReportPermissions.add(reportId);
+    }
+  }
+
+  toggleHubPermission(hubId: string): void {
+    // Toggle hub-level permission
+    if (this.userHubPermissions.has(hubId)) {
+      this.userHubPermissions.delete(hubId);
+    } else {
+      this.userHubPermissions.add(hubId);
     }
   }
 
@@ -469,7 +512,13 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   hasPermission(reportId: string): boolean {
-    return this.userPermissions.has(reportId);
+    // Check if user has direct report permission
+    return this.userReportPermissions.has(reportId);
+  }
+
+  hasHubPermission(hubId: string): boolean {
+    // Check if user has direct hub permission
+    return this.userHubPermissions.has(hubId);
   }
 
   hasDepartment(departmentId: string): boolean {
@@ -477,24 +526,34 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   toggleCategoryPermissions(category: HubCategory): void {
-    const allSelected = category.reports.every(report =>
-      this.userPermissions.has(report.id)
-    );
-
-    if (allSelected) {
-      category.reports.forEach(report => this.userPermissions.delete(report.id));
+    // Toggle hub-level permission
+    // If hub is already granted, revoke it
+    // If hub is not granted, grant it (gives access to all reports in hub)
+    if (this.userHubPermissions.has(category.id)) {
+      this.userHubPermissions.delete(category.id);
     } else {
-      category.reports.forEach(report => this.userPermissions.add(report.id));
+      this.userHubPermissions.add(category.id);
+      // When granting hub access, remove individual report permissions
+      // since hub access supersedes them
+      category.reports.forEach(report => {
+        this.userReportPermissions.delete(report.id);
+      });
     }
   }
 
   isCategoryFullySelected(category: HubCategory): boolean {
-    return category.reports.every(report => this.userPermissions.has(report.id));
+    // Hub is "fully selected" if user has direct hub access
+    return this.userHubPermissions.has(category.id);
   }
 
   isCategoryPartiallySelected(category: HubCategory): boolean {
+    // Hub is "partially selected" if user has some report permissions
+    // but not hub-level access
+    if (this.userHubPermissions.has(category.id)) {
+      return false; // Has full hub access, not partial
+    }
     const selectedCount = category.reports.filter(report =>
-      this.userPermissions.has(report.id)
+      this.userReportPermissions.has(report.id)
     ).length;
     return selectedCount > 0 && selectedCount < category.reports.length;
   }
@@ -517,89 +576,116 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.isSaving = true;
     const userId = parseInt(this.selectedUser.id, 10);
 
-    // For now, still use mock for permissions (will be connected later)
-    const reportIds = Array.from(this.userPermissions);
-    this.mockUserService.updateUserPermissions(this.selectedUser.id, reportIds)
-      .subscribe({
-        next: () => {
-          // Save departments via real API
-          this.saveDepartments(userId);
-        },
-        error: () => {
-          this.isSaving = false;
-          this.notificationService.error(
-            'Save Failed',
-            'Error updating permissions. Please try again.'
-          );
-        }
-      });
-  }
+    // Build array of all operations (departments, hubs, reports)
+    const operations: Observable<{ success: boolean }>[] = [];
 
-  private saveDepartments(userId: number): void {
-    // Compute what was added and removed
+    // Compute department changes
     const currentDepts = Array.from(this.userDepartments);
     const originalDepts = Array.from(this.originalUserDepartments);
+    const deptsToAdd = currentDepts.filter(id => !this.originalUserDepartments.has(id));
+    const deptsToRemove = originalDepts.filter(id => !this.userDepartments.has(id));
 
-    console.log('[DEBUG] saveDepartments - userId:', userId);
-    console.log('[DEBUG] saveDepartments - currentDepts:', currentDepts);
-    console.log('[DEBUG] saveDepartments - originalDepts:', originalDepts);
+    // Compute hub permission changes
+    const currentHubs = Array.from(this.userHubPermissions);
+    const originalHubs = Array.from(this.originalUserHubPermissions);
+    const hubsToAdd = currentHubs.filter(id => !this.originalUserHubPermissions.has(id));
+    const hubsToRemove = originalHubs.filter(id => !this.userHubPermissions.has(id));
 
-    const toAdd = currentDepts.filter(id => !this.originalUserDepartments.has(id));
-    const toRemove = originalDepts.filter(id => !this.userDepartments.has(id));
+    // Compute report permission changes
+    const currentReports = Array.from(this.userReportPermissions);
+    const originalReports = Array.from(this.originalUserReportPermissions);
+    const reportsToAdd = currentReports.filter(id => !this.originalUserReportPermissions.has(id));
+    const reportsToRemove = originalReports.filter(id => !this.userReportPermissions.has(id));
 
-    console.log('[DEBUG] saveDepartments - toAdd:', toAdd);
-    console.log('[DEBUG] saveDepartments - toRemove:', toRemove);
+    console.log('[DEBUG] savePermissions - changes:');
+    console.log('[DEBUG]   Departments: add=', deptsToAdd, 'remove=', deptsToRemove);
+    console.log('[DEBUG]   Hubs: add=', hubsToAdd, 'remove=', hubsToRemove);
+    console.log('[DEBUG]   Reports: add=', reportsToAdd, 'remove=', reportsToRemove);
 
     // If no changes, we're done
-    if (toAdd.length === 0 && toRemove.length === 0) {
-      console.log('[DEBUG] No department changes to save');
+    if (deptsToAdd.length === 0 && deptsToRemove.length === 0 &&
+        hubsToAdd.length === 0 && hubsToRemove.length === 0 &&
+        reportsToAdd.length === 0 && reportsToRemove.length === 0) {
       this.isSaving = false;
-      this.notificationService.success(
-        'Changes Saved',
-        'Permissions updated successfully'
-      );
+      this.notificationService.info('No Changes', 'No permission changes to save.');
       return;
     }
 
-    // Build array of observables for all add/remove operations
-    const operations: Observable<{ success: boolean }>[] = [];
-
-    toAdd.forEach(deptId => {
+    // Add department operations
+    deptsToAdd.forEach(deptId => {
       operations.push(this.adminUserService.assignUserToDepartment(userId, parseInt(deptId, 10)));
     });
-
-    toRemove.forEach(deptId => {
+    deptsToRemove.forEach(deptId => {
       operations.push(this.adminUserService.removeUserFromDepartment(userId, parseInt(deptId, 10)));
     });
 
+    // Add hub operations
+    hubsToAdd.forEach(hubId => {
+      operations.push(this.adminUserService.grantHubAccess(userId, parseInt(hubId, 10)));
+    });
+    hubsToRemove.forEach(hubId => {
+      operations.push(this.adminUserService.revokeHubAccess(userId, parseInt(hubId, 10)));
+    });
+
+    // Add report operations
+    reportsToAdd.forEach(reportId => {
+      operations.push(this.adminUserService.grantReportAccess(userId, parseInt(reportId, 10)));
+    });
+    reportsToRemove.forEach(reportId => {
+      operations.push(this.adminUserService.revokeReportAccess(userId, parseInt(reportId, 10)));
+    });
+
     // Execute all operations
-    console.log('[DEBUG] Executing', operations.length, 'department operations');
+    console.log('[DEBUG] Executing', operations.length, 'permission operations');
     forkJoin(operations).subscribe({
       next: (results) => {
-        console.log('[DEBUG] Department operations completed:', results);
+        console.log('[DEBUG] Permission operations completed:', results);
         this.isSaving = false;
-        // Update original to match current (so subsequent saves work correctly)
-        this.originalUserDepartments = new Set(this.userDepartments);
 
-        // Update the user's department count in the list
+        // Update original values to match current (so subsequent saves work correctly)
+        this.originalUserDepartments = new Set(this.userDepartments);
+        this.originalUserHubPermissions = new Set(this.userHubPermissions);
+        this.originalUserReportPermissions = new Set(this.userReportPermissions);
+
+        // Update the user's counts in the list
         if (this.selectedUser) {
           this.updateUserDepartmentCount(this.selectedUser.id, this.userDepartments.size);
+          this.updateUserReportCount(this.selectedUser.id, this.userHubPermissions.size, this.userReportPermissions.size);
         }
 
         this.notificationService.success(
           'Changes Saved',
-          'Permissions and departments updated successfully'
+          'Permissions updated successfully'
         );
       },
       error: (error) => {
-        console.error('[DEBUG] Error saving departments:', error);
+        console.error('[DEBUG] Error saving permissions:', error);
         this.isSaving = false;
         this.notificationService.error(
           'Save Failed',
-          'Error updating departments. Please try again.'
+          'Error updating permissions. Please try again.'
         );
       }
     });
+  }
+
+  /**
+   * Update the user's report count in the users array for display
+   */
+  private updateUserReportCount(userId: string, hubCount: number, reportCount: number): void {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      // Create a permissions array of the right length for display
+      const totalPermissions = hubCount + reportCount;
+      this.users[userIndex] = {
+        ...this.users[userIndex],
+        permissions: Array(totalPermissions).fill('permission')
+      };
+      if (this.selectedUser?.id === userId) {
+        this.selectedUser = this.users[userIndex];
+      }
+      this.applyFilters();
+    }
   }
 
   backToDashboard(): void {

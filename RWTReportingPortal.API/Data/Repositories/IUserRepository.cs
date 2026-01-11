@@ -85,6 +85,8 @@ public class UserRepository : IUserRepository
             .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
             .Include(u => u.UserDepartments)
+            .Include(u => u.HubAccess)
+            .Include(u => u.ReportAccess)
             .AsQueryable();
 
         if (!includeExpired)
