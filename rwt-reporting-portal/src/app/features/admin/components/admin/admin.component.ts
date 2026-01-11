@@ -136,18 +136,26 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   loadDepartments(): void {
     // Load departments from real API
-    this.adminUserService.getAllDepartments(false).subscribe(apiDepartments => {
-      // Map API response to existing Department interface format
-      this.departments = apiDepartments.map(d => ({
-        id: d.departmentId.toString(),
-        name: d.departmentName,
-        description: d.description || '',
-        sortOrder: d.sortOrder,
-        isActive: d.isActive,
-        createdAt: new Date(d.createdAt),
-        updatedAt: new Date(),
-        createdBy: d.createdByEmail || ''
-      }));
+    console.log('[DEBUG] Loading departments from API...');
+    this.adminUserService.getAllDepartments(false).subscribe({
+      next: (apiDepartments) => {
+        console.log('[DEBUG] Departments loaded:', apiDepartments);
+        // Map API response to existing Department interface format
+        this.departments = apiDepartments.map(d => ({
+          id: d.departmentId.toString(),
+          name: d.departmentName,
+          description: d.description || '',
+          sortOrder: d.sortOrder,
+          isActive: d.isActive,
+          createdAt: new Date(d.createdAt),
+          updatedAt: new Date(),
+          createdBy: d.createdByEmail || ''
+        }));
+        console.log('[DEBUG] Mapped departments:', this.departments);
+      },
+      error: (err) => {
+        console.error('[DEBUG] Error loading departments:', err);
+      }
     });
   }
 
@@ -284,14 +292,16 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.userDepartments = new Set();
     this.originalUserDepartments = new Set();
 
+    console.log('[DEBUG] Fetching departments for user:', user.id);
     this.adminUserService.getUserDepartments(parseInt(user.id, 10)).subscribe({
       next: (departmentIds) => {
+        console.log('[DEBUG] User departments loaded:', departmentIds);
         this.userDepartments = new Set(departmentIds);
         this.originalUserDepartments = new Set(departmentIds); // Store original for diff
         this.isLoadingDepartments = false;
       },
       error: (error) => {
-        console.error('Error loading user departments:', error);
+        console.error('[DEBUG] Error loading user departments:', error);
         this.isLoadingDepartments = false;
         // Still allow editing with empty departments
       }
@@ -389,11 +399,19 @@ export class AdminComponent implements OnInit, OnDestroy {
     const currentDepts = Array.from(this.userDepartments);
     const originalDepts = Array.from(this.originalUserDepartments);
 
+    console.log('[DEBUG] saveDepartments - userId:', userId);
+    console.log('[DEBUG] saveDepartments - currentDepts:', currentDepts);
+    console.log('[DEBUG] saveDepartments - originalDepts:', originalDepts);
+
     const toAdd = currentDepts.filter(id => !this.originalUserDepartments.has(id));
     const toRemove = originalDepts.filter(id => !this.userDepartments.has(id));
 
+    console.log('[DEBUG] saveDepartments - toAdd:', toAdd);
+    console.log('[DEBUG] saveDepartments - toRemove:', toRemove);
+
     // If no changes, we're done
     if (toAdd.length === 0 && toRemove.length === 0) {
+      console.log('[DEBUG] No department changes to save');
       this.isSaving = false;
       this.notificationService.success(
         'Changes Saved',
@@ -414,8 +432,10 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
 
     // Execute all operations
+    console.log('[DEBUG] Executing', operations.length, 'department operations');
     forkJoin(operations).subscribe({
-      next: () => {
+      next: (results) => {
+        console.log('[DEBUG] Department operations completed:', results);
         this.isSaving = false;
         // Update original to match current (so subsequent saves work correctly)
         this.originalUserDepartments = new Set(this.userDepartments);
@@ -426,7 +446,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.loadUsers();
       },
       error: (error) => {
-        console.error('Error saving departments:', error);
+        console.error('[DEBUG] Error saving departments:', error);
         this.isSaving = false;
         this.notificationService.error(
           'Save Failed',
