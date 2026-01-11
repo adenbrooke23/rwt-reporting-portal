@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -11,6 +12,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 export class AuthService {
   private http = inject(HttpClient);
   private themeService = inject(ThemeService);
+  private platformId = inject(PLATFORM_ID);
 
   // .NET API base URL
   private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
@@ -28,8 +30,10 @@ export class AuthService {
   public authState$ = this.authState.asObservable();
 
   constructor() {
-    // Check for existing session on service initialization
-    this.checkExistingSession();
+    // Only check for existing session in browser (not during SSR)
+    if (isPlatformBrowser(this.platformId)) {
+      this.checkExistingSession();
+    }
   }
 
   /**
@@ -368,10 +372,12 @@ export class AuthService {
    * Clear authentication session
    */
   private clearSession(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('auth_user');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_user');
+    }
 
     this.authState.next({
       isAuthenticated: false,
@@ -386,6 +392,7 @@ export class AuthService {
    * Store authentication token
    */
   private storeToken(token: AuthToken, rememberMe = false): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('auth_token', JSON.stringify(token));
   }
@@ -394,6 +401,7 @@ export class AuthService {
    * Store user data
    */
   private storeUser(user: User, rememberMe = false): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('auth_user', JSON.stringify(user));
   }
@@ -402,6 +410,7 @@ export class AuthService {
    * Get stored token
    */
   private getStoredToken(): AuthToken | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     return token ? JSON.parse(token) : null;
   }
@@ -410,6 +419,7 @@ export class AuthService {
    * Get stored user
    */
   private getStoredUser(): User | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
     const user = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
     return user ? JSON.parse(user) : null;
   }
