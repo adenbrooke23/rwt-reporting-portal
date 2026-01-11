@@ -1,6 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { filter, take } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ContentManagementService } from '../../services/content-management.service';
 import { Hub, ReportGroup, Report } from '../../models/content-management.models';
@@ -36,6 +38,7 @@ export class ContentManagementComponent implements OnInit {
   private contentService = inject(ContentManagementService);
   private router = inject(Router);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   currentUser = this.authService.getCurrentUser();
   isLoading = true;
@@ -50,17 +53,32 @@ export class ContentManagementComponent implements OnInit {
   recentReports: Report[] = [];
 
   ngOnInit(): void {
-    // Case-insensitive check for admin role
-    const hasAdminRole = this.currentUser?.roles?.some(
-      role => role.toLowerCase() === 'admin'
-    );
-    if (!this.currentUser || !hasAdminRole) {
-      this.router.navigate(['/dashboard']);
+    // Register icons (safe for SSR)
+    this.iconService.registerAll([ArrowLeft, ArrowRight, Folder, Category, Document, Group, Add]);
+
+    // Skip API calls during SSR
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    this.iconService.registerAll([ArrowLeft, ArrowRight, Folder, Category, Document, Group, Add]);
-    this.loadStats();
+    // Wait for auth state to be ready before loading data
+    this.authService.authState$.pipe(
+      filter(state => state.isAuthenticated),
+      take(1)
+    ).subscribe(state => {
+      this.currentUser = state.user;
+
+      // Case-insensitive check for admin role
+      const hasAdminRole = state.user?.roles?.some(
+        role => role.toLowerCase() === 'admin'
+      );
+      if (!state.user || !hasAdminRole) {
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+
+      this.loadStats();
+    });
   }
 
   loadStats(): void {

@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, forkJoin, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil, filter, take } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
 import { MockUserService } from '../../../auth/services/mock-user.service';
 import { AdminUserService } from '../../services/admin-user.service';
@@ -69,12 +70,13 @@ export class AdminComponent implements OnInit, OnDestroy {
   private contentService = inject(ContentManagementService);
   private router = inject(Router);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   // Search debounce
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  currentUser = this.authService.getCurrentUser();
+  currentUser = this.authService.getCurrentUser(); // Will be updated via subscription on init
   users: UserProfile[] = [];
   filteredUsers: UserProfile[] = [];
   reportCategories: HubCategory[] = [];
@@ -109,16 +111,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   isRestoring = false;
 
   ngOnInit(): void {
-    // Case-insensitive check for admin role
-    const hasAdminRole = this.currentUser?.roles?.some(
-      role => role.toLowerCase() === 'admin'
-    );
-    if (!this.currentUser || !hasAdminRole) {
-      this.router.navigate(['/dashboard']);
-      return;
-    }
-
-    // Register Carbon icons
+    // Register Carbon icons first (safe for SSR)
     this.iconService.registerAll([Search, Close, ChevronDown, Locked, Unlocked, Time, Renew, ArrowLeft, User]);
 
     // Set up search debounce
@@ -132,9 +125,34 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.applyFilters();
     });
 
-    this.loadUsers();
-    this.loadReportCategories();
-    this.loadDepartments();
+    // Skip API calls during SSR - they will run on client after hydration
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Wait for auth state to be ready before loading data
+    // This ensures the JWT token is available for API calls
+    this.authService.authState$.pipe(
+      filter(state => state.isAuthenticated),
+      take(1),
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
+      this.currentUser = state.user;
+
+      // Case-insensitive check for admin role
+      const hasAdminRole = state.user?.roles?.some(
+        role => role.toLowerCase() === 'admin'
+      );
+      if (!state.user || !hasAdminRole) {
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+
+      // Now load data - auth token is guaranteed to be available
+      this.loadUsers();
+      this.loadReportCategories();
+      this.loadDepartments();
+    });
   }
 
   loadDepartments(): void {
@@ -310,6 +328,9 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.userDepartments = new Set(departmentIds);
         this.originalUserDepartments = new Set(departmentIds); // Store original for diff
         this.isLoadingDepartments = false;
+
+        // Update the user's groups array to reflect department count in the list
+        this.updateUserDepartmentCount(user.id, departmentIds.length);
       },
       error: (error) => {
         console.error('[DEBUG] Error loading user departments:', error);
@@ -320,6 +341,28 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     // Collapse all categories by default
     this.collapsedCategories = new Set(this.reportCategories.map(cat => cat.id));
+  }
+
+  /**
+   * Update the user's department count in the users array for display
+   */
+  private updateUserDepartmentCount(userId: string, count: number): void {
+    // Find the user in the main users array
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      // Create a groups array of the right length for display purposes
+      // We just need the length to be correct for {{ user.groups.length }}
+      this.users[userIndex] = {
+        ...this.users[userIndex],
+        groups: Array(count).fill('dept') // Array with correct length
+      };
+      // Also update selectedUser if it's the same user
+      if (this.selectedUser?.id === userId) {
+        this.selectedUser = this.users[userIndex];
+      }
+      // Refresh the filtered view
+      this.applyFilters();
+    }
   }
 
   togglePermission(reportId: string): void {
@@ -537,11 +580,16 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         // Update original to match current (so subsequent saves work correctly)
         this.originalUserDepartments = new Set(this.userDepartments);
+
+        // Update the user's department count in the list
+        if (this.selectedUser) {
+          this.updateUserDepartmentCount(this.selectedUser.id, this.userDepartments.size);
+        }
+
         this.notificationService.success(
           'Changes Saved',
           'Permissions and departments updated successfully'
         );
-        this.loadUsers();
       },
       error: (error) => {
         console.error('[DEBUG] Error saving departments:', error);

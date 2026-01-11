@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, TemplateRef, ViewChild, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil, filter, take } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ContentManagementService } from '../../services/content-management.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -71,6 +72,7 @@ export class HubManagementComponent implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationNotificationService);
   private router = inject(Router);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -133,15 +135,7 @@ export class HubManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Case-insensitive check for admin role
-    const hasAdminRole = this.currentUser?.roles?.some(
-      role => role.toLowerCase() === 'admin'
-    );
-    if (!this.currentUser || !hasAdminRole) {
-      this.router.navigate(['/dashboard']);
-      return;
-    }
-
+    // Register icons (safe for SSR)
     this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Folder]);
 
     this.paginationModel.currentPage = 1;
@@ -157,7 +151,30 @@ export class HubManagementComponent implements OnInit, OnDestroy {
       this.applyFilters();
     });
 
-    this.loadHubs();
+    // Skip API calls during SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Wait for auth state to be ready before loading data
+    this.authService.authState$.pipe(
+      filter(state => state.isAuthenticated),
+      take(1),
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
+      this.currentUser = state.user;
+
+      // Case-insensitive check for admin role
+      const hasAdminRole = state.user?.roles?.some(
+        role => role.toLowerCase() === 'admin'
+      );
+      if (!state.user || !hasAdminRole) {
+        this.router.navigate(['/dashboard']);
+        return;
+      }
+
+      this.loadHubs();
+    });
   }
 
   ngOnDestroy(): void {
