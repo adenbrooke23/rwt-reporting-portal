@@ -127,11 +127,19 @@ export class ThemeService {
    * Load theme from API (call after login)
    */
   loadThemeFromApi(): void {
+    console.log('[THEME] Loading theme from API:', `${this.API_URL}/preferences`);
     this.http.get<{ themeId: string; tableRowSize: string }>(`${this.API_URL}/preferences`).pipe(
-      catchError(() => of({ themeId: 'white', tableRowSize: 'md' }))
+      catchError(err => {
+        console.error('[THEME] Failed to load theme from API:', err);
+        return of({ themeId: 'white', tableRowSize: 'md' });
+      })
     ).subscribe(prefs => {
+      console.log('[THEME] Received preferences from API:', prefs);
       if (prefs.themeId && AVAILABLE_THEMES.some(t => t.id === prefs.themeId)) {
+        console.log('[THEME] Applying theme:', prefs.themeId);
         this.setTheme(prefs.themeId as Theme, false); // Don't save back to API
+      } else {
+        console.log('[THEME] Theme not found in available themes or no themeId in response');
       }
     });
   }

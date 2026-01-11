@@ -44,7 +44,11 @@ export class AuthService {
     const token = this.getStoredToken();
     const user = this.getStoredUser();
 
+    console.log('[AUTH] checkExistingSession - token exists:', !!token, 'user exists:', !!user);
+
     if (token && user && !this.isTokenExpired(token)) {
+      console.log('[AUTH] Restoring session from localStorage, user:', user.email);
+
       // Set initial auth state with cached user data
       this.authState.next({
         isAuthenticated: true,
@@ -55,8 +59,10 @@ export class AuthService {
       });
 
       // Fetch fresh user profile from API to get latest settings
+      console.log('[AUTH] Fetching fresh user profile from API...');
       this.fetchUserProfile().subscribe({
         next: (profile) => {
+          console.log('[AUTH] User profile response:', profile);
           if (profile.avatarId) {
             const updatedUser: User = {
               ...user,
@@ -67,15 +73,17 @@ export class AuthService {
               ...this.authState.value,
               user: updatedUser
             });
+            console.log('[AUTH] Updated user with avatarId:', profile.avatarId);
           }
         },
         error: (err) => {
-          console.warn('Failed to refresh user profile from API:', err);
+          console.error('[AUTH] Failed to fetch user profile:', err);
           // Continue with cached data - not a critical failure
         }
       });
 
       // Load user's theme preference from API
+      console.log('[AUTH] Loading theme preference from API...');
       this.themeService.loadThemeFromApi();
 
       // Apply business theme if user has a business branch
@@ -83,6 +91,7 @@ export class AuthService {
         this.themeService.setBusinessTheme((user as any).businessBranch);
       }
     } else {
+      console.log('[AUTH] No valid session found, clearing');
       this.clearSession();
     }
   }
