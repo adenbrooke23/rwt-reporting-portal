@@ -136,6 +136,8 @@ export class AuthService {
    * Handle SSO tokens from URL callback
    */
   handleSSOTokens(accessToken: string, refreshToken?: string): void {
+    console.log('[AUTH] handleSSOTokens called with token length:', accessToken?.length);
+
     // Create token object
     const token: AuthToken = {
       accessToken,
@@ -146,8 +148,10 @@ export class AuthService {
 
     // Decode JWT to get basic user info
     const user = this.decodeJwtUser(accessToken);
+    console.log('[AUTH] Decoded user from JWT:', user.email);
 
     // Store token first (needed for API calls)
+    console.log('[AUTH] About to store token in localStorage...');
     this.storeToken(token, true); // Use localStorage for SSO
 
     // Set initial auth state
@@ -424,26 +428,44 @@ export class AuthService {
    * Store authentication token
    */
   private storeToken(token: AuthToken, rememberMe = false): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[AUTH] storeToken: NOT in browser, skipping');
+      return;
+    }
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('auth_token', JSON.stringify(token));
+    console.log('[AUTH] Token stored in', rememberMe ? 'localStorage' : 'sessionStorage');
+
+    // Verify it was stored
+    const verify = storage.getItem('auth_token');
+    console.log('[AUTH] Token verification - stored successfully:', !!verify);
   }
 
   /**
    * Store user data
    */
   private storeUser(user: User, rememberMe = false): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[AUTH] storeUser: NOT in browser, skipping');
+      return;
+    }
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('auth_user', JSON.stringify(user));
+    console.log('[AUTH] User stored in', rememberMe ? 'localStorage' : 'sessionStorage', '- email:', user.email);
   }
 
   /**
    * Get stored token
    */
   private getStoredToken(): AuthToken | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[AUTH] getStoredToken: NOT in browser');
+      return null;
+    }
+    const fromLocal = localStorage.getItem('auth_token');
+    const fromSession = sessionStorage.getItem('auth_token');
+    console.log('[AUTH] getStoredToken - localStorage:', !!fromLocal, 'sessionStorage:', !!fromSession);
+    const token = fromLocal || fromSession;
     return token ? JSON.parse(token) : null;
   }
 
@@ -451,8 +473,14 @@ export class AuthService {
    * Get stored user
    */
   private getStoredUser(): User | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    const user = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user');
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[AUTH] getStoredUser: NOT in browser');
+      return null;
+    }
+    const fromLocal = localStorage.getItem('auth_user');
+    const fromSession = sessionStorage.getItem('auth_user');
+    console.log('[AUTH] getStoredUser - localStorage:', !!fromLocal, 'sessionStorage:', !!fromSession);
+    const user = fromLocal || fromSession;
     return user ? JSON.parse(user) : null;
   }
 
