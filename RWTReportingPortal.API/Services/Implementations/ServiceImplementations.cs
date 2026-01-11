@@ -625,8 +625,41 @@ public class DepartmentService : IDepartmentService
     public Task ReorderDepartmentsAsync(List<int> departmentIds) => throw new NotImplementedException();
     public Task<DepartmentUsersResponse> GetDepartmentUsersAsync(int departmentId) => throw new NotImplementedException();
     public Task<DepartmentReportsResponse> GetDepartmentReportsAsync(int departmentId) => throw new NotImplementedException();
-    public Task AssignUserToDepartmentAsync(int userId, int departmentId, int grantedBy) => throw new NotImplementedException();
-    public Task RemoveUserFromDepartmentAsync(int userId, int departmentId) => throw new NotImplementedException();
+    public async Task AssignUserToDepartmentAsync(int userId, int departmentId, int grantedBy)
+    {
+        // Check if assignment already exists
+        var existing = await _context.UserDepartments
+            .FirstOrDefaultAsync(ud => ud.UserId == userId && ud.DepartmentId == departmentId);
+
+        if (existing != null)
+        {
+            // Already assigned, nothing to do
+            return;
+        }
+
+        var userDepartment = new UserDepartment
+        {
+            UserId = userId,
+            DepartmentId = departmentId,
+            GrantedBy = grantedBy,
+            GrantedAt = DateTime.UtcNow
+        };
+
+        _context.UserDepartments.Add(userDepartment);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveUserFromDepartmentAsync(int userId, int departmentId)
+    {
+        var userDepartment = await _context.UserDepartments
+            .FirstOrDefaultAsync(ud => ud.UserId == userId && ud.DepartmentId == departmentId);
+
+        if (userDepartment != null)
+        {
+            _context.UserDepartments.Remove(userDepartment);
+            await _context.SaveChangesAsync();
+        }
+    }
     public Task AddReportDepartmentAccessAsync(int reportId, int departmentId, int grantedBy) => throw new NotImplementedException();
     public Task RemoveReportDepartmentAccessAsync(int reportId, int departmentId) => throw new NotImplementedException();
     public Task ReplaceReportDepartmentAccessAsync(int reportId, List<int> departmentIds, int grantedBy) => throw new NotImplementedException();
@@ -636,17 +669,60 @@ public class PermissionService : IPermissionService
 {
     private readonly ISqlConnectionFactory _sqlConnectionFactory;
     private readonly IUserRepository _userRepository;
+    private readonly ApplicationDbContext _context;
 
-    public PermissionService(ISqlConnectionFactory sqlConnectionFactory, IUserRepository userRepository)
+    public PermissionService(ISqlConnectionFactory sqlConnectionFactory, IUserRepository userRepository, ApplicationDbContext context)
     {
         _sqlConnectionFactory = sqlConnectionFactory;
         _userRepository = userRepository;
+        _context = context;
     }
 
     public Task<bool> CanAccessReportAsync(int userId, int reportId) => throw new NotImplementedException();
     public Task<bool> CanAccessHubAsync(int userId, int hubId) => throw new NotImplementedException();
     public Task<bool> IsAdminAsync(int userId) => _userRepository.IsAdminAsync(userId);
-    public Task<UserPermissionsResponse> GetUserPermissionsAsync(int userId) => throw new NotImplementedException();
+
+    public async Task<UserPermissionsResponse> GetUserPermissionsAsync(int userId)
+    {
+        var user = await _context.Users
+            .Include(u => u.UserDepartments)
+                .ThenInclude(ud => ud.Department)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+        {
+            return new UserPermissionsResponse
+            {
+                UserId = userId,
+                Email = "",
+                IsAdmin = false,
+                Departments = new List<UserDepartmentPermissionDto>(),
+                Permissions = new PermissionsDto()
+            };
+        }
+
+        var isAdmin = await _userRepository.IsAdminAsync(userId);
+
+        var departments = user.UserDepartments?.Select(ud => new UserDepartmentPermissionDto
+        {
+            UserDepartmentId = ud.UserDepartmentId,
+            DepartmentId = ud.DepartmentId,
+            DepartmentCode = ud.Department?.DepartmentCode ?? "",
+            DepartmentName = ud.Department?.DepartmentName ?? "",
+            GrantedAt = ud.GrantedAt,
+            GrantedBy = null // Could lookup admin name if needed
+        }).ToList() ?? new List<UserDepartmentPermissionDto>();
+
+        return new UserPermissionsResponse
+        {
+            UserId = userId,
+            Email = user.Email,
+            IsAdmin = isAdmin,
+            Departments = departments,
+            Permissions = new PermissionsDto() // Hub/Report permissions not implemented yet
+        };
+    }
+
     public Task GrantHubAccessAsync(int userId, int hubId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
     public Task GrantReportGroupAccessAsync(int userId, int reportGroupId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
     public Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();

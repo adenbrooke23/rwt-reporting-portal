@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, forkJoin, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
 import { MockUserService } from '../../../auth/services/mock-user.service';
@@ -82,7 +82,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   selectedUser: UserProfile | null = null;
   userPermissions: Set<string> = new Set();
   userDepartments: Set<string> = new Set();
+  originalUserDepartments: Set<string> = new Set(); // Track original for diff
   isSaving = false;
+  isLoadingDepartments = false;
   collapsedCategories: Set<string> = new Set();
 
   searchQuery = '';
@@ -264,9 +266,25 @@ export class AdminComponent implements OnInit, OnDestroy {
   selectUser(user: UserProfile): void {
     this.selectedUser = user;
     const permissions = this.mockUserService.getUserPermissions(user.id);
-    const departments = this.mockUserService.getUserGroups(user.id); // Still uses groups in mock service
     this.userPermissions = new Set(permissions);
-    this.userDepartments = new Set(departments);
+
+    // Fetch departments from real API
+    this.isLoadingDepartments = true;
+    this.userDepartments = new Set();
+    this.originalUserDepartments = new Set();
+
+    this.adminUserService.getUserDepartments(parseInt(user.id, 10)).subscribe({
+      next: (departmentIds) => {
+        this.userDepartments = new Set(departmentIds);
+        this.originalUserDepartments = new Set(departmentIds); // Store original for diff
+        this.isLoadingDepartments = false;
+      },
+      error: (error) => {
+        console.error('Error loading user departments:', error);
+        this.isLoadingDepartments = false;
+        // Still allow editing with empty departments
+      }
+    });
 
     // Collapse all categories by default
     this.collapsedCategories = new Set(this.reportCategories.map(cat => cat.id));
@@ -335,31 +353,15 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!this.selectedUser) return;
 
     this.isSaving = true;
+    const userId = parseInt(this.selectedUser.id, 10);
 
+    // For now, still use mock for permissions (will be connected later)
     const reportIds = Array.from(this.userPermissions);
-    const departmentIds = Array.from(this.userDepartments);
-
     this.mockUserService.updateUserPermissions(this.selectedUser.id, reportIds)
       .subscribe({
         next: () => {
-          this.mockUserService.updateUserGroups(this.selectedUser!.id, departmentIds)
-            .subscribe({
-              next: () => {
-                this.isSaving = false;
-                this.notificationService.success(
-                  'Changes Saved',
-                  'Permissions and departments updated successfully'
-                );
-                this.loadUsers();
-              },
-              error: () => {
-                this.isSaving = false;
-                this.notificationService.error(
-                  'Save Failed',
-                  'Error updating departments. Please try again.'
-                );
-              }
-            });
+          // Save departments via real API
+          this.saveDepartments(userId);
         },
         error: () => {
           this.isSaving = false;
@@ -369,6 +371,58 @@ export class AdminComponent implements OnInit, OnDestroy {
           );
         }
       });
+  }
+
+  private saveDepartments(userId: number): void {
+    // Compute what was added and removed
+    const currentDepts = Array.from(this.userDepartments);
+    const originalDepts = Array.from(this.originalUserDepartments);
+
+    const toAdd = currentDepts.filter(id => !this.originalUserDepartments.has(id));
+    const toRemove = originalDepts.filter(id => !this.userDepartments.has(id));
+
+    // If no changes, we're done
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      this.isSaving = false;
+      this.notificationService.success(
+        'Changes Saved',
+        'Permissions updated successfully'
+      );
+      return;
+    }
+
+    // Build array of observables for all add/remove operations
+    const operations: Observable<{ success: boolean }>[] = [];
+
+    toAdd.forEach(deptId => {
+      operations.push(this.adminUserService.assignUserToDepartment(userId, parseInt(deptId, 10)));
+    });
+
+    toRemove.forEach(deptId => {
+      operations.push(this.adminUserService.removeUserFromDepartment(userId, parseInt(deptId, 10)));
+    });
+
+    // Execute all operations
+    forkJoin(operations).subscribe({
+      next: () => {
+        this.isSaving = false;
+        // Update original to match current (so subsequent saves work correctly)
+        this.originalUserDepartments = new Set(this.userDepartments);
+        this.notificationService.success(
+          'Changes Saved',
+          'Permissions and departments updated successfully'
+        );
+        this.loadUsers();
+      },
+      error: (error) => {
+        console.error('Error saving departments:', error);
+        this.isSaving = false;
+        this.notificationService.error(
+          'Save Failed',
+          'Error updating departments. Please try again.'
+        );
+      }
+    });
   }
 
   backToDashboard(): void {

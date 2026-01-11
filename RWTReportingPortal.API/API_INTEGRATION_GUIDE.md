@@ -155,7 +155,37 @@ var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == u
 return profile?.AvatarId;  // Works!
 ```
 
-### Issue 4: Data Saved But Not Fetched on Login
+### Issue 4: Cannot Find Expired/Locked Users (404 on Restore/Unlock)
+**Cause**: Standard `GetByIdAsync` filters out expired users with `WHERE !IsExpired`.
+
+**Solution**: Create a separate method that doesn't filter:
+```csharp
+// Standard method - filters out expired users
+public async Task<User?> GetByIdAsync(int userId)
+{
+    return await _context.Users
+        .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsExpired);
+}
+
+// Special method for admin operations - includes expired users
+public async Task<User?> GetByIdIncludeExpiredAsync(int userId)
+{
+    return await _context.Users
+        .FirstOrDefaultAsync(u => u.UserId == userId);
+}
+```
+
+**Use `GetByIdIncludeExpiredAsync` for**:
+- Unlock user endpoint
+- Restore user endpoint
+- Any admin operation that needs to find inactive/expired users
+
+**Account Status Hierarchy**:
+- `IsExpired` supersedes `IsActive` - expired users are filtered from queries entirely
+- `IsLockedOut` is checked after IsExpired
+- Lock operation should set both `IsLockedOut = true` AND `IsActive = false`
+
+### Issue 5: Data Saved But Not Fetched on Login
 **Cause**: JWT token doesn't contain database-stored values (like avatar). Must fetch from API after login.
 
 **Solution**: After SSO callback, fetch user profile:
@@ -177,7 +207,7 @@ handleSSOTokens(accessToken: string, refreshToken?: string): void {
 }
 ```
 
-### Issue 5: CORS Errors
+### Issue 6: CORS Errors
 **Cause**: API not configured to accept requests from Angular app's origin.
 
 **Solution**: Configure CORS in `Program.cs`:
@@ -273,17 +303,50 @@ Navigate to `https://erpqaapi.redwoodtrust.com/swagger` (if enabled in developme
 | PUT | `/api/users/preferences` | Update preferences | Implemented |
 | GET | `/api/users/stats` | Get user statistics | Implemented |
 
+### Admin User Management Endpoints (Requires Admin Role)
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/admin/users` | Get paginated user list | Working |
+| GET | `/api/admin/users/{userId}` | Get user details | Working |
+| GET | `/api/admin/users/{userId}/permissions` | Get user permissions | Working |
+| PUT | `/api/admin/users/{userId}/lock` | Lock user account | Working |
+| PUT | `/api/admin/users/{userId}/unlock` | Unlock user account | Working |
+| PUT | `/api/admin/users/{userId}/expire` | Expire user account | Working |
+| PUT | `/api/admin/users/{userId}/restore` | Restore expired account | Working |
+| GET | `/api/admin/users/{userId}/departments` | Get user's departments | Working |
+| POST | `/api/admin/users/{userId}/departments` | Assign user to department | Working |
+| DELETE | `/api/admin/users/{userId}/departments/{departmentId}` | Remove from department | Working |
+| POST | `/api/admin/users/{userId}/permissions/hub` | Grant hub access | Working |
+
 ---
 
 ## Database Tables Reference
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `portal.User` | Main user record | UserId, Email, EntraObjectId |
+| `portal.User` | Main user record | UserId, Email, EntraObjectId, IsActive, IsLockedOut, IsExpired |
 | `portal.UserProfile` | Profile data | UserProfileId, UserId, AvatarId |
 | `portal.UserPreference` | User preferences | UserPreferenceId, UserId, ThemeId |
+| `portal.Role` | Role definitions | RoleId, RoleName |
+| `portal.UserRole` | User-role mappings | UserId, RoleId |
+| `portal.Department` | Organizational departments | DepartmentId, DepartmentCode, DepartmentName |
+| `portal.UserDepartment` | User-department mappings | UserId, DepartmentId, GrantedAt |
 
 **Note**: Table names are singular (UserProfile, not UserProfiles). The DbSet properties in code use plural names but map to singular table names.
+
+### User Account Status Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `IsActive` | bit | User can log in (false when locked) |
+| `IsLockedOut` | bit | Account is locked by admin |
+| `LockedOutAt` | datetime | When lock was applied |
+| `LockoutReason` | nvarchar | Why account was locked |
+| `IsExpired` | bit | Account is expired (supersedes IsActive) |
+| `ExpiredAt` | datetime | When expiration was applied |
+| `ExpirationReason` | nvarchar | Why account was expired (includes ticket #) |
+| `ExpiredBy` | int | Admin who expired the account |
 
 ---
 
@@ -298,5 +361,16 @@ When implementing new features, follow this pattern:
 
 ---
 
+## Angular Frontend Integration Files
+
+| File | Purpose |
+|------|---------|
+| `admin-user.service.ts` | Admin user management API calls |
+| `admin.component.ts` | User Management UI (uses AdminUserService) |
+| `auth.interceptor.ts` | Adds JWT token to API requests |
+| `auth.service.ts` | Authentication and token management |
+
+---
+
 *Last Updated: January 2026*
-*Based on learnings from user profile/avatar implementation*
+*Based on learnings from user profile/avatar and user management implementations*
