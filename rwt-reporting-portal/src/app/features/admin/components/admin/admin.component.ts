@@ -135,8 +135,19 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   loadDepartments(): void {
-    this.contentService.getDepartments(false).subscribe(departments => {
-      this.departments = departments;
+    // Load departments from real API
+    this.adminUserService.getAllDepartments(false).subscribe(apiDepartments => {
+      // Map API response to existing Department interface format
+      this.departments = apiDepartments.map(d => ({
+        id: d.departmentId.toString(),
+        name: d.departmentName,
+        description: d.description || '',
+        sortOrder: d.sortOrder,
+        isActive: d.isActive,
+        createdAt: new Date(d.createdAt),
+        updatedAt: new Date(),
+        createdBy: d.createdByEmail || ''
+      }));
     });
   }
 

@@ -617,7 +617,35 @@ public class DepartmentService : IDepartmentService
         _context = context;
     }
 
-    public Task<DepartmentListResponse> GetAllDepartmentsAsync(bool includeInactive = false) => throw new NotImplementedException();
+    public async Task<DepartmentListResponse> GetAllDepartmentsAsync(bool includeInactive = false)
+    {
+        var query = _context.Departments.AsQueryable();
+
+        if (!includeInactive)
+        {
+            query = query.Where(d => d.IsActive);
+        }
+
+        var departments = await query
+            .OrderBy(d => d.SortOrder)
+            .ThenBy(d => d.DepartmentName)
+            .Select(d => new DepartmentDto
+            {
+                DepartmentId = d.DepartmentId,
+                DepartmentCode = d.DepartmentCode,
+                DepartmentName = d.DepartmentName,
+                Description = d.Description,
+                SortOrder = d.SortOrder,
+                IsActive = d.IsActive,
+                UserCount = d.UserDepartments.Count,
+                ReportCount = d.ReportDepartments.Count,
+                CreatedAt = d.CreatedAt,
+                CreatedByEmail = null
+            })
+            .ToListAsync();
+
+        return new DepartmentListResponse { Departments = departments };
+    }
     public Task<DepartmentDto?> GetDepartmentAsync(int departmentId) => throw new NotImplementedException();
     public Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentRequest request, int createdBy) => throw new NotImplementedException();
     public Task<DepartmentDto> UpdateDepartmentAsync(int departmentId, UpdateDepartmentRequest request, int updatedBy) => throw new NotImplementedException();

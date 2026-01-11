@@ -86,6 +86,19 @@ export interface ReportPermissionDto {
   expiresAt?: string;
 }
 
+export interface DepartmentDto {
+  departmentId: number;
+  departmentCode: string;
+  departmentName: string;
+  description?: string;
+  sortOrder: number;
+  isActive: boolean;
+  userCount: number;
+  reportCount: number;
+  createdAt: string;
+  createdByEmail?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -254,6 +267,23 @@ export class AdminUserService {
       catchError(error => {
         console.error('Error granting hub access:', error);
         return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all departments
+   */
+  getAllDepartments(includeInactive = false): Observable<DepartmentDto[]> {
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+    return this.http.get<{ departments: DepartmentDto[] }>(
+      `${this.API_BASE_URL}/admin/departments`,
+      { params }
+    ).pipe(
+      map(response => response.departments),
+      catchError(error => {
+        console.error('Error fetching departments:', error);
+        return of([]);
       })
     );
   }
