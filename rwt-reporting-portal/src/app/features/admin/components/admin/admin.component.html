@@ -205,7 +205,7 @@
                 <div *ngFor="let dept of departments" class="group-item-compact">
                   <ibm-checkbox
                     [checked]="hasDepartment(dept.id)"
-                    (change)="toggleDepartment(dept.id)">
+                    (checkedChange)="toggleDepartment(dept.id)">
                     {{ dept.name }}
                   </ibm-checkbox>
                   <p class="group-helper-text">{{ dept.description }}</p>
