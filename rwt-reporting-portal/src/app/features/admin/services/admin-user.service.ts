@@ -20,6 +20,7 @@ export interface AdminUserDto {
   lastLoginAt?: string;
   loginCount: number;
   createdAt: string;
+  departmentCount?: number; // Number of departments user belongs to
 }
 
 export interface PaginationInfo {
@@ -317,6 +318,12 @@ export class AdminUserService {
       accountStatus = 'locked';
     }
 
+    // Create placeholder array for groups based on departmentCount
+    // This allows the UI to show the count without having the full list
+    const groups = dto.departmentCount
+      ? Array(dto.departmentCount).fill('dept')
+      : [];
+
     return {
       id: dto.userId.toString(),
       username: dto.email.split('@')[0],
@@ -326,7 +333,7 @@ export class AdminUserService {
       displayName: dto.displayName || `${dto.firstName} ${dto.lastName}`.trim(),
       roles: dto.roles || [],
       permissions: [],
-      groups: [],
+      groups,
       createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
       accountStatus,
       failedLoginAttempts: 0

@@ -61,7 +61,8 @@ public class AdminUsersController : ControllerBase
                 IsLockedOut = u.IsLockedOut,
                 LastLoginAt = u.LastLoginAt,
                 LoginCount = u.LoginCount,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                DepartmentCount = u.UserDepartments?.Count ?? 0
             }).ToList(),
             Pagination = new PaginationInfo
             {

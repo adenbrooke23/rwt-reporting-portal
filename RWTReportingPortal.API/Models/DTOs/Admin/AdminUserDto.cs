@@ -17,6 +17,7 @@ public class AdminUserDto
     public DateTime? LastLoginAt { get; set; }
     public int LoginCount { get; set; }
     public DateTime CreatedAt { get; set; }
+    public int DepartmentCount { get; set; }
 }
 
 public class AdminUserListResponse
