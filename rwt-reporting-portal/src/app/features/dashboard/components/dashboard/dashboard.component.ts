@@ -1,11 +1,14 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter, take, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AnnouncementService } from '../../../../core/services/announcement.service';
 import { UserStatsService } from '../../../../core/services/user-stats.service';
-import { ContentManagementService } from '../../../admin/services/content-management.service';
+import { HubService } from '../../services/hub.service';
 import { Announcement, AnnouncementSummary } from '../../../../core/models/announcement.model';
 import { QuickStat } from '../../../../core/models/user-stats.model';
 import { ModalModule, ButtonModule } from 'carbon-components-angular';
@@ -31,9 +34,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private announcementService = inject(AnnouncementService);
   private userStatsService = inject(UserStatsService);
-  private contentService = inject(ContentManagementService);
+  private hubService = inject(HubService);
+  private platformId = inject(PLATFORM_ID);
 
   private subscriptions: Subscription[] = [];
+  private destroy$ = new Subject<void>();
 
   currentUser = this.authService.getCurrentUser();
   hubs: HubDisplay[] = [];
@@ -53,13 +58,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.loadHubs();
-    this.loadAnnouncements();
-    this.loadQuickStats();
+    // Skip API calls during SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Wait for auth state to be ready before loading data
+    this.authService.authState$.pipe(
+      filter(state => state.isAuthenticated),
+      take(1),
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
+      this.currentUser = state.user;
+      this.loadHubs();
+      this.loadAnnouncements();
+      this.loadQuickStats();
+    });
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadQuickStats(): void {
@@ -73,24 +93,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadHubs(): void {
-    // Load available reporting hubs from ContentManagementService
-    const sub = this.contentService.getHubs().subscribe({
+    // Load accessible hubs from real API based on user permissions
+    console.log('[DEBUG] Loading accessible hubs from API...');
+    const sub = this.hubService.getAccessibleHubs().subscribe({
       next: (hubs) => {
+        console.log('[DEBUG] Accessible hubs loaded:', hubs);
         this.hubs = hubs.map(hub => ({
-          id: hub.id,
-          name: hub.name,
-          description: hub.description,
+          id: hub.hubId.toString(),
+          name: hub.hubName,
+          description: hub.description || '',
           reportCount: hub.reportCount || 0,
           icon: hub.iconName || 'folder',
-          colorClass: hub.colorClass || 'default'
+          colorClass: this.getHubColorClass(hub.hubCode)
         }));
       },
-      error: () => {
-        // Fallback to empty array on error
+      error: (err) => {
+        console.error('[DEBUG] Error loading hubs:', err);
         this.hubs = [];
       }
     });
     this.subscriptions.push(sub);
+  }
+
+  /**
+   * Get color class based on hub code for visual distinction
+   */
+  private getHubColorClass(hubCode: string): string {
+    const colorMap: Record<string, string> = {
+      'SEQUOIA': 'sequoia',
+      'COREVEST': 'corevest',
+      'ENTERPRISE': 'enterprise',
+      'ASPIRE': 'aspire'
+    };
+    return colorMap[hubCode?.toUpperCase()] || 'default';
   }
 
   getUserName(): string {

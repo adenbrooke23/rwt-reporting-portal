@@ -562,14 +562,121 @@ public class HubService : IHubService
 {
     private readonly IHubRepository _hubRepository;
     private readonly ISqlConnectionFactory _sqlConnectionFactory;
+    private readonly ApplicationDbContext _context;
 
-    public HubService(IHubRepository hubRepository, ISqlConnectionFactory sqlConnectionFactory)
+    public HubService(IHubRepository hubRepository, ISqlConnectionFactory sqlConnectionFactory, ApplicationDbContext context)
     {
         _hubRepository = hubRepository;
         _sqlConnectionFactory = sqlConnectionFactory;
+        _context = context;
     }
 
-    public Task<HubListResponse> GetAccessibleHubsAsync(int userId) => throw new NotImplementedException();
+    public async Task<HubListResponse> GetAccessibleHubsAsync(int userId)
+    {
+        // Get user with roles to check if admin
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Include(u => u.UserDepartments)
+            .Include(u => u.HubAccess)
+            .Include(u => u.ReportAccess)
+                .ThenInclude(ra => ra.Report)
+                    .ThenInclude(r => r.ReportGroup)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+        {
+            return new HubListResponse { Hubs = new List<HubDto>() };
+        }
+
+        // Check if user is admin (case-insensitive)
+        var isAdmin = user.UserRoles?.Any(ur =>
+            ur.Role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)) ?? false;
+
+        List<ReportingHub> accessibleHubs;
+
+        if (isAdmin)
+        {
+            // Admins get all active hubs
+            accessibleHubs = await _context.ReportingHubs
+                .Include(h => h.ReportGroups)
+                    .ThenInclude(rg => rg.Reports)
+                .Where(h => h.IsActive)
+                .OrderBy(h => h.SortOrder)
+                .ThenBy(h => h.HubName)
+                .ToListAsync();
+        }
+        else
+        {
+            // Collect hub IDs the user has access to
+            var accessibleHubIds = new HashSet<int>();
+
+            // 1. Direct hub access (ad-hoc)
+            var directHubIds = user.HubAccess?
+                .Where(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow)
+                .Select(ha => ha.HubId) ?? Enumerable.Empty<int>();
+            foreach (var hubId in directHubIds)
+            {
+                accessibleHubIds.Add(hubId);
+            }
+
+            // 2. Direct report access (ad-hoc) - get the hub for each report
+            var reportHubIds = user.ReportAccess?
+                .Where(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow)
+                .Where(ra => ra.Report?.ReportGroup != null)
+                .Select(ra => ra.Report.ReportGroup.HubId) ?? Enumerable.Empty<int>();
+            foreach (var hubId in reportHubIds)
+            {
+                accessibleHubIds.Add(hubId);
+            }
+
+            // 3. Department-based access - get hubs containing reports tagged with user's departments
+            if (user.UserDepartments?.Any() == true)
+            {
+                var userDepartmentIds = user.UserDepartments.Select(ud => ud.DepartmentId).ToList();
+
+                var departmentHubIds = await _context.ReportDepartments
+                    .Where(rd => userDepartmentIds.Contains(rd.DepartmentId))
+                    .Include(rd => rd.Report)
+                        .ThenInclude(r => r.ReportGroup)
+                    .Where(rd => rd.Report.IsActive && rd.Report.ReportGroup.IsActive)
+                    .Select(rd => rd.Report.ReportGroup.HubId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var hubId in departmentHubIds)
+                {
+                    accessibleHubIds.Add(hubId);
+                }
+            }
+
+            // Fetch the actual hubs
+            accessibleHubs = await _context.ReportingHubs
+                .Include(h => h.ReportGroups)
+                    .ThenInclude(rg => rg.Reports)
+                .Where(h => h.IsActive && accessibleHubIds.Contains(h.HubId))
+                .OrderBy(h => h.SortOrder)
+                .ThenBy(h => h.HubName)
+                .ToListAsync();
+        }
+
+        return new HubListResponse
+        {
+            Hubs = accessibleHubs.Select(h => new HubDto
+            {
+                HubId = h.HubId,
+                HubCode = h.HubCode,
+                HubName = h.HubName,
+                Description = h.Description,
+                IconName = h.IconName,
+                BackgroundImage = h.BackgroundImage,
+                ReportCount = h.ReportGroups?
+                    .Where(rg => rg.IsActive)
+                    .Sum(rg => rg.Reports?.Count(r => r.IsActive) ?? 0) ?? 0
+            }).ToList()
+        };
+    }
+
     public Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId) => throw new NotImplementedException();
 
     public async Task<List<HubDto>> GetAllHubsAsync(bool includeInactive = false)
