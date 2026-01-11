@@ -1,4 +1,5 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Subject, fromEvent, merge, timer } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 
@@ -6,6 +7,7 @@ import { debounceTime, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class IdleTimeoutService {
+  private platformId = inject(PLATFORM_ID);
   private readonly WARNING_TIME = 20 * 60 * 1000; // 20 minutes
   private readonly LOGOUT_TIME = 25 * 60 * 1000;  // 25 minutes
 
@@ -22,6 +24,8 @@ export class IdleTimeoutService {
   constructor(private ngZone: NgZone) {}
 
   startWatching(): void {
+    // Only watch for idle in browser environment
+    if (!isPlatformBrowser(this.platformId)) return;
     if (this.isActive) return;
 
     this.isActive = true;

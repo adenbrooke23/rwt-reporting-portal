@@ -244,6 +244,17 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "Hub access granted successfully" });
     }
 
+    /// <summary>
+    /// Update user admin role (grant or revoke)
+    /// </summary>
+    [HttpPut("{userId}/roles/admin")]
+    public async Task<IActionResult> UpdateUserAdminRole(int userId, [FromBody] UpdateAdminRoleRequest request)
+    {
+        var grantedBy = GetUserId();
+        await _permissionService.UpdateUserAdminRoleAsync(userId, request.IsAdmin, grantedBy);
+        return Ok(new { success = true, message = request.IsAdmin ? "Admin role granted successfully" : "Admin role revoked successfully" });
+    }
+
     private int GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

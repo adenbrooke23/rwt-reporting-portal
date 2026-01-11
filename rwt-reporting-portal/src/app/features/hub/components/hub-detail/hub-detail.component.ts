@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -38,6 +38,7 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   @ViewChild('reportNameTemplate', { static: false }) reportNameTemplate!: TemplateRef<any>;
   @ViewChild('descriptionTemplate', { static: false }) descriptionTemplate!: TemplateRef<any>;
@@ -84,10 +85,12 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Load row size preference from localStorage
-    const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
-    if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
-      this.tableRowSize = savedRowSize;
+    // Load row size preference from localStorage (only in browser)
+    if (isPlatformBrowser(this.platformId)) {
+      const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
+      if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
+        this.tableRowSize = savedRowSize;
+      }
     }
 
     // Initialize pagination model
@@ -237,7 +240,9 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   setRowSize(size: 'xs' | 'sm' | 'md' | 'lg'): void {
     this.tableRowSize = size;
-    localStorage.setItem('tableRowSize', size);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('tableRowSize', size);
+    }
   }
 
   backToDashboard(): void {

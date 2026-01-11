@@ -289,6 +289,21 @@ export class AdminUserService {
   }
 
   /**
+   * Update user admin role (grant or revoke)
+   */
+  updateUserAdminRole(userId: number, isAdmin: boolean): Observable<{ success: boolean }> {
+    return this.http.put<{ success: boolean; message: string }>(
+      `${this.ADMIN_USERS_URL}/${userId}/roles/admin`,
+      { isAdmin }
+    ).pipe(
+      catchError(error => {
+        console.error('Error updating admin role:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Map API DTO to frontend UserProfile model
    */
   private mapToUserProfile(dto: AdminUserDto): UserProfile {

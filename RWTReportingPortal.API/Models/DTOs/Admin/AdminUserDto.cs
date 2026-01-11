@@ -121,3 +121,8 @@ public class ReplaceReportDepartmentsRequest
 {
     public List<int> DepartmentIds { get; set; } = new();
 }
+
+public class UpdateAdminRoleRequest
+{
+    public bool IsAdmin { get; set; }
+}

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { SubReport } from '../../features/auth/models/user-management.models';
 
@@ -12,19 +13,31 @@ export interface PinnedReport {
   providedIn: 'root'
 })
 export class QuickAccessService {
+  private platformId = inject(PLATFORM_ID);
   private readonly STORAGE_KEY = 'quick_access_reports';
-  private pinnedReportsSubject = new BehaviorSubject<PinnedReport[]>(this.loadFromStorage());
+  private pinnedReportsSubject: BehaviorSubject<PinnedReport[]>;
 
-  public pinnedReports$: Observable<PinnedReport[]> = this.pinnedReportsSubject.asObservable();
+  public pinnedReports$: Observable<PinnedReport[]>;
 
-  constructor() {}
+  constructor() {
+    // Initialize with stored data only in browser environment
+    const initialData = this.loadFromStorage();
+    this.pinnedReportsSubject = new BehaviorSubject<PinnedReport[]>(initialData);
+    this.pinnedReports$ = this.pinnedReportsSubject.asObservable();
+  }
 
   private loadFromStorage(): PinnedReport[] {
+    if (!isPlatformBrowser(this.platformId)) {
+      return [];
+    }
     const stored = localStorage.getItem(this.STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   }
 
   private saveToStorage(reports: PinnedReport[]): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(reports));
   }
 

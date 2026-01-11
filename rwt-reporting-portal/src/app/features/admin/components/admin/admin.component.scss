@@ -479,6 +479,37 @@
     color: var(--color-danger, #da1e28);
     font-weight: 500;
   }
+
+  &.warning-text {
+    color: var(--color-warning, #f1c21b);
+    font-style: italic;
+  }
+}
+
+.admin-section {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  padding: spacing.$spacing-05;
+  margin-bottom: spacing.$spacing-05;
+}
+
+.admin-toggle-container {
+  margin-top: spacing.$spacing-03;
+
+  ::ng-deep {
+    .cds--checkbox-wrapper,
+    .bx--checkbox-wrapper {
+      margin-bottom: spacing.$spacing-02;
+    }
+
+    .cds--checkbox-label-text,
+    .bx--checkbox-label-text {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+  }
 }
 
 .categories-list {

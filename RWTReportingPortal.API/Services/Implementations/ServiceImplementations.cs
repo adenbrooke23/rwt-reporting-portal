@@ -755,6 +755,48 @@ public class PermissionService : IPermissionService
     public Task GrantReportGroupAccessAsync(int userId, int reportGroupId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
     public Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null) => throw new NotImplementedException();
     public Task RevokePermissionAsync(int permissionId, string permissionType) => throw new NotImplementedException();
+
+    public async Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int grantedBy)
+    {
+        // Get the Admin role
+        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
+        if (adminRole == null)
+        {
+            throw new InvalidOperationException("Admin role not found in database");
+        }
+
+        // Check if user already has admin role
+        var existingUserRole = await _context.UserRoles
+            .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == adminRole.RoleId);
+
+        if (isAdmin)
+        {
+            // Grant admin role
+            if (existingUserRole == null)
+            {
+                var userRole = new UserRole
+                {
+                    UserId = userId,
+                    RoleId = adminRole.RoleId,
+                    GrantedAt = DateTime.UtcNow,
+                    GrantedBy = grantedBy
+                };
+                _context.UserRoles.Add(userRole);
+                await _context.SaveChangesAsync();
+            }
+            // If already has role, nothing to do
+        }
+        else
+        {
+            // Revoke admin role
+            if (existingUserRole != null)
+            {
+                _context.UserRoles.Remove(existingUserRole);
+                await _context.SaveChangesAsync();
+            }
+            // If doesn't have role, nothing to do
+        }
+    }
 }
 
 public class AnnouncementService : IAnnouncementService

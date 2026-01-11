@@ -83,8 +83,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   userPermissions: Set<string> = new Set();
   userDepartments: Set<string> = new Set();
   originalUserDepartments: Set<string> = new Set(); // Track original for diff
+  originalIsAdmin = false; // Track original admin status
+  pendingIsAdmin = false; // Track pending admin status change
   isSaving = false;
   isLoadingDepartments = false;
+  isSavingAdminRole = false;
   collapsedCategories: Set<string> = new Set();
 
   searchQuery = '';
@@ -287,6 +290,11 @@ export class AdminComponent implements OnInit, OnDestroy {
     const permissions = this.mockUserService.getUserPermissions(user.id);
     this.userPermissions = new Set(permissions);
 
+    // Track admin status
+    this.originalIsAdmin = this.isUserAdmin(user);
+    this.pendingIsAdmin = this.originalIsAdmin;
+    console.log('[DEBUG] User admin status:', this.originalIsAdmin);
+
     // Fetch departments from real API
     this.isLoadingDepartments = true;
     this.userDepartments = new Set();
@@ -328,6 +336,90 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.userDepartments.add(departmentId);
     }
     console.log('[DEBUG] userDepartments after:', Array.from(this.userDepartments));
+  }
+
+  async toggleAdminRole(): Promise<void> {
+    if (!this.selectedUser) return;
+
+    // Don't allow modifying own admin status
+    if (this.selectedUser.id === this.currentUser?.id) {
+      this.notificationService.warning(
+        'Action Not Allowed',
+        'You cannot modify your own administrator status.'
+      );
+      return;
+    }
+
+    const newAdminStatus = !this.isUserAdmin(this.selectedUser);
+    const userName = `${this.selectedUser.firstName} ${this.selectedUser.lastName}`;
+
+    console.log('[DEBUG] toggleAdminRole called');
+    console.log('[DEBUG] Current admin status:', this.isUserAdmin(this.selectedUser));
+    console.log('[DEBUG] New admin status will be:', newAdminStatus);
+
+    // Confirm the action
+    const action = newAdminStatus ? 'grant' : 'revoke';
+    const confirmed = await this.confirmationService.confirm(
+      newAdminStatus ? 'info' : 'warning',
+      `${newAdminStatus ? 'Grant' : 'Revoke'} Administrator Access`,
+      `Are you sure you want to ${action} administrator privileges for ${userName}? ${
+        newAdminStatus
+          ? 'They will have full access to manage users, content, and system settings.'
+          : 'They will lose access to administrative functions.'
+      }`,
+      `${newAdminStatus ? 'Grant' : 'Revoke'} Admin`
+    );
+
+    if (!confirmed) {
+      console.log('[DEBUG] Admin role change cancelled by user');
+      return;
+    }
+
+    // Save the admin role change immediately
+    this.isSavingAdminRole = true;
+    const userId = parseInt(this.selectedUser.id, 10);
+
+    console.log('[DEBUG] Calling API to update admin role for user:', userId, 'to:', newAdminStatus);
+
+    this.adminUserService.updateUserAdminRole(userId, newAdminStatus).subscribe({
+      next: () => {
+        console.log('[DEBUG] Admin role updated successfully');
+        this.isSavingAdminRole = false;
+
+        // Update the local user's roles
+        if (this.selectedUser) {
+          if (newAdminStatus) {
+            // Add Admin role if not present
+            if (!this.selectedUser.roles.some(r => r.toLowerCase() === 'admin')) {
+              this.selectedUser.roles = [...this.selectedUser.roles, 'Admin'];
+            }
+          } else {
+            // Remove Admin role
+            this.selectedUser.roles = this.selectedUser.roles.filter(
+              r => r.toLowerCase() !== 'admin'
+            );
+          }
+          this.originalIsAdmin = newAdminStatus;
+          this.pendingIsAdmin = newAdminStatus;
+        }
+
+        this.notificationService.success(
+          'Administrator Access Updated',
+          `${userName} has been ${newAdminStatus ? 'granted' : 'revoked'} administrator access.`
+        );
+
+        // Refresh user list to reflect changes
+        this.loadUsers();
+      },
+      error: (error) => {
+        console.error('[DEBUG] Error updating admin role:', error);
+        this.isSavingAdminRole = false;
+        this.notificationService.error(
+          'Update Failed',
+          'Failed to update administrator access. Please try again.'
+        );
+      }
+    });
   }
 
   hasPermission(reportId: string): boolean {

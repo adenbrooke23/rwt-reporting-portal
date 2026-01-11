@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
@@ -33,6 +33,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private iconService = inject(IconService);
+  private platformId = inject(PLATFORM_ID);
 
   @ViewChild('reportNameTemplate', { static: false }) reportNameTemplate!: TemplateRef<any>;
   @ViewChild('hubTemplate', { static: false }) hubTemplate!: TemplateRef<any>;
@@ -64,10 +65,12 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
     // Register Carbon icons
     this.iconService.registerAll([ArrowLeft, Document, Star, StarFilled, Pin, PinFilled, TrashCan, OverflowMenuVertical, View, Settings, Checkmark]);
 
-    // Load row size preference from localStorage
-    const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
-    if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
-      this.tableRowSize = savedRowSize;
+    // Load row size preference from localStorage (only in browser)
+    if (isPlatformBrowser(this.platformId)) {
+      const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
+      if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
+        this.tableRowSize = savedRowSize;
+      }
     }
 
     // Initialize pagination model
@@ -265,6 +268,8 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
 
   setRowSize(size: 'xs' | 'sm' | 'md' | 'lg'): void {
     this.tableRowSize = size;
-    localStorage.setItem('tableRowSize', size);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('tableRowSize', size);
+    }
   }
 }

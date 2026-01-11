@@ -197,6 +197,26 @@
               </div>
             </div>
 
+            <div class="permissions-section admin-section">
+              <h3>Administrator Access</h3>
+              <p class="section-description">Grant or revoke administrator privileges for this user</p>
+
+              <div class="admin-toggle-container">
+                <ibm-checkbox
+                  [checked]="isUserAdmin(selectedUser)"
+                  (checkedChange)="toggleAdminRole()"
+                  [disabled]="selectedUser.id === currentUser?.id">
+                  Administrator Role
+                </ibm-checkbox>
+                <p class="group-helper-text" *ngIf="selectedUser.id !== currentUser?.id">
+                  Administrators have full access to manage users, content, and system settings.
+                </p>
+                <p class="group-helper-text warning-text" *ngIf="selectedUser.id === currentUser?.id">
+                  You cannot modify your own administrator status.
+                </p>
+              </div>
+            </div>
+
             <div class="permissions-section">
               <h3>Departments</h3>
               <p class="section-description">Assign user to departments for group-based report access</p>
