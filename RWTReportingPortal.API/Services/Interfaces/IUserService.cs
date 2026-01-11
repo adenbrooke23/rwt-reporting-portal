@@ -7,6 +7,7 @@ namespace RWTReportingPortal.API.Services.Interfaces;
 public interface IUserService
 {
     Task<User?> GetByIdAsync(int userId);
+    Task<User?> GetByIdIncludeExpiredAsync(int userId);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByEntraObjectIdAsync(string entraObjectId);
     Task<List<User>> GetAllUsersAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true, bool includeExpired = false);

@@ -6,6 +6,7 @@ namespace RWTReportingPortal.API.Data.Repositories;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int userId);
+    Task<User?> GetByIdIncludeExpiredAsync(int userId);
     Task<User?> GetByIdWithDetailsAsync(int userId);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByEntraObjectIdAsync(string entraObjectId);
@@ -34,6 +35,12 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsExpired);
+    }
+
+    public async Task<User?> GetByIdIncludeExpiredAsync(int userId)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 
     public async Task<User?> GetByIdWithDetailsAsync(int userId)

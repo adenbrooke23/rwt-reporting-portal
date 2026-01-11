@@ -468,6 +468,7 @@ public class UserService : IUserService
     }
 
     public Task<User?> GetByIdAsync(int userId) => _userRepository.GetByIdAsync(userId);
+    public Task<User?> GetByIdIncludeExpiredAsync(int userId) => _userRepository.GetByIdIncludeExpiredAsync(userId);
     public Task<User?> GetByEmailAsync(string email) => _userRepository.GetByEmailAsync(email);
     public Task<User?> GetByEntraObjectIdAsync(string entraObjectId) => _userRepository.GetByEntraObjectIdAsync(entraObjectId);
     public Task<List<User>> GetAllUsersAsync(int page = 1, int pageSize = 50, string? search = null, bool includeInactive = true, bool includeExpired = false)

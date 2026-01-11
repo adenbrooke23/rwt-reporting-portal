@@ -431,9 +431,7 @@ export class AdminComponent implements OnInit, OnDestroy {
             `${userName} account has been unlocked successfully`
           );
           this.loadUsers();
-          if (this.selectedUser && this.selectedUser.id === user.id) {
-            this.selectUser(this.users.find(u => u.id === user.id)!);
-          }
+          this.selectedUser = null;
         },
         error: () => {
           this.isUnlocking = false;

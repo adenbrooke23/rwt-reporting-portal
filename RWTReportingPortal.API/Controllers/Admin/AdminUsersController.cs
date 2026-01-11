@@ -114,13 +114,14 @@ public class AdminUsersController : ControllerBase
 
         var adminUserId = GetUserId();
         user.IsLockedOut = true;
+        user.IsActive = false;
         user.LockedOutAt = DateTime.UtcNow;
         user.LockoutReason = request?.Reason ?? "Locked by administrator";
         await _userService.UpdateAsync(user);
 
         _logger.LogInformation("User {UserId} locked by admin {AdminId}", userId, adminUserId);
 
-        return Ok(new { success = true, userId, isLockedOut = true, message = "User account has been locked" });
+        return Ok(new { success = true, userId, isLockedOut = true, isActive = false, message = "User account has been locked" });
     }
 
     /// <summary>
@@ -129,7 +130,8 @@ public class AdminUsersController : ControllerBase
     [HttpPut("{userId}/unlock")]
     public async Task<IActionResult> UnlockUser(int userId)
     {
-        var user = await _userService.GetByIdAsync(userId);
+        // Use GetByIdIncludeExpiredAsync since locked users might also be inactive
+        var user = await _userService.GetByIdIncludeExpiredAsync(userId);
         if (user == null)
         {
             return NotFound();
@@ -137,6 +139,7 @@ public class AdminUsersController : ControllerBase
 
         var adminUserId = GetUserId();
         user.IsLockedOut = false;
+        user.IsActive = true;
         user.LockedOutUntil = null;
         user.LockedOutAt = null;
         user.LockoutReason = null;
@@ -147,7 +150,7 @@ public class AdminUsersController : ControllerBase
 
         _logger.LogInformation("User {UserId} unlocked by admin {AdminId}", userId, adminUserId);
 
-        return Ok(new { success = true, userId, isLockedOut = false, message = "User account has been unlocked" });
+        return Ok(new { success = true, userId, isLockedOut = false, isActive = true, message = "User account has been unlocked" });
     }
 
     /// <summary>
@@ -178,18 +181,23 @@ public class AdminUsersController : ControllerBase
     [HttpPut("{userId}/restore")]
     public async Task<IActionResult> RestoreUser(int userId)
     {
-        var user = await _userService.GetByIdAsync(userId);
+        // Use GetByIdIncludeExpiredAsync since we need to find expired users
+        var user = await _userService.GetByIdIncludeExpiredAsync(userId);
         if (user == null)
         {
             return NotFound();
         }
 
+        var adminUserId = GetUserId();
         user.IsExpired = false;
         user.ExpiredAt = null;
         user.ExpirationReason = null;
         user.ExpiredBy = null;
         user.IsActive = true;
+        user.IsLockedOut = false;
         await _userService.UpdateAsync(user);
+
+        _logger.LogInformation("User {UserId} restored by admin {AdminId}", userId, adminUserId);
 
         return Ok(new { success = true, userId, isExpired = false, isActive = true, message = "User account has been restored" });
     }
