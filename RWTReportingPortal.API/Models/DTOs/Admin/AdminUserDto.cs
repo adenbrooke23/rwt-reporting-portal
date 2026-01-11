@@ -96,6 +96,11 @@ public class ExpireUserRequest
     public string? Reason { get; set; }
 }
 
+public class LockUserRequest
+{
+    public string? Reason { get; set; }
+}
+
 public class GrantHubAccessRequest
 {
     public int HubId { get; set; }

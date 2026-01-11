@@ -101,6 +101,29 @@ public class AdminUsersController : ControllerBase
     }
 
     /// <summary>
+    /// Lock user account
+    /// </summary>
+    [HttpPut("{userId}/lock")]
+    public async Task<IActionResult> LockUser(int userId, [FromBody] LockUserRequest? request = null)
+    {
+        var user = await _userService.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var adminUserId = GetUserId();
+        user.IsLockedOut = true;
+        user.LockedOutAt = DateTime.UtcNow;
+        user.LockoutReason = request?.Reason ?? "Locked by administrator";
+        await _userService.UpdateAsync(user);
+
+        _logger.LogInformation("User {UserId} locked by admin {AdminId}", userId, adminUserId);
+
+        return Ok(new { success = true, userId, isLockedOut = true, message = "User account has been locked" });
+    }
+
+    /// <summary>
     /// Unlock user account
     /// </summary>
     [HttpPut("{userId}/unlock")]
@@ -112,15 +135,19 @@ public class AdminUsersController : ControllerBase
             return NotFound();
         }
 
+        var adminUserId = GetUserId();
         user.IsLockedOut = false;
         user.LockedOutUntil = null;
         user.LockedOutAt = null;
         user.LockoutReason = null;
         user.FailedLoginAttempts = 0;
         user.UnlockedAt = DateTime.UtcNow;
+        user.UnlockedBy = adminUserId;
         await _userService.UpdateAsync(user);
 
-        return Ok(new { success = true, message = "User account unlocked" });
+        _logger.LogInformation("User {UserId} unlocked by admin {AdminId}", userId, adminUserId);
+
+        return Ok(new { success = true, userId, isLockedOut = false, message = "User account has been unlocked" });
     }
 
     /// <summary>

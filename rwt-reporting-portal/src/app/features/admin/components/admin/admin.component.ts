@@ -388,7 +388,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     if (confirmed) {
       this.isLocking = true;
-      this.mockUserService.lockUser(user.id).subscribe({
+      this.adminUserService.lockUser(parseInt(user.id, 10)).subscribe({
         next: () => {
           this.isLocking = false;
           this.notificationService.success(
@@ -423,7 +423,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     if (confirmed) {
       this.isUnlocking = true;
-      this.mockUserService.unlockUser(user.id).subscribe({
+      this.adminUserService.unlockUser(parseInt(user.id, 10)).subscribe({
         next: () => {
           this.isUnlocking = false;
           this.notificationService.success(
@@ -492,9 +492,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     // Build the expiration reason with ticket number
     const expirationReason = `Ticket: ${this.expireFormData.ticketNumber.trim().toUpperCase()}${this.expireFormData.reason.trim() ? ' - ' + this.expireFormData.reason.trim() : ''}`;
 
-    // For now, use the existing deleteUser method from mock service
-    // In production, this would call an expireUser method
-    this.mockUserService.deleteUser(userId).subscribe({
+    this.adminUserService.expireUser(parseInt(userId, 10), expirationReason).subscribe({
       next: () => {
         this.isExpiring = false;
         this.notificationService.success(
@@ -531,7 +529,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     if (confirmed) {
       this.isRestoring = true;
-      this.mockUserService.restoreUser(userId).subscribe({
+      this.adminUserService.restoreUser(parseInt(userId, 10)).subscribe({
         next: () => {
           this.isRestoring = false;
           this.notificationService.success(

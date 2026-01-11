@@ -184,6 +184,21 @@ export class AdminUserService {
   }
 
   /**
+   * Lock user account
+   */
+  lockUser(userId: number, reason?: string): Observable<{ success: boolean }> {
+    return this.http.put<{ success: boolean; message: string }>(
+      `${this.ADMIN_USERS_URL}/${userId}/lock`,
+      { reason }
+    ).pipe(
+      catchError(error => {
+        console.error('Error locking user:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Unlock user account
    */
   unlockUser(userId: number): Observable<{ success: boolean }> {
