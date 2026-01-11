@@ -17,7 +17,8 @@
       "Bash(ng build:*)",
       "Bash(cat:*)",
       "Bash(timeout 30 ng serve:*)",
-      "Bash(timeout 60 ng serve:*)"
+      "Bash(timeout 60 ng serve:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -38,18 +38,41 @@ export class AuthService {
 
   /**
    * Check for existing authentication session
+   * On page refresh, we restore from localStorage but also fetch fresh profile from API
    */
   private checkExistingSession(): void {
     const token = this.getStoredToken();
     const user = this.getStoredUser();
 
     if (token && user && !this.isTokenExpired(token)) {
+      // Set initial auth state with cached user data
       this.authState.next({
         isAuthenticated: true,
         user,
         token,
         isLoading: false,
         error: null
+      });
+
+      // Fetch fresh user profile from API to get latest settings
+      this.fetchUserProfile().subscribe({
+        next: (profile) => {
+          if (profile.avatarId) {
+            const updatedUser: User = {
+              ...user,
+              avatarId: profile.avatarId
+            };
+            this.storeUser(updatedUser, true);
+            this.authState.next({
+              ...this.authState.value,
+              user: updatedUser
+            });
+          }
+        },
+        error: (err) => {
+          console.warn('Failed to refresh user profile from API:', err);
+          // Continue with cached data - not a critical failure
+        }
       });
 
       // Load user's theme preference from API
