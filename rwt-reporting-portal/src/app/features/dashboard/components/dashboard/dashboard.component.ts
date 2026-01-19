@@ -93,11 +93,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadHubs(): void {
-    // Load accessible hubs from real API based on user permissions
-    console.log('[DEBUG] Loading accessible hubs from API...');
     const sub = this.hubService.getAccessibleHubs().subscribe({
       next: (hubs) => {
-        console.log('[DEBUG] Accessible hubs loaded:', hubs);
         this.hubs = hubs.map(hub => ({
           id: hub.hubId.toString(),
           name: hub.hubName,
@@ -107,8 +104,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           colorClass: this.getHubColorClass(hub.hubCode)
         }));
       },
-      error: (err) => {
-        console.error('[DEBUG] Error loading hubs:', err);
+      error: () => {
         this.hubs = [];
       }
     });

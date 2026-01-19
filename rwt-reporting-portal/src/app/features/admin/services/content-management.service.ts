@@ -78,119 +78,30 @@ export class ContentManagementService {
     const adminUser = 'admin@redwoodtrust.com';
 
     // NOTE: Hubs and Departments are now loaded from the API
-    // Only report groups and reports use mock data until we have them in the database
+    // Report groups and reports will also come from API once we have them in database
+    // Keeping one sample report group and report for demo purposes
 
-    // Initialize report groups (MOCK DATA - until we have reports in database)
     const groupsData: ReportGroup[] = [
       {
-        id: 'sequoia-main',
-        hubId: 'sequoia',
-        name: 'Main Reports',
-        description: 'Primary Sequoia reports',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportCount: 3
-      },
-      {
-        id: 'sequoia-samples',
-        hubId: 'sequoia',
+        id: 'demo-samples',
+        hubId: '1', // Will need to match actual hub ID from database
         name: 'Sample Reports',
-        description: 'Demo and sample reports',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportCount: 3
-      },
-      {
-        id: 'corevest-main',
-        hubId: 'corevest',
-        name: 'Main Reports',
-        description: 'Primary CoreVest reports',
+        description: 'Demo and sample reports for testing',
         sortOrder: 1,
         isActive: true,
         createdAt: new Date('2024-01-15'),
         updatedAt: now,
         createdBy: adminUser,
-        reportCount: 3
-      },
-      {
-        id: 'enterprise-main',
-        hubId: 'enterprise',
-        name: 'Main Reports',
-        description: 'Primary Enterprise reports',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportCount: 3
-      },
-      {
-        id: 'aspire-main',
-        hubId: 'aspire',
-        name: 'Main Reports',
-        description: 'Primary Aspire reports',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportCount: 3
+        reportCount: 1
       }
     ];
 
-    // Initialize reports
+    // Initialize reports - keeping only Sample Power BI Report for demo
     const reportsData: Report[] = [
-      // Sequoia Main Reports
-      {
-        id: 'sequoia-monthly-summary',
-        reportGroupId: 'sequoia-main',
-        hubId: 'sequoia',
-        name: 'Monthly Summary',
-        description: 'Outstanding Conditions for all sellers',
-        type: 'SSRS',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'sequoia-transaction-details',
-        reportGroupId: 'sequoia-main',
-        hubId: 'sequoia',
-        name: 'Transaction Details',
-        description: 'Detailed transaction reports',
-        type: 'PowerBI',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'sequoia-performance-metrics',
-        reportGroupId: 'sequoia-main',
-        hubId: 'sequoia',
-        name: 'Performance Metrics',
-        description: 'Key performance indicators',
-        type: 'SSRS',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      // Sequoia Sample Reports
       {
         id: 'sample-powerbi-embed',
-        reportGroupId: 'sequoia-samples',
-        hubId: 'sequoia',
+        reportGroupId: 'demo-samples',
+        hubId: '1', // Will need to match actual hub ID from database
         name: 'Sample Power BI Report',
         description: 'Interactive Power BI embedded report demo',
         type: 'PowerBI',
@@ -198,152 +109,6 @@ export class ContentManagementService {
           embedUrl: 'https://playground.powerbi.com/sampleReportEmbed'
         },
         sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'sample-ssrs-report',
-        reportGroupId: 'sequoia-samples',
-        hubId: 'sequoia',
-        name: 'Sample SSRS Report',
-        description: 'On-premises SSRS paginated report demo',
-        type: 'SSRS',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'sample-paginated-report',
-        reportGroupId: 'sequoia-samples',
-        hubId: 'sequoia',
-        name: 'Sample Paginated Report',
-        description: 'Paginated/RDL report on Power BI service',
-        type: 'Paginated',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      // CoreVest Reports
-      {
-        id: 'corevest-portfolio-overview',
-        reportGroupId: 'corevest-main',
-        hubId: 'corevest',
-        name: 'Portfolio Overview',
-        description: 'Portfolio summary and overview',
-        type: 'PowerBI',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'corevest-asset-analysis',
-        reportGroupId: 'corevest-main',
-        hubId: 'corevest',
-        name: 'Asset Analysis',
-        description: 'Detailed asset analysis',
-        type: 'SSRS',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'corevest-risk-assessment',
-        reportGroupId: 'corevest-main',
-        hubId: 'corevest',
-        name: 'Risk Assessment',
-        description: 'Risk metrics and assessment',
-        type: 'PowerBI',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      // Enterprise Reports
-      {
-        id: 'enterprise-financial-dashboard',
-        reportGroupId: 'enterprise-main',
-        hubId: 'enterprise',
-        name: 'Financial Dashboard',
-        description: 'Enterprise-wide financial dashboard',
-        type: 'PowerBI',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'enterprise-compliance-report',
-        reportGroupId: 'enterprise-main',
-        hubId: 'enterprise',
-        name: 'Compliance Report',
-        description: 'Compliance and regulatory reports',
-        type: 'SSRS',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'enterprise-executive-summary',
-        reportGroupId: 'enterprise-main',
-        hubId: 'enterprise',
-        name: 'Executive Summary',
-        description: 'High-level executive summary',
-        type: 'PowerBI',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      // Aspire Reports
-      {
-        id: 'aspire-loan-pipeline',
-        reportGroupId: 'aspire-main',
-        hubId: 'aspire',
-        name: 'Loan Pipeline',
-        description: 'Loan pipeline and origination reports',
-        type: 'PowerBI',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'aspire-servicing-summary',
-        reportGroupId: 'aspire-main',
-        hubId: 'aspire',
-        name: 'Servicing Summary',
-        description: 'Loan servicing and portfolio summary',
-        type: 'SSRS',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'aspire-performance-analytics',
-        reportGroupId: 'aspire-main',
-        hubId: 'aspire',
-        name: 'Performance Analytics',
-        description: 'Performance metrics and analytics',
-        type: 'PowerBI',
-        sortOrder: 3,
         isActive: true,
         createdAt: new Date('2024-01-15'),
         updatedAt: now,
@@ -365,17 +130,12 @@ export class ContentManagementService {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
 
     return this.http.get<{ hubs: HubApiDto[] }>(`${this.API_BASE_URL}/admin/hubs`, { params }).pipe(
-      tap(response => console.log('[ContentMgmt] Raw API response:', response)),
       map(response => response.hubs.map(dto => this.mapHubDtoToHub(dto))),
       tap(hubs => {
-        console.log('[ContentMgmt] Mapped hubs:', hubs.length, 'hubs');
         this.hubs.next(hubs);
         this.hubsLoaded = true;
       }),
-      catchError(error => {
-        console.error('[ContentMgmt] Error fetching hubs from API:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
@@ -805,17 +565,12 @@ export class ContentManagementService {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
 
     return this.http.get<{ departments: DepartmentApiDto[] }>(`${this.API_BASE_URL}/admin/departments`, { params }).pipe(
-      tap(response => console.log('[ContentMgmt] Raw departments API response:', response)),
       map(response => response.departments.map(dto => this.mapDepartmentDtoToDepartment(dto))),
       tap(departments => {
-        console.log('[ContentMgmt] Mapped departments:', departments.length, 'departments');
         this.departments.next(departments);
         this.departmentsLoaded = true;
       }),
-      catchError(error => {
-        console.error('[ContentMgmt] Error fetching departments from API:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 

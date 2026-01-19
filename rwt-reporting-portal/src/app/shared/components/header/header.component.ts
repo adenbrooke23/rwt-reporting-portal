@@ -90,14 +90,8 @@ export class HeaderComponent {
   }
 
   navigateToSettings(): void {
-    console.log('Navigating to settings...');
-    console.log('Current user:', this.currentUser);
     this.isProfileDropdownOpen = false;
-    this.router.navigate(['/settings']).then(success => {
-      console.log('Navigation result:', success);
-    }).catch(error => {
-      console.error('Navigation error:', error);
-    });
+    this.router.navigate(['/settings']);
   }
 
   toggleProfileDropdown(): void {
@@ -110,7 +104,6 @@ export class HeaderComponent {
 
   handleSearch(): void {
     // TODO: Implement global search functionality
-    console.log('Search clicked');
   }
 
   handleNotifications(): void {

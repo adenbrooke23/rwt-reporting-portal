@@ -161,12 +161,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   loadDepartments(): void {
-    // Load departments from real API
-    console.log('[DEBUG] Loading departments from API...');
     this.adminUserService.getAllDepartments(false).subscribe({
       next: (apiDepartments) => {
-        console.log('[DEBUG] Departments loaded:', apiDepartments);
-        // Map API response to existing Department interface format
         // Filter out "Admin" department since we now have a dedicated Administrator Access section
         this.departments = apiDepartments
           .filter(d => d.departmentName.toLowerCase() !== 'admin')
@@ -180,38 +176,29 @@ export class AdminComponent implements OnInit, OnDestroy {
             updatedAt: new Date(),
             createdBy: d.createdByEmail || ''
           }));
-        console.log('[DEBUG] Mapped departments (Admin filtered):', this.departments);
       },
-      error: (err) => {
-        console.error('[DEBUG] Error loading departments:', err);
-      }
+      error: () => {}
     });
   }
 
   loadReportCategories(): void {
-    // Load hubs with their reports from real API
-    console.log('[DEBUG] Loading hubs with reports from API...');
     this.adminUserService.getHubsWithReports(false).subscribe({
       next: (hubsWithReports) => {
-        console.log('[DEBUG] Hubs with reports loaded:', hubsWithReports);
         this.reportCategories = hubsWithReports.map(hub => ({
-          id: hub.hubId.toString(), // Convert numeric ID to string for consistency
+          id: hub.hubId.toString(),
           name: hub.hubName,
           description: hub.description || '',
           reports: hub.reports.map(r => ({
-            id: r.reportId.toString(), // Convert numeric ID to string
+            id: r.reportId.toString(),
             name: r.reportName,
             description: r.description || '',
-            type: 'PowerBI' as const, // Default type - could be fetched from API if needed
+            type: 'PowerBI' as const,
             route: `/hub/${hub.hubId}/report/${r.reportId}`,
             embedConfig: undefined
           }))
         }));
-        console.log('[DEBUG] Report categories mapped:', this.reportCategories);
       },
-      error: (err) => {
-        console.error('[DEBUG] Error loading hubs with reports:', err);
-        // Keep empty categories on error
+      error: () => {
         this.reportCategories = [];
       }
     });
@@ -315,7 +302,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     // Track admin status
     this.originalIsAdmin = this.isUserAdmin(user);
     this.pendingIsAdmin = this.originalIsAdmin;
-    console.log('[DEBUG] User admin status:', this.originalIsAdmin);
 
     // Reset permissions state
     this.userDepartments = new Set();
@@ -325,24 +311,20 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.userReportPermissions = new Set();
     this.originalUserReportPermissions = new Set();
 
-    // Fetch all permissions (departments, hubs, reports) from real API
     this.isLoadingDepartments = true;
     this.isLoadingPermissions = true;
 
     const userId = parseInt(user.id, 10);
-    console.log('[DEBUG] Fetching permissions for user:', userId);
 
     // Fetch departments
     this.adminUserService.getUserDepartments(userId).subscribe({
       next: (departmentIds) => {
-        console.log('[DEBUG] User departments loaded:', departmentIds);
         this.userDepartments = new Set(departmentIds);
         this.originalUserDepartments = new Set(departmentIds);
         this.isLoadingDepartments = false;
         this.updateUserDepartmentCount(user.id, departmentIds.length);
       },
-      error: (error) => {
-        console.error('[DEBUG] Error loading user departments:', error);
+      error: () => {
         this.isLoadingDepartments = false;
       }
     });
@@ -350,24 +332,17 @@ export class AdminComponent implements OnInit, OnDestroy {
     // Fetch hub and report permissions
     this.adminUserService.getUserPermissions(userId).subscribe({
       next: (response) => {
-        console.log('[DEBUG] User permissions loaded:', response);
-
-        // Load hub permissions
         const hubIds = response.permissions.hubs.map(h => h.hubId.toString());
         this.userHubPermissions = new Set(hubIds);
         this.originalUserHubPermissions = new Set(hubIds);
 
-        // Load report permissions
         const reportIds = response.permissions.reports.map(r => r.reportId.toString());
         this.userReportPermissions = new Set(reportIds);
         this.originalUserReportPermissions = new Set(reportIds);
 
         this.isLoadingPermissions = false;
-        console.log('[DEBUG] Hub permissions:', hubIds);
-        console.log('[DEBUG] Report permissions:', reportIds);
       },
-      error: (error) => {
-        console.error('[DEBUG] Error loading user permissions:', error);
+      error: () => {
         this.isLoadingPermissions = false;
       }
     });
@@ -417,14 +392,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   toggleDepartment(departmentId: string): void {
-    console.log('[DEBUG] toggleDepartment called with:', departmentId);
-    console.log('[DEBUG] userDepartments before:', Array.from(this.userDepartments));
     if (this.userDepartments.has(departmentId)) {
       this.userDepartments.delete(departmentId);
     } else {
       this.userDepartments.add(departmentId);
     }
-    console.log('[DEBUG] userDepartments after:', Array.from(this.userDepartments));
   }
 
   async toggleAdminRole(): Promise<void> {
@@ -442,11 +414,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     const newAdminStatus = !this.isUserAdmin(this.selectedUser);
     const userName = `${this.selectedUser.firstName} ${this.selectedUser.lastName}`;
 
-    console.log('[DEBUG] toggleAdminRole called');
-    console.log('[DEBUG] Current admin status:', this.isUserAdmin(this.selectedUser));
-    console.log('[DEBUG] New admin status will be:', newAdminStatus);
-
-    // Confirm the action
     const action = newAdminStatus ? 'grant' : 'revoke';
     const confirmed = await this.confirmationService.confirm(
       newAdminStatus ? 'info' : 'warning',
@@ -459,20 +426,13 @@ export class AdminComponent implements OnInit, OnDestroy {
       `${newAdminStatus ? 'Grant' : 'Revoke'} Admin`
     );
 
-    if (!confirmed) {
-      console.log('[DEBUG] Admin role change cancelled by user');
-      return;
-    }
+    if (!confirmed) return;
 
-    // Save the admin role change immediately
     this.isSavingAdminRole = true;
     const userId = parseInt(this.selectedUser.id, 10);
 
-    console.log('[DEBUG] Calling API to update admin role for user:', userId, 'to:', newAdminStatus);
-
     this.adminUserService.updateUserAdminRole(userId, newAdminStatus).subscribe({
       next: () => {
-        console.log('[DEBUG] Admin role updated successfully');
         this.isSavingAdminRole = false;
 
         // Update the local user's roles
@@ -500,8 +460,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         // Refresh user list to reflect changes
         this.loadUsers();
       },
-      error: (error) => {
-        console.error('[DEBUG] Error updating admin role:', error);
+      error: () => {
         this.isSavingAdminRole = false;
         this.notificationService.error(
           'Update Failed',
@@ -597,11 +556,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     const reportsToAdd = currentReports.filter(id => !this.originalUserReportPermissions.has(id));
     const reportsToRemove = originalReports.filter(id => !this.userReportPermissions.has(id));
 
-    console.log('[DEBUG] savePermissions - changes:');
-    console.log('[DEBUG]   Departments: add=', deptsToAdd, 'remove=', deptsToRemove);
-    console.log('[DEBUG]   Hubs: add=', hubsToAdd, 'remove=', hubsToRemove);
-    console.log('[DEBUG]   Reports: add=', reportsToAdd, 'remove=', reportsToRemove);
-
     // If no changes, we're done
     if (deptsToAdd.length === 0 && deptsToRemove.length === 0 &&
         hubsToAdd.length === 0 && hubsToRemove.length === 0 &&
@@ -635,11 +589,8 @@ export class AdminComponent implements OnInit, OnDestroy {
       operations.push(this.adminUserService.revokeReportAccess(userId, parseInt(reportId, 10)));
     });
 
-    // Execute all operations
-    console.log('[DEBUG] Executing', operations.length, 'permission operations');
     forkJoin(operations).subscribe({
-      next: (results) => {
-        console.log('[DEBUG] Permission operations completed:', results);
+      next: () => {
         this.isSaving = false;
 
         // Update original values to match current (so subsequent saves work correctly)
@@ -658,8 +609,7 @@ export class AdminComponent implements OnInit, OnDestroy {
           'Permissions updated successfully'
         );
       },
-      error: (error) => {
-        console.error('[DEBUG] Error saving permissions:', error);
+      error: () => {
         this.isSaving = false;
         this.notificationService.error(
           'Save Failed',
