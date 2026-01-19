@@ -35,6 +35,16 @@ export interface HubApiDto {
   createdByEmail?: string;
 }
 
+// Request DTO for creating/updating hubs
+export interface HubRequestDto {
+  hubCode: string;
+  hubName: string;
+  description?: string;
+  iconName?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
 export interface DepartmentApiDto {
   departmentId: number;
   departmentCode: string;
@@ -46,6 +56,20 @@ export interface DepartmentApiDto {
   reportCount: number;
   createdAt: string;
   createdByEmail?: string;
+}
+
+// Request DTO for creating departments
+export interface CreateDepartmentRequestDto {
+  departmentCode: string;
+  departmentName: string;
+  description?: string;
+}
+
+// Request DTO for updating departments
+export interface UpdateDepartmentRequestDto {
+  departmentName?: string;
+  description?: string;
+  isActive?: boolean;
 }
 
 @Injectable({
@@ -177,64 +201,89 @@ export class ContentManagementService {
   }
 
   createHub(dto: CreateHubDto): Observable<Hub> {
-    const currentHubs = this.hubs.value;
-    const maxSortOrder = Math.max(...currentHubs.map(h => h.sortOrder), 0);
+    // Generate hub code from name (uppercase, no spaces)
+    const hubCode = dto.name.toUpperCase().replace(/\s+/g, '_');
 
-    const newHub: Hub = {
-      id: this.generateId('hub'),
-      name: dto.name,
+    const requestDto: HubRequestDto = {
+      hubCode: hubCode,
+      hubName: dto.name,
       description: dto.description,
       iconName: dto.iconName,
-      colorClass: dto.colorClass,
-      sortOrder: maxSortOrder + 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: 'admin@redwoodtrust.com',
-      reportGroupCount: 0,
-      reportCount: 0
+      isActive: true
     };
 
-    this.hubs.next([...currentHubs, newHub]);
-    return of(newHub).pipe(delay(this.mockDelay));
+    return this.http.post<HubApiDto>(`${this.API_BASE_URL}/admin/hubs`, requestDto).pipe(
+      map(response => this.mapHubDtoToHub(response)),
+      tap(hub => {
+        const currentHubs = this.hubs.value;
+        this.hubs.next([...currentHubs, hub]);
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to create hub'));
+      })
+    );
   }
 
   updateHub(id: string, dto: UpdateHubDto): Observable<Hub> {
-    const currentHubs = this.hubs.value;
-    const index = currentHubs.findIndex(h => h.id === id);
+    const hubId = parseInt(id, 10);
+    const existingHub = this.hubs.value.find(h => h.id === id);
 
-    if (index === -1) {
+    if (!existingHub) {
       return throwError(() => new Error('Hub not found'));
     }
 
-    const updatedHub: Hub = {
-      ...currentHubs[index],
-      ...dto,
-      updatedAt: new Date()
+    // Generate hub code from name if name changed
+    const hubCode = dto.name
+      ? dto.name.toUpperCase().replace(/\s+/g, '_')
+      : existingHub.name.toUpperCase().replace(/\s+/g, '_');
+
+    const requestDto: HubRequestDto = {
+      hubCode: hubCode,
+      hubName: dto.name || existingHub.name,
+      description: dto.description ?? existingHub.description,
+      iconName: dto.iconName ?? existingHub.iconName,
+      sortOrder: existingHub.sortOrder,
+      isActive: dto.isActive ?? existingHub.isActive
     };
 
-    currentHubs[index] = updatedHub;
-    this.hubs.next([...currentHubs]);
-    return of(updatedHub).pipe(delay(this.mockDelay));
+    return this.http.put<HubApiDto>(`${this.API_BASE_URL}/admin/hubs/${hubId}`, requestDto).pipe(
+      map(response => this.mapHubDtoToHub(response)),
+      tap(updatedHub => {
+        const currentHubs = this.hubs.value;
+        const index = currentHubs.findIndex(h => h.id === id);
+        if (index !== -1) {
+          currentHubs[index] = updatedHub;
+          this.hubs.next([...currentHubs]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to update hub'));
+      })
+    );
   }
 
   deleteHub(id: string): Observable<void> {
-    const currentHubs = this.hubs.value;
-    const index = currentHubs.findIndex(h => h.id === id);
+    const hubId = parseInt(id, 10);
 
-    if (index === -1) {
-      return throwError(() => new Error('Hub not found'));
-    }
-
-    // Soft delete - mark as inactive
-    currentHubs[index] = {
-      ...currentHubs[index],
-      isActive: false,
-      updatedAt: new Date()
-    };
-
-    this.hubs.next([...currentHubs]);
-    return of(void 0).pipe(delay(this.mockDelay));
+    // Soft delete by default (hardDelete=false)
+    return this.http.delete<void>(`${this.API_BASE_URL}/admin/hubs/${hubId}`).pipe(
+      tap(() => {
+        const currentHubs = this.hubs.value;
+        const index = currentHubs.findIndex(h => h.id === id);
+        if (index !== -1) {
+          // Mark as inactive in local state (soft delete)
+          currentHubs[index] = {
+            ...currentHubs[index],
+            isActive: false,
+            updatedAt: new Date()
+          };
+          this.hubs.next([...currentHubs]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to delete hub'));
+      })
+    );
   }
 
   reorderHubs(hubIds: string[]): Observable<void> {
@@ -595,60 +644,79 @@ export class ContentManagementService {
   }
 
   createDepartment(dto: CreateDepartmentDto): Observable<Department> {
-    const currentDepartments = this.departments.value;
-    const maxSortOrder = Math.max(...currentDepartments.map(d => d.sortOrder), 0);
+    // Generate department code from name (uppercase, no spaces)
+    const deptCode = dto.name.toUpperCase().replace(/\s+/g, '_');
 
-    const newDepartment: Department = {
-      id: this.generateId('dept'),
-      name: dto.name,
-      description: dto.description,
-      sortOrder: maxSortOrder + 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: 'admin@redwoodtrust.com'
+    const requestDto: CreateDepartmentRequestDto = {
+      departmentCode: deptCode,
+      departmentName: dto.name,
+      description: dto.description
     };
 
-    this.departments.next([...currentDepartments, newDepartment]);
-    return of(newDepartment).pipe(delay(this.mockDelay));
+    return this.http.post<DepartmentApiDto>(`${this.API_BASE_URL}/admin/departments`, requestDto).pipe(
+      map(response => this.mapDepartmentDtoToDepartment(response)),
+      tap(department => {
+        const currentDepartments = this.departments.value;
+        this.departments.next([...currentDepartments, department]);
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to create department'));
+      })
+    );
   }
 
   updateDepartment(id: string, dto: UpdateDepartmentDto): Observable<Department> {
-    const currentDepartments = this.departments.value;
-    const index = currentDepartments.findIndex(d => d.id === id);
+    const deptId = parseInt(id, 10);
+    const existingDept = this.departments.value.find(d => d.id === id);
 
-    if (index === -1) {
+    if (!existingDept) {
       return throwError(() => new Error('Department not found'));
     }
 
-    const updatedDepartment: Department = {
-      ...currentDepartments[index],
-      ...dto,
-      updatedAt: new Date()
+    const requestDto: UpdateDepartmentRequestDto = {
+      departmentName: dto.name,
+      description: dto.description,
+      isActive: dto.isActive
     };
 
-    currentDepartments[index] = updatedDepartment;
-    this.departments.next([...currentDepartments]);
-    return of(updatedDepartment).pipe(delay(this.mockDelay));
+    return this.http.put<DepartmentApiDto>(`${this.API_BASE_URL}/admin/departments/${deptId}`, requestDto).pipe(
+      map(response => this.mapDepartmentDtoToDepartment(response)),
+      tap(updatedDepartment => {
+        const currentDepartments = this.departments.value;
+        const index = currentDepartments.findIndex(d => d.id === id);
+        if (index !== -1) {
+          currentDepartments[index] = updatedDepartment;
+          this.departments.next([...currentDepartments]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to update department'));
+      })
+    );
   }
 
   deleteDepartment(id: string): Observable<void> {
-    const currentDepartments = this.departments.value;
-    const index = currentDepartments.findIndex(d => d.id === id);
+    const deptId = parseInt(id, 10);
 
-    if (index === -1) {
-      return throwError(() => new Error('Department not found'));
-    }
-
-    // Soft delete
-    currentDepartments[index] = {
-      ...currentDepartments[index],
-      isActive: false,
-      updatedAt: new Date()
-    };
-
-    this.departments.next([...currentDepartments]);
-    return of(void 0).pipe(delay(this.mockDelay));
+    // Soft delete by default (hardDelete=false)
+    return this.http.delete<void>(`${this.API_BASE_URL}/admin/departments/${deptId}`).pipe(
+      tap(() => {
+        const currentDepartments = this.departments.value;
+        const index = currentDepartments.findIndex(d => d.id === id);
+        if (index !== -1) {
+          // Mark as inactive in local state (soft delete)
+          currentDepartments[index] = {
+            ...currentDepartments[index],
+            isActive: false,
+            updatedAt: new Date()
+          };
+          this.departments.next([...currentDepartments]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to delete department'));
+      })
+    );
   }
 
   // ============== HELPER METHODS ==============
