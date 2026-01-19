@@ -690,7 +690,12 @@ public class HubService : IHubService
             Description = h.Description,
             IconName = h.IconName,
             BackgroundImage = h.BackgroundImage,
-            ReportCount = h.ReportGroups?.Sum(rg => rg.Reports?.Count ?? 0) ?? 0
+            SortOrder = h.SortOrder,
+            IsActive = h.IsActive,
+            ReportGroupCount = h.ReportGroups?.Count(rg => rg.IsActive) ?? 0,
+            ReportCount = h.ReportGroups?.Sum(rg => rg.Reports?.Count(r => r.IsActive) ?? 0) ?? 0,
+            CreatedAt = h.CreatedAt,
+            CreatedByEmail = null // Navigation property not loaded yet
         }).ToList();
     }
 

@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, delay, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import {
   Hub,
   CreateHubDto,
@@ -18,10 +20,41 @@ import {
   BulkImportResult
 } from '../models/content-management.models';
 
+// API DTOs - match backend response format
+export interface HubApiDto {
+  hubId: number;
+  hubCode: string;
+  hubName: string;
+  description?: string;
+  iconName?: string;
+  sortOrder: number;
+  isActive: boolean;
+  reportGroupCount: number;
+  reportCount: number;
+  createdAt: string;
+  createdByEmail?: string;
+}
+
+export interface DepartmentApiDto {
+  departmentId: number;
+  departmentCode: string;
+  departmentName: string;
+  description?: string;
+  sortOrder: number;
+  isActive: boolean;
+  userCount: number;
+  reportCount: number;
+  createdAt: string;
+  createdByEmail?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ContentManagementService {
+  private http = inject(HttpClient);
+  private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
+
   private hubs = new BehaviorSubject<Hub[]>([]);
   private reportGroups = new BehaviorSubject<ReportGroup[]>([]);
   private reports = new BehaviorSubject<Report[]>([]);
@@ -33,6 +66,8 @@ export class ContentManagementService {
   departments$ = this.departments.asObservable();
 
   private mockDelay = 300;
+  private hubsLoaded = false;
+  private departmentsLoaded = false;
 
   constructor() {
     this.initializeMockData();
@@ -42,67 +77,10 @@ export class ContentManagementService {
     const now = new Date();
     const adminUser = 'admin@redwoodtrust.com';
 
-    // Initialize hubs
-    const hubsData: Hub[] = [
-      {
-        id: 'sequoia',
-        name: 'Sequoia',
-        description: 'Sequoia reporting and analytics',
-        iconName: 'analytics',
-        colorClass: 'sequoia',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportGroupCount: 2,
-        reportCount: 6
-      },
-      {
-        id: 'corevest',
-        name: 'CoreVest',
-        description: 'CoreVest reporting and analytics',
-        iconName: 'building',
-        colorClass: 'corevest',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportGroupCount: 1,
-        reportCount: 3
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        description: 'Enterprise reporting and analytics',
-        iconName: 'dashboard',
-        colorClass: 'enterprise',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportGroupCount: 1,
-        reportCount: 3
-      },
-      {
-        id: 'aspire',
-        name: 'Aspire',
-        description: 'Aspire reporting and analytics',
-        iconName: 'finance',
-        colorClass: 'aspire',
-        sortOrder: 4,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportGroupCount: 1,
-        reportCount: 3
-      }
-    ];
+    // NOTE: Hubs and Departments are now loaded from the API
+    // Only report groups and reports use mock data until we have them in the database
 
-    // Initialize report groups
+    // Initialize report groups (MOCK DATA - until we have reports in database)
     const groupsData: ReportGroup[] = [
       {
         id: 'sequoia-main',
@@ -373,84 +351,67 @@ export class ContentManagementService {
       }
     ];
 
-    // Initialize departments (organizational groups)
-    const departmentsData: Department[] = [
-      {
-        id: 'admin',
-        name: 'Admin',
-        description: 'Full system access',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'it',
-        name: 'IT',
-        description: 'IT department',
-        sortOrder: 2,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'treasury',
-        name: 'Treasury',
-        description: 'Treasury department',
-        sortOrder: 3,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'finance',
-        name: 'Finance',
-        description: 'Finance department',
-        sortOrder: 4,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'accounting',
-        name: 'Accounting',
-        description: 'Accounting department',
-        sortOrder: 5,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        description: 'Enterprise group',
-        sortOrder: 6,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      }
-    ];
+    // NOTE: Departments are now loaded from the API
+    // Mock data removed - departments come from database
 
-    this.hubs.next(hubsData);
+    // Initialize only report groups and reports (mock data until database has them)
     this.reportGroups.next(groupsData);
     this.reports.next(reportsData);
-    this.departments.next(departmentsData);
   }
 
   // ============== HUB OPERATIONS ==============
 
   getHubs(includeInactive = false): Observable<Hub[]> {
-    return of(
-      this.hubs.value
-        .filter(h => includeInactive || h.isActive)
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-    ).pipe(delay(this.mockDelay));
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+
+    return this.http.get<{ hubs: HubApiDto[] }>(`${this.API_BASE_URL}/admin/hubs`, { params }).pipe(
+      map(response => response.hubs.map(dto => this.mapHubDtoToHub(dto))),
+      tap(hubs => {
+        this.hubs.next(hubs);
+        this.hubsLoaded = true;
+      }),
+      catchError(error => {
+        console.error('Error fetching hubs from API:', error);
+        // Fall back to cached data if available
+        if (this.hubs.value.length > 0) {
+          return of(this.hubs.value.filter(h => includeInactive || h.isActive));
+        }
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Map API DTO to frontend Hub model
+   */
+  private mapHubDtoToHub(dto: HubApiDto): Hub {
+    return {
+      id: dto.hubId.toString(),
+      name: dto.hubName,
+      description: dto.description || '',
+      iconName: dto.iconName || 'folder',
+      colorClass: this.getColorClassFromCode(dto.hubCode),
+      sortOrder: dto.sortOrder,
+      isActive: dto.isActive,
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      createdBy: dto.createdByEmail || 'admin@redwoodtrust.com',
+      reportGroupCount: dto.reportGroupCount || 0,
+      reportCount: dto.reportCount || 0
+    };
+  }
+
+  /**
+   * Get color class from hub code
+   */
+  private getColorClassFromCode(hubCode: string): string {
+    const colorMap: Record<string, string> = {
+      'SEQUOIA': 'sequoia',
+      'COREVEST': 'corevest',
+      'ENTERPRISE': 'enterprise',
+      'ASPIRE': 'aspire'
+    };
+    return colorMap[hubCode?.toUpperCase()] || 'default';
   }
 
   getHubById(id: string): Observable<Hub | undefined> {
@@ -843,11 +804,39 @@ export class ContentManagementService {
   // ============== DEPARTMENT OPERATIONS ==============
 
   getDepartments(includeInactive = false): Observable<Department[]> {
-    return of(
-      this.departments.value
-        .filter(d => includeInactive || d.isActive)
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-    ).pipe(delay(this.mockDelay));
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+
+    return this.http.get<{ departments: DepartmentApiDto[] }>(`${this.API_BASE_URL}/admin/departments`, { params }).pipe(
+      map(response => response.departments.map(dto => this.mapDepartmentDtoToDepartment(dto))),
+      tap(departments => {
+        this.departments.next(departments);
+        this.departmentsLoaded = true;
+      }),
+      catchError(error => {
+        console.error('Error fetching departments from API:', error);
+        // Fall back to cached data if available
+        if (this.departments.value.length > 0) {
+          return of(this.departments.value.filter(d => includeInactive || d.isActive));
+        }
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Map API DTO to frontend Department model
+   */
+  private mapDepartmentDtoToDepartment(dto: DepartmentApiDto): Department {
+    return {
+      id: dto.departmentId.toString(),
+      name: dto.departmentName,
+      description: dto.description || '',
+      sortOrder: dto.sortOrder,
+      isActive: dto.isActive,
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      createdBy: dto.createdByEmail || 'admin@redwoodtrust.com'
+    };
   }
 
   getDepartmentById(id: string): Observable<Department | undefined> {

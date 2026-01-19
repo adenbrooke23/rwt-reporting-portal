@@ -8,7 +8,12 @@ public class HubDto
     public string? Description { get; set; }
     public string? IconName { get; set; }
     public string? BackgroundImage { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+    public int ReportGroupCount { get; set; }
     public int ReportCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedByEmail { get; set; }
 }
 
 public class HubListResponse
