@@ -723,10 +723,82 @@ public class HubService : IHubService
         }).ToList();
     }
 
-    public Task<HubDto> CreateHubAsync(HubDto hub, int createdBy) => throw new NotImplementedException();
-    public Task<HubDto> UpdateHubAsync(int hubId, HubDto hub, int updatedBy) => throw new NotImplementedException();
-    public Task DeleteHubAsync(int hubId, bool hardDelete = false) => throw new NotImplementedException();
-    public Task ReorderHubsAsync(List<int> hubIds) => throw new NotImplementedException();
+    public async Task<HubDto> CreateHubAsync(HubDto hub, int createdBy)
+    {
+        var entity = new Models.Entities.ReportingHub
+        {
+            HubCode = hub.HubCode,
+            HubName = hub.HubName,
+            Description = hub.Description,
+            IconName = hub.IconName,
+            BackgroundImage = hub.BackgroundImage,
+            IsActive = true,
+            CreatedBy = createdBy
+        };
+
+        var created = await _hubRepository.CreateAsync(entity);
+
+        return new HubDto
+        {
+            HubId = created.HubId,
+            HubCode = created.HubCode,
+            HubName = created.HubName,
+            Description = created.Description,
+            IconName = created.IconName,
+            BackgroundImage = created.BackgroundImage,
+            SortOrder = created.SortOrder,
+            IsActive = created.IsActive,
+            ReportGroupCount = 0,
+            ReportCount = 0,
+            CreatedAt = created.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
+    public async Task<HubDto> UpdateHubAsync(int hubId, HubDto hub, int updatedBy)
+    {
+        var existing = await _hubRepository.GetByIdAsync(hubId);
+        if (existing == null)
+        {
+            throw new KeyNotFoundException($"Hub with ID {hubId} not found");
+        }
+
+        existing.HubCode = hub.HubCode;
+        existing.HubName = hub.HubName;
+        existing.Description = hub.Description;
+        existing.IconName = hub.IconName;
+        existing.BackgroundImage = hub.BackgroundImage;
+        existing.SortOrder = hub.SortOrder;
+        existing.IsActive = hub.IsActive;
+
+        await _hubRepository.UpdateAsync(existing);
+
+        return new HubDto
+        {
+            HubId = existing.HubId,
+            HubCode = existing.HubCode,
+            HubName = existing.HubName,
+            Description = existing.Description,
+            IconName = existing.IconName,
+            BackgroundImage = existing.BackgroundImage,
+            SortOrder = existing.SortOrder,
+            IsActive = existing.IsActive,
+            ReportGroupCount = existing.ReportGroups?.Count(rg => rg.IsActive) ?? 0,
+            ReportCount = existing.ReportGroups?.Sum(rg => rg.Reports?.Count(r => r.IsActive) ?? 0) ?? 0,
+            CreatedAt = existing.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
+    public async Task DeleteHubAsync(int hubId, bool hardDelete = false)
+    {
+        await _hubRepository.DeleteAsync(hubId, hardDelete);
+    }
+
+    public async Task ReorderHubsAsync(List<int> hubIds)
+    {
+        await _hubRepository.ReorderAsync(hubIds);
+    }
 }
 
 public class ReportService : IReportService
@@ -797,13 +869,149 @@ public class DepartmentService : IDepartmentService
 
         return new DepartmentListResponse { Departments = departments };
     }
-    public Task<DepartmentDto?> GetDepartmentAsync(int departmentId) => throw new NotImplementedException();
-    public Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentRequest request, int createdBy) => throw new NotImplementedException();
-    public Task<DepartmentDto> UpdateDepartmentAsync(int departmentId, UpdateDepartmentRequest request, int updatedBy) => throw new NotImplementedException();
-    public Task DeleteDepartmentAsync(int departmentId, bool hardDelete = false) => throw new NotImplementedException();
-    public Task ReorderDepartmentsAsync(List<int> departmentIds) => throw new NotImplementedException();
-    public Task<DepartmentUsersResponse> GetDepartmentUsersAsync(int departmentId) => throw new NotImplementedException();
-    public Task<DepartmentReportsResponse> GetDepartmentReportsAsync(int departmentId) => throw new NotImplementedException();
+    public async Task<DepartmentDto?> GetDepartmentAsync(int departmentId)
+    {
+        var department = await _departmentRepository.GetByIdAsync(departmentId);
+        if (department == null) return null;
+
+        return new DepartmentDto
+        {
+            DepartmentId = department.DepartmentId,
+            DepartmentCode = department.DepartmentCode,
+            DepartmentName = department.DepartmentName,
+            Description = department.Description,
+            SortOrder = department.SortOrder,
+            IsActive = department.IsActive,
+            UserCount = department.UserDepartments?.Count ?? 0,
+            ReportCount = department.ReportDepartments?.Count ?? 0,
+            CreatedAt = department.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
+    public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentRequest request, int createdBy)
+    {
+        var entity = new Department
+        {
+            DepartmentCode = request.DepartmentCode,
+            DepartmentName = request.DepartmentName,
+            Description = request.Description,
+            IsActive = true,
+            CreatedBy = createdBy
+        };
+
+        var created = await _departmentRepository.CreateAsync(entity);
+
+        return new DepartmentDto
+        {
+            DepartmentId = created.DepartmentId,
+            DepartmentCode = created.DepartmentCode,
+            DepartmentName = created.DepartmentName,
+            Description = created.Description,
+            SortOrder = created.SortOrder,
+            IsActive = created.IsActive,
+            UserCount = 0,
+            ReportCount = 0,
+            CreatedAt = created.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
+    public async Task<DepartmentDto> UpdateDepartmentAsync(int departmentId, UpdateDepartmentRequest request, int updatedBy)
+    {
+        var existing = await _departmentRepository.GetByIdAsync(departmentId);
+        if (existing == null)
+        {
+            throw new KeyNotFoundException($"Department with ID {departmentId} not found");
+        }
+
+        if (request.DepartmentName != null)
+            existing.DepartmentName = request.DepartmentName;
+        if (request.Description != null)
+            existing.Description = request.Description;
+        if (request.IsActive.HasValue)
+            existing.IsActive = request.IsActive.Value;
+
+        await _departmentRepository.UpdateAsync(existing);
+
+        return new DepartmentDto
+        {
+            DepartmentId = existing.DepartmentId,
+            DepartmentCode = existing.DepartmentCode,
+            DepartmentName = existing.DepartmentName,
+            Description = existing.Description,
+            SortOrder = existing.SortOrder,
+            IsActive = existing.IsActive,
+            UserCount = existing.UserDepartments?.Count ?? 0,
+            ReportCount = existing.ReportDepartments?.Count ?? 0,
+            CreatedAt = existing.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
+    public async Task DeleteDepartmentAsync(int departmentId, bool hardDelete = false)
+    {
+        await _departmentRepository.DeleteAsync(departmentId, hardDelete);
+    }
+
+    public async Task ReorderDepartmentsAsync(List<int> departmentIds)
+    {
+        await _departmentRepository.ReorderAsync(departmentIds);
+    }
+
+    public async Task<DepartmentUsersResponse> GetDepartmentUsersAsync(int departmentId)
+    {
+        var department = await _departmentRepository.GetByIdAsync(departmentId);
+        if (department == null)
+        {
+            throw new KeyNotFoundException($"Department with ID {departmentId} not found");
+        }
+
+        var userDepartments = await _departmentRepository.GetUserDepartmentsAsync(departmentId);
+
+        return new DepartmentUsersResponse
+        {
+            DepartmentId = department.DepartmentId,
+            DepartmentName = department.DepartmentName,
+            Users = userDepartments.Select(ud => new DepartmentUserDto
+            {
+                UserId = ud.UserId,
+                Email = ud.User?.Email ?? "",
+                FirstName = ud.User?.FirstName ?? "",
+                LastName = ud.User?.LastName ?? "",
+                DisplayName = ud.User?.DisplayName,
+                GrantedAt = ud.GrantedAt,
+                GrantedBy = null // Would need to join to get granter's email
+            }).ToList()
+        };
+    }
+
+    public async Task<DepartmentReportsResponse> GetDepartmentReportsAsync(int departmentId)
+    {
+        var department = await _departmentRepository.GetByIdAsync(departmentId);
+        if (department == null)
+        {
+            throw new KeyNotFoundException($"Department with ID {departmentId} not found");
+        }
+
+        var reportDepartments = await _departmentRepository.GetReportDepartmentsAsync(departmentId);
+
+        return new DepartmentReportsResponse
+        {
+            DepartmentId = department.DepartmentId,
+            DepartmentName = department.DepartmentName,
+            Reports = reportDepartments.Select(rd => new DepartmentReportDto
+            {
+                ReportId = rd.ReportId,
+                ReportCode = rd.Report?.ReportCode ?? "",
+                ReportName = rd.Report?.ReportName ?? "",
+                HubName = "", // Would need deeper join
+                GroupName = "", // Would need deeper join
+                GrantedAt = rd.GrantedAt,
+                GrantedBy = null
+            }).ToList()
+        };
+    }
     public async Task AssignUserToDepartmentAsync(int userId, int departmentId, int grantedBy)
     {
         // Check if assignment already exists

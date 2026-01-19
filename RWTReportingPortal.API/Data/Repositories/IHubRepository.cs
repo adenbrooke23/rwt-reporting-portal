@@ -47,8 +47,55 @@ public class HubRepository : IHubRepository
     }
 
     public Task<List<ReportingHub>> GetAccessibleByUserIdAsync(int userId) => throw new NotImplementedException();
-    public Task<ReportingHub> CreateAsync(ReportingHub hub) => throw new NotImplementedException();
-    public Task UpdateAsync(ReportingHub hub) => throw new NotImplementedException();
-    public Task DeleteAsync(int hubId, bool hardDelete = false) => throw new NotImplementedException();
-    public Task ReorderAsync(List<int> hubIds) => throw new NotImplementedException();
+
+    public async Task<ReportingHub> CreateAsync(ReportingHub hub)
+    {
+        // Get max sort order for new hub
+        var maxSortOrder = await _context.ReportingHubs.MaxAsync(h => (int?)h.SortOrder) ?? 0;
+        hub.SortOrder = maxSortOrder + 1;
+        hub.CreatedAt = DateTime.UtcNow;
+
+        _context.ReportingHubs.Add(hub);
+        await _context.SaveChangesAsync();
+        return hub;
+    }
+
+    public async Task UpdateAsync(ReportingHub hub)
+    {
+        hub.UpdatedAt = DateTime.UtcNow;
+        _context.ReportingHubs.Update(hub);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(int hubId, bool hardDelete = false)
+    {
+        var hub = await _context.ReportingHubs.FindAsync(hubId);
+        if (hub == null) return;
+
+        if (hardDelete)
+        {
+            _context.ReportingHubs.Remove(hub);
+        }
+        else
+        {
+            hub.IsActive = false;
+            hub.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ReorderAsync(List<int> hubIds)
+    {
+        for (int i = 0; i < hubIds.Count; i++)
+        {
+            var hub = await _context.ReportingHubs.FindAsync(hubIds[i]);
+            if (hub != null)
+            {
+                hub.SortOrder = i + 1;
+                hub.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await _context.SaveChangesAsync();
+    }
 }
