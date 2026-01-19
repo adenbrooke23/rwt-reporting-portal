@@ -979,7 +979,9 @@ public class DepartmentService : IDepartmentService
                 Email = ud.User?.Email ?? "",
                 FirstName = ud.User?.FirstName ?? "",
                 LastName = ud.User?.LastName ?? "",
-                DisplayName = ud.User?.DisplayName,
+                DisplayName = ud.User != null
+                    ? $"{ud.User.FirstName} {ud.User.LastName}".Trim()
+                    : null,
                 GrantedAt = ud.GrantedAt,
                 GrantedBy = null // Would need to join to get granter's email
             }).ToList()
