@@ -365,17 +365,15 @@ export class ContentManagementService {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
 
     return this.http.get<{ hubs: HubApiDto[] }>(`${this.API_BASE_URL}/admin/hubs`, { params }).pipe(
+      tap(response => console.log('[ContentMgmt] Raw API response:', response)),
       map(response => response.hubs.map(dto => this.mapHubDtoToHub(dto))),
       tap(hubs => {
+        console.log('[ContentMgmt] Mapped hubs:', hubs.length, 'hubs');
         this.hubs.next(hubs);
         this.hubsLoaded = true;
       }),
       catchError(error => {
-        console.error('Error fetching hubs from API:', error);
-        // Fall back to cached data if available
-        if (this.hubs.value.length > 0) {
-          return of(this.hubs.value.filter(h => includeInactive || h.isActive));
-        }
+        console.error('[ContentMgmt] Error fetching hubs from API:', error);
         return of([]);
       })
     );
@@ -807,17 +805,15 @@ export class ContentManagementService {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
 
     return this.http.get<{ departments: DepartmentApiDto[] }>(`${this.API_BASE_URL}/admin/departments`, { params }).pipe(
+      tap(response => console.log('[ContentMgmt] Raw departments API response:', response)),
       map(response => response.departments.map(dto => this.mapDepartmentDtoToDepartment(dto))),
       tap(departments => {
+        console.log('[ContentMgmt] Mapped departments:', departments.length, 'departments');
         this.departments.next(departments);
         this.departmentsLoaded = true;
       }),
       catchError(error => {
-        console.error('Error fetching departments from API:', error);
-        // Fall back to cached data if available
-        if (this.departments.value.length > 0) {
-          return of(this.departments.value.filter(d => includeInactive || d.isActive));
-        }
+        console.error('[ContentMgmt] Error fetching departments from API:', error);
         return of([]);
       })
     );

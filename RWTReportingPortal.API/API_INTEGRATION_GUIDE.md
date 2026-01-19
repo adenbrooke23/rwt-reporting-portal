@@ -382,22 +382,50 @@ Navigate to `https://erpqaapi.redwoodtrust.com/swagger` (if enabled in developme
 | PUT | `/api/users/preferences` | Update preferences | Implemented |
 | GET | `/api/users/stats` | Get user statistics | Implemented |
 
+### Hub Endpoints (Requires Authentication)
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/hubs` | Get accessible hubs for current user | Working |
+| GET | `/api/hubs/{hubId}` | Get hub detail with reports | Pending |
+| GET | `/api/hubs/{hubId}/reports` | Get reports in hub | Pending |
+
+**Permission Logic for `/api/hubs`:**
+1. **Admin users** → See all active hubs
+2. **Regular users** → See hubs where they have:
+   - Direct hub access (UserHubAccess)
+   - Direct report access (UserReportAccess → hub)
+   - Department membership (UserDepartments → ReportDepartments → hub)
+
 ### Admin User Management Endpoints (Requires Admin Role)
 
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
-| GET | `/api/admin/users` | Get paginated user list (includes departmentCount) | Working |
+| GET | `/api/admin/users` | Get paginated user list (includes counts) | Working |
 | GET | `/api/admin/users/{userId}` | Get user details | Working |
-| GET | `/api/admin/users/{userId}/permissions` | Get user permissions | Working |
+| GET | `/api/admin/users/{userId}/permissions` | Get user hub/report permissions | Working |
 | PUT | `/api/admin/users/{userId}/lock` | Lock user account | Working |
 | PUT | `/api/admin/users/{userId}/unlock` | Unlock user account | Working |
 | PUT | `/api/admin/users/{userId}/expire` | Expire user account | Working |
 | PUT | `/api/admin/users/{userId}/restore` | Restore expired account | Working |
 | GET | `/api/admin/users/{userId}/departments` | Get user's departments | Working |
 | POST | `/api/admin/users/{userId}/departments` | Assign user to department | Working |
-| DELETE | `/api/admin/users/{userId}/departments/{departmentId}` | Remove from department | Working |
+| DELETE | `/api/admin/users/{userId}/departments/{deptId}` | Remove from department | Working |
 | PUT | `/api/admin/users/{userId}/roles/admin` | Grant/revoke admin role | Working |
 | POST | `/api/admin/users/{userId}/permissions/hub` | Grant hub access | Working |
+| DELETE | `/api/admin/users/{userId}/permissions/hub/{hubId}` | Revoke hub access | Working |
+| POST | `/api/admin/users/{userId}/permissions/report` | Grant report access | Working |
+| DELETE | `/api/admin/users/{userId}/permissions/report/{reportId}` | Revoke report access | Working |
+
+### Admin Hub Endpoints (Requires Admin Role)
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/admin/hubs` | Get all hubs (admin view) | Working |
+| GET | `/api/admin/hubs/with-reports` | Get hubs with reports (for permission UI) | Working |
+| POST | `/api/admin/hubs` | Create hub | Pending |
+| PUT | `/api/admin/hubs/{hubId}` | Update hub | Pending |
+| DELETE | `/api/admin/hubs/{hubId}` | Delete hub | Pending |
 
 ---
 
@@ -445,16 +473,24 @@ When implementing new features, follow this pattern:
 
 | File | Purpose |
 |------|---------|
+| `hub.service.ts` | Dashboard hub API calls (permission-based access) |
 | `admin-user.service.ts` | Admin user management API calls |
 | `admin.component.ts` | User Management UI (uses AdminUserService) |
+| `dashboard.component.ts` | Dashboard UI (uses HubService for real API) |
 | `auth.interceptor.ts` | Adds JWT token to API requests |
 | `auth.service.ts` | Authentication and token management |
+
+### HubService Methods (Dashboard)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `getAccessibleHubs()` | GET `/api/hubs` | Get hubs user has access to |
 
 ### AdminUserService Methods
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `getAllUsers(...)` | GET `/api/admin/users` | Paginated user list with search and departmentCount |
+| `getAllUsers(...)` | GET `/api/admin/users` | Paginated user list with counts |
 | `lockUser(userId, reason?)` | PUT `/api/admin/users/{id}/lock` | Lock user account |
 | `unlockUser(userId)` | PUT `/api/admin/users/{id}/unlock` | Unlock user account |
 | `expireUser(userId, reason?)` | PUT `/api/admin/users/{id}/expire` | Expire user account |
@@ -464,6 +500,12 @@ When implementing new features, follow this pattern:
 | `assignUserToDepartment(...)` | POST `/api/admin/users/{id}/departments` | Assign to department |
 | `removeUserFromDepartment(...)` | DELETE `/api/admin/users/{id}/departments/{deptId}` | Remove from department |
 | `updateUserAdminRole(userId, isAdmin)` | PUT `/api/admin/users/{id}/roles/admin` | Grant/revoke admin role |
+| `getUserPermissions(userId)` | GET `/api/admin/users/{id}/permissions` | Get hub/report permissions |
+| `getHubsWithReports()` | GET `/api/admin/hubs/with-reports` | Get hubs with reports for permission UI |
+| `grantHubAccess(userId, hubId)` | POST `/api/admin/users/{id}/permissions/hub` | Grant hub access |
+| `revokeHubAccess(userId, hubId)` | DELETE `/api/admin/users/{id}/permissions/hub/{hubId}` | Revoke hub access |
+| `grantReportAccess(userId, reportId)` | POST `/api/admin/users/{id}/permissions/report` | Grant report access |
+| `revokeReportAccess(userId, reportId)` | DELETE `/api/admin/users/{id}/permissions/report/{reportId}` | Revoke report access |
 
 ---
 
@@ -483,11 +525,13 @@ The `AdminUserDto` returned by `GET /api/admin/users` includes:
 | `isExpired` | bool | Account is expired |
 | `isLockedOut` | bool | Account is locked |
 | `departmentCount` | int | Number of departments user belongs to |
+| `hubCount` | int | Number of ad-hoc hub permissions (non-expired) |
+| `reportCount` | int | Number of ad-hoc report permissions (non-expired) |
 | `lastLoginAt` | DateTime? | Last login timestamp |
 | `loginCount` | int | Total login count |
 | `createdAt` | DateTime | Account creation date |
 
-**Backend Implementation Note**: To include `departmentCount`, the `UserRepository.GetAllAsync` method must include `UserDepartments`:
+**Backend Implementation Note**: To include counts, the `UserRepository.GetAllAsync` method must include related entities:
 
 ```csharp
 var query = _context.Users
@@ -495,15 +539,47 @@ var query = _context.Users
     .Include(u => u.UserRoles)
         .ThenInclude(ur => ur.Role)
     .Include(u => u.UserDepartments)  // Required for departmentCount
+    .Include(u => u.HubAccess)        // Required for hubCount
+    .Include(u => u.ReportAccess)     // Required for reportCount
     .AsQueryable();
 ```
 
 Then in the controller:
 ```csharp
-DepartmentCount = u.UserDepartments?.Count ?? 0
+DepartmentCount = u.UserDepartments?.Count ?? 0,
+HubCount = u.HubAccess?.Count(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow) ?? 0,
+ReportCount = u.ReportAccess?.Count(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow) ?? 0
 ```
 
 ---
 
+## Permission Model
+
+The application uses a dual permission model:
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ ADMIN BYPASS                                                │
+│ Admin role → All hubs and reports                          │
+├────────────────────────────────────────────────────────────┤
+│ DEPARTMENT-BASED ACCESS                                     │
+│ User → UserDepartment → ReportDepartment → Report → Hub    │
+├────────────────────────────────────────────────────────────┤
+│ AD-HOC HUB ACCESS                                           │
+│ User → UserHubAccess → Hub (all reports in hub)            │
+├────────────────────────────────────────────────────────────┤
+│ AD-HOC REPORT ACCESS                                        │
+│ User → UserReportAccess → Report → Hub                     │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Access Resolution**: User can see a hub if ANY of the following are true:
+1. User has **Admin** role
+2. User has **UserHubAccess** to that hub
+3. User has **UserReportAccess** to any report in that hub
+4. User's department (**UserDepartment**) is tagged on any report (**ReportDepartment**) in that hub
+
+---
+
 *Last Updated: January 2026*
-*Based on learnings from user profile/avatar, user management, and circular dependency fix implementations*
+*Based on learnings from user profile/avatar, user management, hub permissions, and circular dependency fix implementations*
