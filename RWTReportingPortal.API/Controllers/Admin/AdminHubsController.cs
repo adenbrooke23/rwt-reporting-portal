@@ -55,10 +55,13 @@ public class AdminHubsController : ControllerBase
     /// Get hub by ID
     /// </summary>
     [HttpGet("{hubId}")]
-    public async Task<IActionResult> GetHub(int hubId)
+    public async Task<ActionResult<HubDto>> GetHub(int hubId)
     {
-        var userId = GetUserId();
-        var result = await _hubService.GetHubDetailAsync(hubId, userId);
+        var result = await _hubService.GetHubByIdAsync(hubId);
+        if (result == null)
+        {
+            return NotFound();
+        }
         return Ok(result);
     }
 

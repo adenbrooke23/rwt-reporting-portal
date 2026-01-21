@@ -679,6 +679,28 @@ public class HubService : IHubService
 
     public Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId) => throw new NotImplementedException();
 
+    public async Task<HubDto?> GetHubByIdAsync(int hubId)
+    {
+        var hub = await _hubRepository.GetByIdAsync(hubId);
+        if (hub == null) return null;
+
+        return new HubDto
+        {
+            HubId = hub.HubId,
+            HubCode = hub.HubCode,
+            HubName = hub.HubName,
+            Description = hub.Description,
+            IconName = hub.IconName,
+            BackgroundImage = hub.BackgroundImage,
+            SortOrder = hub.SortOrder,
+            IsActive = hub.IsActive,
+            ReportGroupCount = hub.ReportGroups?.Count(rg => rg.IsActive) ?? 0,
+            ReportCount = hub.ReportGroups?.Sum(rg => rg.Reports?.Count(r => r.IsActive) ?? 0) ?? 0,
+            CreatedAt = hub.CreatedAt,
+            CreatedByEmail = null
+        };
+    }
+
     public async Task<List<HubDto>> GetAllHubsAsync(bool includeInactive = false)
     {
         var hubs = await _hubRepository.GetAllAsync(includeInactive);

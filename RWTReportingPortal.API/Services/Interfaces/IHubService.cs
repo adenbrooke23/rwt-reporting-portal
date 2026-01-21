@@ -6,6 +6,7 @@ public interface IHubService
 {
     Task<HubListResponse> GetAccessibleHubsAsync(int userId);
     Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId);
+    Task<HubDto?> GetHubByIdAsync(int hubId);
     Task<List<HubDto>> GetAllHubsAsync(bool includeInactive = false);
     Task<List<HubWithReportsDto>> GetAllHubsWithReportsAsync(bool includeInactive = false);
     Task<HubDto> CreateHubAsync(HubDto hub, int createdBy);
