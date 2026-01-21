@@ -197,7 +197,18 @@ export class ContentManagementService {
   }
 
   getHubById(id: string): Observable<Hub | undefined> {
-    return of(this.hubs.value.find(h => h.id === id)).pipe(delay(this.mockDelay));
+    // First check local cache
+    const cached = this.hubs.value.find(h => h.id === id);
+    if (cached) {
+      return of(cached);
+    }
+
+    // If not in cache, fetch from API
+    const hubId = parseInt(id, 10);
+    return this.http.get<HubApiDto>(`${this.API_BASE_URL}/admin/hubs/${hubId}`).pipe(
+      map(dto => this.mapHubDtoToHub(dto)),
+      catchError(() => of(undefined))
+    );
   }
 
   createHub(dto: CreateHubDto): Observable<Hub> {
@@ -640,7 +651,18 @@ export class ContentManagementService {
   }
 
   getDepartmentById(id: string): Observable<Department | undefined> {
-    return of(this.departments.value.find(d => d.id === id)).pipe(delay(this.mockDelay));
+    // First check local cache
+    const cached = this.departments.value.find(d => d.id === id);
+    if (cached) {
+      return of(cached);
+    }
+
+    // If not in cache, fetch from API
+    const deptId = parseInt(id, 10);
+    return this.http.get<DepartmentApiDto>(`${this.API_BASE_URL}/admin/departments/${deptId}`).pipe(
+      map(dto => this.mapDepartmentDtoToDepartment(dto)),
+      catchError(() => of(undefined))
+    );
   }
 
   createDepartment(dto: CreateDepartmentDto): Observable<Department> {
