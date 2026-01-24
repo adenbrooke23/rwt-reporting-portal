@@ -24,14 +24,13 @@
             [placeholder]="'Search by title, category, or author'"
             [(ngModel)]="searchTerm"
             (valueChange)="onSearchChange()"
-            size="sm"
-            theme="light">
+            [size]="'sm'">
           </ibm-search>
 
           <ibm-dropdown
+            [appendInline]="true"
             [placeholder]="'Date range'"
-            size="sm"
-            theme="light"
+            [size]="'sm'"
             (selected)="onDateRangeChange($event)">
             <ibm-dropdown-list [items]="dateRangeOptions"></ibm-dropdown-list>
           </ibm-dropdown>
@@ -42,7 +41,7 @@
               [dateFormat]="'m/d/Y'"
               [placeholder]="'mm/dd/yyyy'"
               (valueChange)="onStartDateChange($event)"
-              size="sm">
+              [size]="'sm'">
             </ibm-date-picker>
 
             <ibm-date-picker
@@ -50,7 +49,7 @@
               [dateFormat]="'m/d/Y'"
               [placeholder]="'mm/dd/yyyy'"
               (valueChange)="onEndDateChange($event)"
-              size="sm">
+              [size]="'sm'">
             </ibm-date-picker>
           </ng-container>
         </div>
