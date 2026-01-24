@@ -12,6 +12,20 @@ public interface ISSRSService
     Task<SSRSFolderListResponse> ListChildrenAsync(string folderPath);
     Task<SSRSConfigResponse> GetServerConfigAsync();
     Task<bool> TestConnectionAsync();
+
+    // Report rendering/proxy
+    Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null);
+}
+
+/// <summary>
+/// Result of rendering an SSRS report
+/// </summary>
+public class SSRSRenderResult
+{
+    public bool Success { get; set; }
+    public byte[]? Content { get; set; }
+    public string ContentType { get; set; } = "text/html";
+    public string? ErrorMessage { get; set; }
 }
 
 public class SSRSParameter

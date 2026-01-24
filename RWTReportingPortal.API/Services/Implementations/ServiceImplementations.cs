@@ -1709,6 +1709,70 @@ public class SSRSService : ISSRSService
 
         return result;
     }
+
+    public async Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null)
+    {
+        try
+        {
+            var serverUrl = reportServer ?? _configuration["SSRS:ReportServerUrl"];
+            if (string.IsNullOrEmpty(serverUrl))
+            {
+                return new SSRSRenderResult
+                {
+                    Success = false,
+                    ErrorMessage = "SSRS server URL not configured"
+                };
+            }
+
+            // Build the report viewer URL
+            // Format: {serverUrl}/Pages/ReportViewer.aspx?{reportPath}&rs:Command=Render&rs:Embed=true
+            var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
+            var viewerUrl = $"{serverUrl}/Pages/ReportViewer.aspx?{reportPathEncoded}&rs:Command=Render&rs:Embed=true";
+
+            // Add any parameters
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
+                {
+                    viewerUrl += $"&{Uri.EscapeDataString(param.Key)}={Uri.EscapeDataString(param.Value)}";
+                }
+            }
+
+            _logger.LogInformation("Rendering SSRS report: {Url}", viewerUrl);
+
+            var httpClient = _httpClientFactory.CreateClient("SSRSClient");
+            var response = await httpClient.GetAsync(viewerUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("SSRS report render failed with status {Status}", response.StatusCode);
+                return new SSRSRenderResult
+                {
+                    Success = false,
+                    ErrorMessage = $"SSRS returned status {response.StatusCode}"
+                };
+            }
+
+            var content = await response.Content.ReadAsByteArrayAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/html";
+
+            return new SSRSRenderResult
+            {
+                Success = true,
+                Content = content,
+                ContentType = contentType
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to render SSRS report {ReportPath}", reportPath);
+            return new SSRSRenderResult
+            {
+                Success = false,
+                ErrorMessage = "Failed to connect to SSRS server"
+            };
+        }
+    }
 }
 
 public class AuditService : IAuditService

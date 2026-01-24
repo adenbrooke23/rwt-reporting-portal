@@ -22,6 +22,9 @@ export class ReportViewerComponent implements OnInit {
   private iconService = inject(IconService);
   private contentService = inject(ContentManagementService);
 
+  // API base URL for proxy endpoints
+  private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
+
   reportId: string = '';
   reportName: string = '';
   reportDescription: string = '';
@@ -102,12 +105,10 @@ export class ReportViewerComponent implements OnInit {
         return 'https://playground.powerbi.com/sampleReportEmbed';
 
       case 'SSRS':
-        // On-premises SSRS/PBIRS report
+        // On-premises SSRS/PBIRS report - use API proxy to avoid Windows auth popup
         if (config?.serverUrl && config?.reportPath) {
-          // Build SSRS embed URL with rs:Embed=true for iframe compatibility
-          const baseUrl = config.serverUrl.replace(/\/$/, '');
-          const reportPath = config.reportPath.startsWith('/') ? config.reportPath : '/' + config.reportPath;
-          return `${baseUrl}/Pages/ReportViewer.aspx?${reportPath}&rs:Command=Render&rs:Embed=true`;
+          // Use the API proxy endpoint which handles authentication server-side
+          return `${this.API_BASE_URL}/reports/${report.id}/render`;
         }
         // No configuration - show setup message
         this.needsConfiguration = true;
