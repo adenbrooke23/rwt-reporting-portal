@@ -1,9 +1,11 @@
 using RWTReportingPortal.API.Models.DTOs.Reports;
+using RWTReportingPortal.API.Models.DTOs.Admin;
 
 namespace RWTReportingPortal.API.Services.Interfaces;
 
 public interface IReportService
 {
+    // User-facing methods
     Task<ReportDto?> GetReportAsync(int reportId, int userId);
     Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId);
     Task LogReportAccessAsync(int reportId, int userId, string accessType, string ipAddress);
@@ -11,4 +13,11 @@ public interface IReportService
     Task AddFavoriteAsync(int userId, int reportId);
     Task RemoveFavoriteAsync(int userId, int reportId);
     Task ReorderFavoritesAsync(int userId, List<int> reportIds);
+
+    // Admin CRUD methods
+    Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false);
+    Task<AdminReportDto?> GetReportByIdAsync(int reportId);
+    Task<AdminReportDto> CreateReportAsync(CreateReportRequest request, int createdBy);
+    Task<AdminReportDto> UpdateReportAsync(int reportId, UpdateReportRequest request, int updatedBy);
+    Task DeleteReportAsync(int reportId, bool hardDelete = false);
 }

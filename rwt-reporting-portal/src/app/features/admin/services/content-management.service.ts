@@ -74,6 +74,61 @@ export interface UpdateDepartmentRequestDto {
   isActive?: boolean;
 }
 
+// Report API DTOs
+export interface ReportApiDto {
+  reportId: number;
+  reportGroupId: number;
+  reportGroupName: string;
+  hubId: number;
+  hubName: string;
+  reportCode: string;
+  reportName: string;
+  description?: string;
+  reportType: string;
+  powerBIWorkspaceId?: string;
+  powerBIReportId?: string;
+  powerBIEmbedUrl?: string;
+  ssrsReportPath?: string;
+  ssrsReportServer?: string;
+  parameters?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  createdByEmail?: string;
+  departmentIds: number[];
+}
+
+// Request DTO for creating reports
+export interface CreateReportRequestDto {
+  reportGroupId: number;
+  reportName: string;
+  description?: string;
+  reportType: string;
+  powerBIWorkspaceId?: string;
+  powerBIReportId?: string;
+  powerBIEmbedUrl?: string;
+  ssrsReportPath?: string;
+  ssrsReportServer?: string;
+  parameters?: string;
+  departmentIds?: number[];
+}
+
+// Request DTO for updating reports
+export interface UpdateReportRequestDto {
+  reportGroupId?: number;
+  reportName?: string;
+  description?: string;
+  reportType?: string;
+  powerBIWorkspaceId?: string;
+  powerBIReportId?: string;
+  powerBIEmbedUrl?: string;
+  ssrsReportPath?: string;
+  ssrsReportServer?: string;
+  parameters?: string;
+  isActive?: boolean;
+  departmentIds?: number[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -103,9 +158,9 @@ export class ContentManagementService {
     const now = new Date();
     const adminUser = 'admin@redwoodtrust.com';
 
-    // NOTE: Hubs and Departments are now loaded from the API
-    // Report groups and reports will also come from API once we have them in database
-    // Keeping one sample report group and report for demo purposes
+    // NOTE: Hubs, Departments, and Reports are now loaded from the API
+    // Report groups will also come from API once we have them in database
+    // Keeping one sample report group for demo purposes
 
     const groupsData: ReportGroup[] = [
       {
@@ -118,36 +173,13 @@ export class ContentManagementService {
         createdAt: new Date('2024-01-15'),
         updatedAt: now,
         createdBy: adminUser,
-        reportCount: 1
+        reportCount: 0
       }
     ];
 
-    // Initialize reports - keeping only Sample Power BI Report for demo
-    const reportsData: Report[] = [
-      {
-        id: 'sample-powerbi-embed',
-        reportGroupId: 'demo-samples',
-        hubId: '1', // Will need to match actual hub ID from database
-        name: 'Sample Power BI Report',
-        description: 'Interactive Power BI embedded report demo',
-        type: 'PowerBI',
-        embedConfig: {
-          embedUrl: 'https://playground.powerbi.com/sampleReportEmbed'
-        },
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser
-      }
-    ];
-
-    // NOTE: Departments are now loaded from the API
-    // Mock data removed - departments come from database
-
-    // Initialize only report groups and reports (mock data until database has them)
+    // Initialize only report groups (mock data until database has them)
+    // Reports now come from the API
     this.reportGroups.next(groupsData);
-    this.reports.next(reportsData);
   }
 
   // ============== HUB OPERATIONS ==============
@@ -420,110 +452,147 @@ export class ContentManagementService {
 
   // ============== REPORT OPERATIONS ==============
 
+  private reportsLoaded = false;
+
   getReports(groupId?: string, hubId?: string, includeInactive = false): Observable<Report[]> {
-    return of(
-      this.reports.value
-        .filter(r =>
-          (!groupId || r.reportGroupId === groupId) &&
-          (!hubId || r.hubId === hubId) &&
-          (includeInactive || r.isActive)
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-    ).pipe(delay(this.mockDelay));
+    const params = new HttpParams().set('includeInactive', includeInactive.toString());
+
+    return this.http.get<{ reports: ReportApiDto[] }>(`${this.API_BASE_URL}/admin/reports`, { params }).pipe(
+      map(response => response.reports.map(dto => this.mapReportDtoToReport(dto))),
+      map(reports => reports.filter(r =>
+        (!groupId || r.reportGroupId === groupId) &&
+        (!hubId || r.hubId === hubId)
+      )),
+      tap(reports => {
+        this.reports.next(reports);
+        this.reportsLoaded = true;
+      }),
+      catchError(() => of([]))
+    );
   }
 
   getReportById(id: string): Observable<Report | undefined> {
-    return of(this.reports.value.find(r => r.id === id)).pipe(delay(this.mockDelay));
+    // First check local cache
+    const cached = this.reports.value.find(r => r.id === id);
+    if (cached) {
+      return of(cached);
+    }
+
+    // If not in cache, fetch from API
+    const reportId = parseInt(id, 10);
+    return this.http.get<ReportApiDto>(`${this.API_BASE_URL}/admin/reports/${reportId}`).pipe(
+      map(dto => this.mapReportDtoToReport(dto)),
+      catchError(() => of(undefined))
+    );
   }
 
   createReport(dto: CreateReportDto): Observable<Report> {
-    const currentReports = this.reports.value;
-    const groupReports = currentReports.filter(r => r.reportGroupId === dto.reportGroupId);
-    const maxSortOrder = Math.max(...groupReports.map(r => r.sortOrder), 0);
-
-    const group = this.reportGroups.value.find(g => g.id === dto.reportGroupId);
-    const hubId = group?.hubId || '';
-
-    const newReport: Report = {
-      id: this.generateId('report'),
-      reportGroupId: dto.reportGroupId,
-      hubId: hubId,
-      name: dto.name,
+    const requestDto: CreateReportRequestDto = {
+      reportGroupId: parseInt(dto.reportGroupId, 10),
+      reportName: dto.name,
       description: dto.description,
-      type: dto.type,
-      embedConfig: dto.embedConfig,
-      sortOrder: maxSortOrder + 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: 'admin@redwoodtrust.com'
+      reportType: dto.type,
+      powerBIWorkspaceId: dto.embedConfig?.workspaceId,
+      powerBIReportId: dto.embedConfig?.reportId,
+      powerBIEmbedUrl: dto.embedConfig?.embedUrl,
+      ssrsReportPath: dto.embedConfig?.reportPath,
+      ssrsReportServer: dto.embedConfig?.serverUrl,
+      departmentIds: dto.departmentIds?.map(id => parseInt(id, 10))
     };
 
-    this.reports.next([...currentReports, newReport]);
-    this.updateGroupCounts(dto.reportGroupId);
-    this.updateHubCounts(hubId);
-    return of(newReport).pipe(delay(this.mockDelay));
+    return this.http.post<ReportApiDto>(`${this.API_BASE_URL}/admin/reports`, requestDto).pipe(
+      map(response => this.mapReportDtoToReport(response)),
+      tap(report => {
+        const currentReports = this.reports.value;
+        this.reports.next([...currentReports, report]);
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to create report'));
+      })
+    );
   }
 
   updateReport(id: string, dto: UpdateReportDto): Observable<Report> {
-    const currentReports = this.reports.value;
-    const index = currentReports.findIndex(r => r.id === id);
+    const reportId = parseInt(id, 10);
 
-    if (index === -1) {
-      return throwError(() => new Error('Report not found'));
-    }
-
-    const oldGroupId = currentReports[index].reportGroupId;
-    let newHubId = currentReports[index].hubId;
-
-    if (dto.reportGroupId && dto.reportGroupId !== oldGroupId) {
-      const newGroup = this.reportGroups.value.find(g => g.id === dto.reportGroupId);
-      newHubId = newGroup?.hubId || newHubId;
-    }
-
-    const updatedReport: Report = {
-      ...currentReports[index],
-      ...dto,
-      hubId: newHubId,
-      updatedAt: new Date()
+    const requestDto: UpdateReportRequestDto = {
+      reportGroupId: dto.reportGroupId ? parseInt(dto.reportGroupId, 10) : undefined,
+      reportName: dto.name,
+      description: dto.description,
+      reportType: dto.type,
+      powerBIWorkspaceId: dto.embedConfig?.workspaceId,
+      powerBIReportId: dto.embedConfig?.reportId,
+      powerBIEmbedUrl: dto.embedConfig?.embedUrl,
+      ssrsReportPath: dto.embedConfig?.reportPath,
+      ssrsReportServer: dto.embedConfig?.serverUrl,
+      isActive: dto.isActive,
+      departmentIds: dto.departmentIds?.map(deptId => parseInt(deptId, 10))
     };
 
-    currentReports[index] = updatedReport;
-    this.reports.next([...currentReports]);
-
-    // Update counts if group changed
-    if (dto.reportGroupId && dto.reportGroupId !== oldGroupId) {
-      this.updateGroupCounts(oldGroupId);
-      this.updateGroupCounts(dto.reportGroupId);
-      this.updateHubCounts(currentReports[index].hubId);
-      this.updateHubCounts(newHubId);
-    }
-
-    return of(updatedReport).pipe(delay(this.mockDelay));
+    return this.http.put<ReportApiDto>(`${this.API_BASE_URL}/admin/reports/${reportId}`, requestDto).pipe(
+      map(response => this.mapReportDtoToReport(response)),
+      tap(updatedReport => {
+        const currentReports = this.reports.value;
+        const index = currentReports.findIndex(r => r.id === id);
+        if (index !== -1) {
+          currentReports[index] = updatedReport;
+          this.reports.next([...currentReports]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to update report'));
+      })
+    );
   }
 
   deleteReport(id: string): Observable<void> {
-    const currentReports = this.reports.value;
-    const index = currentReports.findIndex(r => r.id === id);
+    const reportId = parseInt(id, 10);
 
-    if (index === -1) {
-      return throwError(() => new Error('Report not found'));
-    }
+    return this.http.delete<void>(`${this.API_BASE_URL}/admin/reports/${reportId}`).pipe(
+      tap(() => {
+        const currentReports = this.reports.value;
+        const index = currentReports.findIndex(r => r.id === id);
+        if (index !== -1) {
+          // Mark as inactive in local state (soft delete)
+          currentReports[index] = {
+            ...currentReports[index],
+            isActive: false,
+            updatedAt: new Date()
+          };
+          this.reports.next([...currentReports]);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to delete report'));
+      })
+    );
+  }
 
-    const groupId = currentReports[index].reportGroupId;
-    const hubId = currentReports[index].hubId;
-
-    // Soft delete
-    currentReports[index] = {
-      ...currentReports[index],
-      isActive: false,
-      updatedAt: new Date()
+  /**
+   * Map API DTO to frontend Report model
+   */
+  private mapReportDtoToReport(dto: ReportApiDto): Report {
+    return {
+      id: dto.reportId.toString(),
+      reportGroupId: dto.reportGroupId.toString(),
+      hubId: dto.hubId.toString(),
+      name: dto.reportName,
+      description: dto.description || '',
+      type: dto.reportType as 'PowerBI' | 'SSRS' | 'Paginated',
+      embedConfig: {
+        embedUrl: dto.powerBIEmbedUrl,
+        workspaceId: dto.powerBIWorkspaceId,
+        reportId: dto.powerBIReportId,
+        serverUrl: dto.ssrsReportServer,
+        reportPath: dto.ssrsReportPath
+      },
+      sortOrder: dto.sortOrder,
+      isActive: dto.isActive,
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.createdAt),
+      createdBy: dto.createdByEmail || 'admin@redwoodtrust.com',
+      departmentIds: dto.departmentIds?.map(id => id.toString())
     };
-
-    this.reports.next([...currentReports]);
-    this.updateGroupCounts(groupId);
-    this.updateHubCounts(hubId);
-    return of(void 0).pipe(delay(this.mockDelay));
   }
 
   reorderReports(groupId: string, reportIds: string[]): Observable<void> {

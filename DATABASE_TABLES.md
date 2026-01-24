@@ -271,6 +271,7 @@ CREATE TABLE portal.ReportingHubs (
     HubName             NVARCHAR(100) NOT NULL,
     Description         NVARCHAR(500) NULL,
     IconName            NVARCHAR(50) NULL,                  -- Carbon icon name
+    ColorClass          NVARCHAR(50) NULL,                  -- CSS color class for hub card styling
     BackgroundImage     NVARCHAR(500) NULL,                 -- URL to background image
     SortOrder           INT NOT NULL DEFAULT 0,
     IsActive            BIT NOT NULL DEFAULT 1,

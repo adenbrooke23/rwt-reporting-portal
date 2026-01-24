@@ -422,10 +422,22 @@ Navigate to `https://erpqaapi.redwoodtrust.com/swagger` (if enabled in developme
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
 | GET | `/api/admin/hubs` | Get all hubs (admin view) | Working |
+| GET | `/api/admin/hubs/{hubId}` | Get hub by ID | Working |
 | GET | `/api/admin/hubs/with-reports` | Get hubs with reports (for permission UI) | Working |
-| POST | `/api/admin/hubs` | Create hub | Pending |
-| PUT | `/api/admin/hubs/{hubId}` | Update hub | Pending |
-| DELETE | `/api/admin/hubs/{hubId}` | Delete hub | Pending |
+| POST | `/api/admin/hubs` | Create hub | Working |
+| PUT | `/api/admin/hubs/{hubId}` | Update hub | Working |
+| DELETE | `/api/admin/hubs/{hubId}` | Delete hub (soft delete by default) | Working |
+| PUT | `/api/admin/hubs/reorder` | Reorder hubs | Working |
+
+### Admin Department Endpoints (Requires Admin Role)
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/admin/departments` | Get all departments | Working |
+| GET | `/api/admin/departments/{deptId}` | Get department by ID | Working |
+| POST | `/api/admin/departments` | Create department | Working |
+| PUT | `/api/admin/departments/{deptId}` | Update department | Working |
+| DELETE | `/api/admin/departments/{deptId}` | Delete department (soft delete by default) | Working |
 
 ---
 
@@ -581,5 +593,35 @@ The application uses a dual permission model:
 
 ---
 
+---
+
+## Hub DTO Fields
+
+The `HubDto` returned by hub endpoints includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `hubId` | int | Hub's unique ID |
+| `hubCode` | string | Unique code for the hub (e.g., "sequoia") |
+| `hubName` | string | Display name |
+| `description` | string? | Hub description |
+| `iconName` | string? | Carbon icon name (e.g., "folder", "document", "chart--bar") |
+| `colorClass` | string? | CSS color class for styling (e.g., "hub-sequoia", "hub-corevest") |
+| `backgroundImage` | string? | URL to background image |
+| `sortOrder` | int | Display order |
+| `isActive` | bool | Whether hub is active |
+| `reportGroupCount` | int | Number of report groups in hub |
+| `reportCount` | int | Total number of reports in hub |
+| `createdAt` | DateTime | Creation timestamp |
+| `createdByEmail` | string? | Email of user who created the hub |
+
+**ColorClass Note**: The `colorClass` field stores the CSS class used for hub card styling in the frontend. If not set, the frontend derives a color from the `hubCode`. Available color classes:
+- `hub-sequoia` - Green theme
+- `hub-corevest` - Orange theme
+- `hub-enterprise` - Blue theme
+- `hub-aspire` - Purple theme
+
+---
+
 *Last Updated: January 2026*
-*Based on learnings from user profile/avatar, user management, hub permissions, and circular dependency fix implementations*
+*Based on learnings from user profile/avatar, user management, hub permissions, hub/department CRUD, and circular dependency fix implementations*

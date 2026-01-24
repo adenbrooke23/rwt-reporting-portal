@@ -838,22 +838,26 @@ public class HubService : IHubService
 public class ReportService : IReportService
 {
     private readonly IReportRepository _reportRepository;
+    private readonly ApplicationDbContext _context;
     private readonly ISqlConnectionFactory _sqlConnectionFactory;
     private readonly IPowerBIService _powerBIService;
     private readonly ISSRSService _ssrsService;
 
     public ReportService(
         IReportRepository reportRepository,
+        ApplicationDbContext context,
         ISqlConnectionFactory sqlConnectionFactory,
         IPowerBIService powerBIService,
         ISSRSService ssrsService)
     {
         _reportRepository = reportRepository;
+        _context = context;
         _sqlConnectionFactory = sqlConnectionFactory;
         _powerBIService = powerBIService;
         _ssrsService = ssrsService;
     }
 
+    // User-facing methods (to be implemented later)
     public Task<ReportDto?> GetReportAsync(int reportId, int userId) => throw new NotImplementedException();
     public Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId) => throw new NotImplementedException();
     public Task LogReportAccessAsync(int reportId, int userId, string accessType, string ipAddress) => throw new NotImplementedException();
@@ -861,6 +865,165 @@ public class ReportService : IReportService
     public Task AddFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
     public Task RemoveFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
     public Task ReorderFavoritesAsync(int userId, List<int> reportIds) => throw new NotImplementedException();
+
+    // Admin CRUD methods
+    public async Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false)
+    {
+        var reports = await _reportRepository.GetAllAsync(includeInactive);
+
+        return reports.Select(r => MapToAdminDto(r)).ToList();
+    }
+
+    public async Task<AdminReportDto?> GetReportByIdAsync(int reportId)
+    {
+        var report = await _reportRepository.GetByIdWithDepartmentsAsync(reportId);
+        if (report == null) return null;
+
+        return MapToAdminDto(report);
+    }
+
+    public async Task<AdminReportDto> CreateReportAsync(CreateReportRequest request, int createdBy)
+    {
+        // Generate report code from name
+        var reportCode = request.ReportName.ToUpper().Replace(" ", "_");
+
+        // Get next sort order for the report group
+        var existingReports = await _context.Reports
+            .Where(r => r.ReportGroupId == request.ReportGroupId)
+            .ToListAsync();
+        var maxSortOrder = existingReports.Any() ? existingReports.Max(r => r.SortOrder) : 0;
+
+        var report = new Report
+        {
+            ReportGroupId = request.ReportGroupId,
+            ReportCode = reportCode,
+            ReportName = request.ReportName,
+            Description = request.Description,
+            ReportType = request.ReportType,
+            PowerBIWorkspaceId = request.PowerBIWorkspaceId,
+            PowerBIReportId = request.PowerBIReportId,
+            SSRSReportPath = request.SSRSReportPath,
+            SSRSReportServer = request.SSRSReportServer,
+            Parameters = request.Parameters,
+            SortOrder = maxSortOrder + 1,
+            IsActive = true,
+            CreatedBy = createdBy,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var created = await _reportRepository.CreateAsync(report);
+
+        // Add department associations if provided
+        if (request.DepartmentIds?.Any() == true)
+        {
+            foreach (var deptId in request.DepartmentIds)
+            {
+                _context.ReportDepartments.Add(new ReportDepartment
+                {
+                    ReportId = created.ReportId,
+                    DepartmentId = deptId
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        // Reload with all associations
+        var result = await _reportRepository.GetByIdWithDepartmentsAsync(created.ReportId);
+        return MapToAdminDto(result!);
+    }
+
+    public async Task<AdminReportDto> UpdateReportAsync(int reportId, UpdateReportRequest request, int updatedBy)
+    {
+        var report = await _reportRepository.GetByIdWithDepartmentsAsync(reportId);
+        if (report == null)
+        {
+            throw new KeyNotFoundException($"Report with ID {reportId} not found");
+        }
+
+        // Update properties
+        if (request.ReportGroupId.HasValue)
+            report.ReportGroupId = request.ReportGroupId.Value;
+        if (request.ReportName != null)
+        {
+            report.ReportName = request.ReportName;
+            report.ReportCode = request.ReportName.ToUpper().Replace(" ", "_");
+        }
+        if (request.Description != null)
+            report.Description = request.Description;
+        if (request.ReportType != null)
+            report.ReportType = request.ReportType;
+        if (request.PowerBIWorkspaceId != null)
+            report.PowerBIWorkspaceId = request.PowerBIWorkspaceId;
+        if (request.PowerBIReportId != null)
+            report.PowerBIReportId = request.PowerBIReportId;
+        if (request.PowerBIEmbedUrl != null)
+            report.PowerBIReportId = request.PowerBIReportId; // Store embed URL in reportId for now
+        if (request.SSRSReportPath != null)
+            report.SSRSReportPath = request.SSRSReportPath;
+        if (request.SSRSReportServer != null)
+            report.SSRSReportServer = request.SSRSReportServer;
+        if (request.Parameters != null)
+            report.Parameters = request.Parameters;
+        if (request.IsActive.HasValue)
+            report.IsActive = request.IsActive.Value;
+
+        await _reportRepository.UpdateAsync(report);
+
+        // Update department associations if provided
+        if (request.DepartmentIds != null)
+        {
+            // Remove existing
+            var existingDepts = await _context.ReportDepartments
+                .Where(rd => rd.ReportId == reportId)
+                .ToListAsync();
+            _context.ReportDepartments.RemoveRange(existingDepts);
+
+            // Add new
+            foreach (var deptId in request.DepartmentIds)
+            {
+                _context.ReportDepartments.Add(new ReportDepartment
+                {
+                    ReportId = reportId,
+                    DepartmentId = deptId
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        // Reload with all associations
+        var result = await _reportRepository.GetByIdWithDepartmentsAsync(reportId);
+        return MapToAdminDto(result!);
+    }
+
+    public async Task DeleteReportAsync(int reportId, bool hardDelete = false)
+    {
+        await _reportRepository.DeleteAsync(reportId, hardDelete);
+    }
+
+    private AdminReportDto MapToAdminDto(Report report)
+    {
+        return new AdminReportDto
+        {
+            ReportId = report.ReportId,
+            ReportGroupId = report.ReportGroupId,
+            ReportGroupName = report.ReportGroup?.GroupName ?? "",
+            HubId = report.ReportGroup?.HubId ?? 0,
+            HubName = report.ReportGroup?.Hub?.HubName ?? "",
+            ReportCode = report.ReportCode,
+            ReportName = report.ReportName,
+            Description = report.Description,
+            ReportType = report.ReportType,
+            PowerBIWorkspaceId = report.PowerBIWorkspaceId,
+            PowerBIReportId = report.PowerBIReportId,
+            SSRSReportPath = report.SSRSReportPath,
+            SSRSReportServer = report.SSRSReportServer,
+            Parameters = report.Parameters,
+            SortOrder = report.SortOrder,
+            IsActive = report.IsActive,
+            CreatedAt = report.CreatedAt,
+            DepartmentIds = report.ReportDepartments?.Select(rd => rd.DepartmentId).ToList() ?? new List<int>()
+        };
+    }
 }
 
 public class DepartmentService : IDepartmentService
