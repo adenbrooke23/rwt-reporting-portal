@@ -17,54 +17,52 @@
 
   <main class="page-main">
     <div class="page-content">
-      <!-- Reports Table with Toolbar -->
+      <!-- Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div class="filter-toolbar-left">
+          <ibm-dropdown
+            [size]="'sm'"
+            class="filter-dropdown"
+            placeholder="All Categories"
+            (selected)="onCategoryFilterChange($event)">
+            <ibm-dropdown-list [items]="categoryDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+          <ibm-dropdown
+            [size]="'sm'"
+            class="filter-dropdown"
+            placeholder="All Departments"
+            (selected)="onDepartmentFilterChange($event)">
+            <ibm-dropdown-list [items]="departmentDropdownItems"></ibm-dropdown-list>
+          </ibm-dropdown>
+          <ibm-search
+            [value]="searchQuery"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Search reports..."
+            [size]="'sm'"
+            class="filter-search">
+          </ibm-search>
+        </div>
+        <div class="filter-toolbar-right">
+          <ibm-tag type="cool-gray" size="md">
+            {{ allReports.length }} report{{ allReports.length !== 1 ? 's' : '' }}
+          </ibm-tag>
+          <button
+            cdsButton="ghost"
+            type="button"
+            [iconOnly]="true"
+            [size]="'sm'"
+            class="row-height-settings-btn"
+            [ibmOverflowMenu]="rowHeightMenu"
+            aria-label="Adjust row height">
+            <svg cdsIcon="settings" size="16"></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Reports Table -->
       <div *ngIf="isLoading || reports.length > 0" class="reports-table">
         <div class="carbon-table-wrapper" [ngClass]="'table-row-size-' + tableRowSize">
           <ibm-table-container>
-            <ibm-table-toolbar [model]="tableModel">
-              <ibm-table-toolbar-content>
-                <!-- Category Filter -->
-                <ibm-dropdown
-                  [appendInline]="true"
-                  [size]="'sm'"
-                  class="toolbar-filter"
-                  placeholder="Category"
-                  (selected)="onCategoryFilterChange($event)">
-                  <ibm-dropdown-list [items]="categoryDropdownItems"></ibm-dropdown-list>
-                </ibm-dropdown>
-                <!-- Department Filter -->
-                <ibm-dropdown
-                  [appendInline]="true"
-                  [size]="'sm'"
-                  class="toolbar-filter"
-                  placeholder="Department"
-                  (selected)="onDepartmentFilterChange($event)">
-                  <ibm-dropdown-list [items]="departmentDropdownItems"></ibm-dropdown-list>
-                </ibm-dropdown>
-                <ibm-table-toolbar-search
-                  [expandable]="true"
-                  [value]="searchQuery"
-                  (valueChange)="onSearchChange($event)"
-                  (clear)="onSearchChange('')"
-                  [placeholder]="'Search reports...'"
-                  [size]="'sm'">
-                </ibm-table-toolbar-search>
-                <!-- Row Height Settings Button -->
-                <button
-                  cdsButton="ghost"
-                  type="button"
-                  [iconOnly]="true"
-                  [size]="'sm'"
-                  class="row-height-settings-btn"
-                  [ibmOverflowMenu]="rowHeightMenu"
-                  aria-label="Adjust row height">
-                  <svg cdsIcon="settings" size="16"></svg>
-                </button>
-                <ibm-tag type="cool-gray" size="md">
-                  {{ allReports.length }} report{{ allReports.length !== 1 ? 's' : '' }}
-                </ibm-tag>
-              </ibm-table-toolbar-content>
-            </ibm-table-toolbar>
             <ibm-table
               [model]="isLoading ? skeletonModel : tableModel"
               [skeleton]="isLoading"
