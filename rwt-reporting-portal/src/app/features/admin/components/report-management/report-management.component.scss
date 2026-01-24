@@ -105,17 +105,40 @@
 .group-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: spacing.$spacing-02;
 }
 
-.group-name {
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  padding: spacing.$spacing-02 spacing.$spacing-03;
+  border-radius: 4px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  width: fit-content;
+
+  .category-icon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
 }
 
 .hub-name {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  font-size: 0.6875rem;
   color: var(--color-text-secondary);
+  padding-left: spacing.$spacing-02;
+
+  .hub-icon {
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
 }
 
 .actions-cell {

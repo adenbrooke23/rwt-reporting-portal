@@ -96,8 +96,14 @@
 
 <ng-template #groupTemplate let-data="data">
   <div class="group-cell">
-    <span class="group-name">{{ getGroupName(data.reportGroupId) }}</span>
-    <span class="hub-name">{{ getHubNameByGroupId(data.reportGroupId) }}</span>
+    <span class="category-badge">
+      <svg cdsIcon="category" size="16" class="category-icon"></svg>
+      {{ getGroupName(data.reportGroupId) }}
+    </span>
+    <span class="hub-name">
+      <svg cdsIcon="folder" size="12" class="hub-icon"></svg>
+      {{ getHubNameByGroupId(data.reportGroupId) }}
+    </span>
   </div>
 </ng-template>
 

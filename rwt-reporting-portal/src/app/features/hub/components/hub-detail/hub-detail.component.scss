@@ -247,6 +247,25 @@
   line-height: 1.5;
 }
 
+// Category Badge
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: spacing.$spacing-02;
+  padding: spacing.$spacing-02 spacing.$spacing-03;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+
+  .category-icon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+}
+
 // Type Badge
 .type-badge {
   display: inline-flex;
@@ -269,6 +288,50 @@
     background: rgba(166, 82, 255, 0.15);
     color: #a56eff;
     border-color: rgba(166, 82, 255, 0.3);
+  }
+}
+
+// Toolbar Filters
+.toolbar-filter {
+  min-width: 150px;
+  max-width: 180px;
+
+  ::ng-deep {
+    .cds--dropdown {
+      background: var(--color-bg-primary);
+      border-color: var(--color-border-light);
+
+      .cds--list-box__field {
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+      }
+
+      .cds--list-box__menu-icon {
+        fill: var(--color-text-primary);
+      }
+
+      &:hover {
+        background: var(--color-bg-hover);
+      }
+    }
+
+    .cds--list-box__menu {
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border-light);
+
+      .cds--list-box__menu-item {
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+
+        &:hover {
+          background: var(--color-bg-hover);
+        }
+
+        &--active {
+          background: var(--color-bg-hover);
+        }
+      }
+    }
   }
 }
 

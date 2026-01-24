@@ -23,6 +23,24 @@
           <ibm-table-container>
             <ibm-table-toolbar [model]="tableModel">
               <ibm-table-toolbar-content>
+                <!-- Category Filter -->
+                <ibm-dropdown
+                  [appendInline]="true"
+                  [size]="'sm'"
+                  class="toolbar-filter"
+                  placeholder="Category"
+                  (selected)="onCategoryFilterChange($event)">
+                  <ibm-dropdown-list [items]="categoryDropdownItems"></ibm-dropdown-list>
+                </ibm-dropdown>
+                <!-- Department Filter -->
+                <ibm-dropdown
+                  [appendInline]="true"
+                  [size]="'sm'"
+                  class="toolbar-filter"
+                  placeholder="Department"
+                  (selected)="onDepartmentFilterChange($event)">
+                  <ibm-dropdown-list [items]="departmentDropdownItems"></ibm-dropdown-list>
+                </ibm-dropdown>
                 <ibm-table-toolbar-search
                   [expandable]="true"
                   [value]="searchQuery"
@@ -94,6 +112,13 @@
           <svg cdsIcon="document" size="16" class="report-icon"></svg>
           <span class="report-name">{{ data.name }}</span>
         </div>
+      </ng-template>
+
+      <ng-template #categoryTemplate let-data="data">
+        <span class="category-badge">
+          <svg cdsIcon="category" size="16" class="category-icon"></svg>
+          {{ data.categoryName }}
+        </span>
       </ng-template>
 
       <ng-template #descriptionTemplate let-data="data">

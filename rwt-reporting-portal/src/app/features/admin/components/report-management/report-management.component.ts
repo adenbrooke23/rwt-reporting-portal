@@ -47,6 +47,7 @@ import TrashCan from '@carbon/icons/es/trash-can/16';
 import Renew from '@carbon/icons/es/renew/16';
 import Document from '@carbon/icons/es/document/16';
 import Folder from '@carbon/icons/es/folder/16';
+import Category from '@carbon/icons/es/category/16';
 
 @Component({
   selector: 'app-report-management',
@@ -211,7 +212,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Register icons (safe for SSR)
-    this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Document, Folder]);
+    this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Document, Folder, Category]);
 
     this.paginationModel.currentPage = 1;
     this.paginationModel.pageLength = 10;
