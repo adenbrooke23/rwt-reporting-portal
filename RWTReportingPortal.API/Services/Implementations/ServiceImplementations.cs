@@ -1739,3 +1739,163 @@ public class AuditService : IAuditService
         return Task.CompletedTask;
     }
 }
+
+public class ReportGroupService : IReportGroupService
+{
+    private readonly ApplicationDbContext _context;
+
+    public ReportGroupService(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<AdminReportGroupDto>> GetAllReportGroupsAsync(bool includeInactive = false)
+    {
+        var query = _context.ReportGroups
+            .Include(g => g.Hub)
+            .Include(g => g.Reports)
+            .AsQueryable();
+
+        if (!includeInactive)
+        {
+            query = query.Where(g => g.IsActive);
+        }
+
+        var groups = await query
+            .OrderBy(g => g.Hub.SortOrder)
+            .ThenBy(g => g.SortOrder)
+            .ToListAsync();
+
+        return groups.Select(MapToDto).ToList();
+    }
+
+    public async Task<List<AdminReportGroupDto>> GetReportGroupsByHubAsync(int hubId, bool includeInactive = false)
+    {
+        var query = _context.ReportGroups
+            .Include(g => g.Hub)
+            .Include(g => g.Reports)
+            .Where(g => g.HubId == hubId);
+
+        if (!includeInactive)
+        {
+            query = query.Where(g => g.IsActive);
+        }
+
+        var groups = await query
+            .OrderBy(g => g.SortOrder)
+            .ToListAsync();
+
+        return groups.Select(MapToDto).ToList();
+    }
+
+    public async Task<AdminReportGroupDto?> GetReportGroupByIdAsync(int reportGroupId)
+    {
+        var group = await _context.ReportGroups
+            .Include(g => g.Hub)
+            .Include(g => g.Reports)
+            .FirstOrDefaultAsync(g => g.ReportGroupId == reportGroupId);
+
+        return group == null ? null : MapToDto(group);
+    }
+
+    public async Task<AdminReportGroupDto> CreateReportGroupAsync(CreateReportGroupRequest request, int createdBy)
+    {
+        // Generate group code from name
+        var groupCode = request.GroupName.ToUpper().Replace(" ", "_");
+
+        // Get next sort order for the hub
+        var existingGroups = await _context.ReportGroups
+            .Where(g => g.HubId == request.HubId)
+            .ToListAsync();
+        var maxSortOrder = existingGroups.Any() ? existingGroups.Max(g => g.SortOrder) : 0;
+
+        var group = new ReportGroup
+        {
+            HubId = request.HubId,
+            GroupCode = groupCode,
+            GroupName = request.GroupName,
+            Description = request.Description,
+            SortOrder = maxSortOrder + 1,
+            IsActive = true,
+            CreatedBy = createdBy,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.ReportGroups.Add(group);
+        await _context.SaveChangesAsync();
+
+        // Reload with navigation properties
+        var created = await _context.ReportGroups
+            .Include(g => g.Hub)
+            .Include(g => g.Reports)
+            .FirstAsync(g => g.ReportGroupId == group.ReportGroupId);
+
+        return MapToDto(created);
+    }
+
+    public async Task<AdminReportGroupDto> UpdateReportGroupAsync(int reportGroupId, UpdateReportGroupRequest request, int updatedBy)
+    {
+        var group = await _context.ReportGroups
+            .Include(g => g.Hub)
+            .Include(g => g.Reports)
+            .FirstOrDefaultAsync(g => g.ReportGroupId == reportGroupId);
+
+        if (group == null)
+        {
+            throw new KeyNotFoundException($"Report group with ID {reportGroupId} not found");
+        }
+
+        if (request.HubId.HasValue)
+            group.HubId = request.HubId.Value;
+        if (request.GroupName != null)
+        {
+            group.GroupName = request.GroupName;
+            group.GroupCode = request.GroupName.ToUpper().Replace(" ", "_");
+        }
+        if (request.Description != null)
+            group.Description = request.Description;
+        if (request.IsActive.HasValue)
+            group.IsActive = request.IsActive.Value;
+
+        group.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return MapToDto(group);
+    }
+
+    public async Task DeleteReportGroupAsync(int reportGroupId, bool hardDelete = false)
+    {
+        var group = await _context.ReportGroups.FindAsync(reportGroupId);
+        if (group == null) return;
+
+        if (hardDelete)
+        {
+            _context.ReportGroups.Remove(group);
+        }
+        else
+        {
+            group.IsActive = false;
+            group.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private AdminReportGroupDto MapToDto(ReportGroup group)
+    {
+        return new AdminReportGroupDto
+        {
+            ReportGroupId = group.ReportGroupId,
+            HubId = group.HubId,
+            HubName = group.Hub?.HubName ?? "",
+            GroupCode = group.GroupCode,
+            GroupName = group.GroupName,
+            Description = group.Description,
+            SortOrder = group.SortOrder,
+            IsActive = group.IsActive,
+            ReportCount = group.Reports?.Count(r => r.IsActive) ?? 0,
+            CreatedAt = group.CreatedAt
+        };
+    }
+}

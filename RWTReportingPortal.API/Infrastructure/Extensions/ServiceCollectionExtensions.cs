@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IHubService, HubService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IReportGroupService, ReportGroupService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IAnnouncementService, AnnouncementService>();

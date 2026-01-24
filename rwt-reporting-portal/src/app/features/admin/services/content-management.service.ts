@@ -129,6 +129,36 @@ export interface UpdateReportRequestDto {
   departmentIds?: number[];
 }
 
+// Report Group API DTOs
+export interface ReportGroupApiDto {
+  reportGroupId: number;
+  hubId: number;
+  hubName: string;
+  groupCode: string;
+  groupName: string;
+  description?: string;
+  sortOrder: number;
+  isActive: boolean;
+  reportCount: number;
+  createdAt: string;
+  createdByEmail?: string;
+}
+
+// Request DTO for creating report groups
+export interface CreateReportGroupRequestDto {
+  hubId: number;
+  groupName: string;
+  description?: string;
+}
+
+// Request DTO for updating report groups
+export interface UpdateReportGroupRequestDto {
+  hubId?: number;
+  groupName?: string;
+  description?: string;
+  isActive?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -155,31 +185,8 @@ export class ContentManagementService {
   }
 
   private initializeMockData(): void {
-    const now = new Date();
-    const adminUser = 'admin@redwoodtrust.com';
-
-    // NOTE: Hubs, Departments, and Reports are now loaded from the API
-    // Report groups will also come from API once we have them in database
-    // Keeping one sample report group for demo purposes
-
-    const groupsData: ReportGroup[] = [
-      {
-        id: 'demo-samples',
-        hubId: '1', // Will need to match actual hub ID from database
-        name: 'Sample Reports',
-        description: 'Demo and sample reports for testing',
-        sortOrder: 1,
-        isActive: true,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: now,
-        createdBy: adminUser,
-        reportCount: 0
-      }
-    ];
-
-    // Initialize only report groups (mock data until database has them)
-    // Reports now come from the API
-    this.reportGroups.next(groupsData);
+    // NOTE: All entities (Hubs, Departments, Reports, Report Groups) now come from the API
+    // No more mock data initialization needed
   }
 
   // ============== HUB OPERATIONS ==============
@@ -351,91 +358,152 @@ export class ContentManagementService {
 
   // ============== REPORT GROUP OPERATIONS ==============
 
+  private reportGroupsLoaded = false;
+
   getReportGroups(hubId?: string, includeInactive = false): Observable<ReportGroup[]> {
-    return of(
-      this.reportGroups.value
-        .filter(g => (!hubId || g.hubId === hubId) && (includeInactive || g.isActive))
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-    ).pipe(delay(this.mockDelay));
+    let params = new HttpParams().set('includeInactive', includeInactive.toString());
+
+    // Use the by-hub endpoint if hubId is provided, otherwise get all
+    const url = hubId
+      ? `${this.API_BASE_URL}/admin/report-groups/by-hub/${hubId}`
+      : `${this.API_BASE_URL}/admin/report-groups`;
+
+    return this.http.get<{ reportGroups: ReportGroupApiDto[] }>(url, { params }).pipe(
+      map(response => response.reportGroups.map(dto => this.mapReportGroupDtoToReportGroup(dto))),
+      tap(groups => {
+        // Merge with existing groups or replace
+        if (!hubId) {
+          this.reportGroups.next(groups);
+        }
+        this.reportGroupsLoaded = true;
+      }),
+      catchError(() => of([]))
+    );
   }
 
   getReportGroupById(id: string): Observable<ReportGroup | undefined> {
-    return of(this.reportGroups.value.find(g => g.id === id)).pipe(delay(this.mockDelay));
+    // First check local cache
+    const cached = this.reportGroups.value.find(g => g.id === id);
+    if (cached) {
+      return of(cached);
+    }
+
+    // If not in cache, fetch from API
+    const groupId = parseInt(id, 10);
+    return this.http.get<ReportGroupApiDto>(`${this.API_BASE_URL}/admin/report-groups/${groupId}`).pipe(
+      map(dto => this.mapReportGroupDtoToReportGroup(dto)),
+      catchError(() => of(undefined))
+    );
   }
 
   createReportGroup(dto: CreateReportGroupDto): Observable<ReportGroup> {
-    const currentGroups = this.reportGroups.value;
-    const hubGroups = currentGroups.filter(g => g.hubId === dto.hubId);
-    const maxSortOrder = Math.max(...hubGroups.map(g => g.sortOrder), 0);
-
-    const newGroup: ReportGroup = {
-      id: this.generateId('group'),
-      hubId: dto.hubId,
-      name: dto.name,
-      description: dto.description,
-      sortOrder: maxSortOrder + 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: 'admin@redwoodtrust.com',
-      reportCount: 0
+    const requestDto: CreateReportGroupRequestDto = {
+      hubId: parseInt(dto.hubId, 10),
+      groupName: dto.name,
+      description: dto.description
     };
 
-    this.reportGroups.next([...currentGroups, newGroup]);
-    this.updateHubCounts(dto.hubId);
-    return of(newGroup).pipe(delay(this.mockDelay));
+    return this.http.post<ReportGroupApiDto>(`${this.API_BASE_URL}/admin/report-groups`, requestDto).pipe(
+      map(response => this.mapReportGroupDtoToReportGroup(response)),
+      tap(group => {
+        const currentGroups = this.reportGroups.value;
+        this.reportGroups.next([...currentGroups, group]);
+        this.updateHubCounts(dto.hubId);
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to create report group'));
+      })
+    );
   }
 
   updateReportGroup(id: string, dto: UpdateReportGroupDto): Observable<ReportGroup> {
-    const currentGroups = this.reportGroups.value;
-    const index = currentGroups.findIndex(g => g.id === id);
+    const groupId = parseInt(id, 10);
+    const existingGroup = this.reportGroups.value.find(g => g.id === id);
 
-    if (index === -1) {
+    if (!existingGroup) {
       return throwError(() => new Error('Report group not found'));
     }
 
-    const oldHubId = currentGroups[index].hubId;
-    const updatedGroup: ReportGroup = {
-      ...currentGroups[index],
-      ...dto,
-      updatedAt: new Date()
+    const oldHubId = existingGroup.hubId;
+
+    const requestDto: UpdateReportGroupRequestDto = {
+      hubId: dto.hubId ? parseInt(dto.hubId, 10) : undefined,
+      groupName: dto.name,
+      description: dto.description,
+      isActive: dto.isActive
     };
 
-    currentGroups[index] = updatedGroup;
-    this.reportGroups.next([...currentGroups]);
+    return this.http.put<ReportGroupApiDto>(`${this.API_BASE_URL}/admin/report-groups/${groupId}`, requestDto).pipe(
+      map(response => this.mapReportGroupDtoToReportGroup(response)),
+      tap(updatedGroup => {
+        const currentGroups = this.reportGroups.value;
+        const index = currentGroups.findIndex(g => g.id === id);
+        if (index !== -1) {
+          currentGroups[index] = updatedGroup;
+          this.reportGroups.next([...currentGroups]);
+        }
 
-    // Update hub counts if hub changed
-    if (dto.hubId && dto.hubId !== oldHubId) {
-      this.updateHubCounts(oldHubId);
-      this.updateHubCounts(dto.hubId);
-    }
-
-    return of(updatedGroup).pipe(delay(this.mockDelay));
+        // Update hub counts if hub changed
+        if (dto.hubId && dto.hubId !== oldHubId) {
+          this.updateHubCounts(oldHubId);
+          this.updateHubCounts(dto.hubId);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to update report group'));
+      })
+    );
   }
 
   deleteReportGroup(id: string): Observable<void> {
-    const currentGroups = this.reportGroups.value;
-    const index = currentGroups.findIndex(g => g.id === id);
+    const groupId = parseInt(id, 10);
+    const existingGroup = this.reportGroups.value.find(g => g.id === id);
+    const hubId = existingGroup?.hubId;
 
-    if (index === -1) {
-      return throwError(() => new Error('Report group not found'));
-    }
+    return this.http.delete<void>(`${this.API_BASE_URL}/admin/report-groups/${groupId}`).pipe(
+      tap(() => {
+        const currentGroups = this.reportGroups.value;
+        const index = currentGroups.findIndex(g => g.id === id);
+        if (index !== -1) {
+          // Mark as inactive in local state (soft delete)
+          currentGroups[index] = {
+            ...currentGroups[index],
+            isActive: false,
+            updatedAt: new Date()
+          };
+          this.reportGroups.next([...currentGroups]);
+        }
 
-    const hubId = currentGroups[index].hubId;
+        if (hubId) {
+          this.updateHubCounts(hubId);
+        }
+      }),
+      catchError(error => {
+        return throwError(() => new Error(error.error?.message || 'Failed to delete report group'));
+      })
+    );
+  }
 
-    // Soft delete
-    currentGroups[index] = {
-      ...currentGroups[index],
-      isActive: false,
-      updatedAt: new Date()
+  /**
+   * Map API DTO to frontend ReportGroup model
+   */
+  private mapReportGroupDtoToReportGroup(dto: ReportGroupApiDto): ReportGroup {
+    return {
+      id: dto.reportGroupId.toString(),
+      hubId: dto.hubId.toString(),
+      name: dto.groupName,
+      description: dto.description || '',
+      sortOrder: dto.sortOrder,
+      isActive: dto.isActive,
+      createdAt: new Date(dto.createdAt),
+      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      createdBy: dto.createdByEmail || 'admin@redwoodtrust.com',
+      reportCount: dto.reportCount || 0
     };
-
-    this.reportGroups.next([...currentGroups]);
-    this.updateHubCounts(hubId);
-    return of(void 0).pipe(delay(this.mockDelay));
   }
 
   reorderReportGroups(hubId: string, groupIds: string[]): Observable<void> {
+    // TODO: Implement reorder API endpoint
     const currentGroups = this.reportGroups.value;
 
     groupIds.forEach((id, index) => {
