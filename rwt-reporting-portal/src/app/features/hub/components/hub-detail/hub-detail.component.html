@@ -17,10 +17,17 @@
 
   <main class="page-main">
     <div class="page-content">
-      <!-- Filter Toolbar -->
-      <div class="filter-toolbar">
-        <div class="filter-toolbar-left">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <ibm-search
+            [value]="searchQuery"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Search reports..."
+            [size]="'sm'">
+          </ibm-search>
           <ibm-dropdown
+            [appendInline]="true"
             [size]="'sm'"
             class="filter-dropdown"
             placeholder="All Categories"
@@ -28,22 +35,16 @@
             <ibm-dropdown-list [items]="categoryDropdownItems"></ibm-dropdown-list>
           </ibm-dropdown>
           <ibm-dropdown
+            [appendInline]="true"
             [size]="'sm'"
             class="filter-dropdown"
             placeholder="All Departments"
             (selected)="onDepartmentFilterChange($event)">
             <ibm-dropdown-list [items]="departmentDropdownItems"></ibm-dropdown-list>
           </ibm-dropdown>
-          <ibm-search
-            [value]="searchQuery"
-            (valueChange)="onSearchChange($event)"
-            placeholder="Search reports..."
-            [size]="'sm'"
-            class="filter-search">
-          </ibm-search>
         </div>
-        <div class="filter-toolbar-right">
-          <ibm-tag type="cool-gray" size="md">
+        <div class="toolbar-right">
+          <ibm-tag type="cool-gray" size="sm">
             {{ allReports.length }} report{{ allReports.length !== 1 ? 's' : '' }}
           </ibm-tag>
           <button
