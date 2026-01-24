@@ -71,10 +71,7 @@
   .filter-dropdown {
     min-width: 130px;
   }
-}
 
-// Toggle styling for toolbar
-.toolbar-left {
   ibm-toggle {
     display: flex;
     align-items: center;
@@ -94,12 +91,45 @@
   }
 }
 
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+}
+
 // Table
 .table-container {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
   border-radius: 4px;
   margin-bottom: spacing.$spacing-05;
+
+  ::ng-deep {
+    .cds--data-table {
+      background: var(--color-bg-primary);
+
+      thead th {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-inverse);
+        font-weight: 600;
+        border-bottom: 1px solid var(--color-border-light);
+      }
+
+      tbody tr {
+        background: var(--color-bg-primary);
+        border-bottom: 1px solid var(--color-border-light);
+
+        &:hover {
+          background: var(--color-bg-hover);
+        }
+
+        td {
+          color: var(--color-text-primary);
+          border-bottom: 1px solid var(--color-border-light);
+        }
+      }
+    }
+  }
 }
 
 .group-cell {
