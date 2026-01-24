@@ -1,16 +1,19 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   HttpInterceptor,
   HttpRequest,
   HttpHandler,
   HttpEvent,
+  HttpErrorResponse,
   HTTP_INTERCEPTORS
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 /**
- * Auth Interceptor - Adds JWT token to API requests
+ * Auth Interceptor - Adds JWT token to API requests and handles 401 errors
  *
  * IMPORTANT: This interceptor reads directly from localStorage to avoid
  * a circular dependency (HttpClient -> Interceptor -> AuthService -> HttpClient).
@@ -19,6 +22,7 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
 
   // API base URL that requires authentication
   private readonly API_BASE = 'https://erpqaapi.redwoodtrust.com/api';
@@ -37,7 +41,39 @@ export class AuthInterceptor implements HttpInterceptor {
       }
     }
 
-    return next.handle(request);
+    return next.handle(request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        // Handle 401 Unauthorized - token expired or invalid
+        if (error.status === 401 && request.url.startsWith(this.API_BASE)) {
+          this.handleUnauthorized();
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Handle 401 Unauthorized response
+   * Clears session and redirects to login
+   */
+  private handleUnauthorized(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Clear all auth data from storage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_user');
+
+    // Redirect to login page
+    // Use setTimeout to avoid issues with change detection during error handling
+    setTimeout(() => {
+      this.router.navigate(['/login'], {
+        queryParams: { sessionExpired: 'true' }
+      });
+    }, 0);
   }
 
   /**

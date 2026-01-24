@@ -32,6 +32,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
   isAdminLogin = false;
+  sessionExpired = false;
 
   // Authorized admin email
   private readonly ADMIN_EMAIL = 'zachary.schmidt@redwoodtrust.com';
@@ -56,10 +57,28 @@ export class LoginComponent implements OnInit {
       WarningFilled
     ]);
 
-    // Check if this is admin login mode
+    // Check query params for admin login mode and session expiration
     this.route.queryParams.subscribe(params => {
       this.isAdminLogin = params['admin'] === 'true';
+      this.sessionExpired = params['sessionExpired'] === 'true';
     });
+  }
+
+  // Notification for session expired
+  get sessionExpiredNotification() {
+    return {
+      type: 'warning' as const,
+      title: 'Session Expired',
+      message: 'Your session has expired. Please log in again.',
+      lowContrast: true,
+      showClose: true
+    };
+  }
+
+  onCloseSessionExpired(): void {
+    this.sessionExpired = false;
+    // Remove the query param from URL
+    this.router.navigate(['/login'], { queryParams: {} });
   }
 
   // Notification object for Carbon inline notification

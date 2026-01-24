@@ -441,13 +441,32 @@ export class AuthService {
 
   /**
    * Check if token is expired
+   * Decodes the JWT to check the 'exp' claim
    */
   private isTokenExpired(token: AuthToken): boolean {
-    if (!token.expiresIn) return false;
+    if (!token.accessToken) return true;
 
-    // Token expiration check logic
-    // This would need to be implemented based on your token structure
-    return false;
+    try {
+      // Decode the JWT payload (second part of the token)
+      const payload = JSON.parse(atob(token.accessToken.split('.')[1]));
+
+      // Check if 'exp' claim exists
+      if (!payload.exp) {
+        return false; // No expiration set, assume valid
+      }
+
+      // exp is in seconds, Date.now() is in milliseconds
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+
+      // Add a 30-second buffer to account for clock skew and network latency
+      const bufferMs = 30 * 1000;
+
+      return currentTime >= (expirationTime - bufferMs);
+    } catch {
+      // If we can't decode the token, consider it expired
+      return true;
+    }
   }
 
   /**

@@ -68,6 +68,13 @@
           <a href="#" class="forgot-password">Forgot password?</a>
         </div>
 
+        <!-- Session Expired Notification -->
+        <cds-inline-notification
+          *ngIf="sessionExpired"
+          [notificationObj]="sessionExpiredNotification"
+          (close)="onCloseSessionExpired()">
+        </cds-inline-notification>
+
         <!-- Error Notification - Carbon inline notification -->
         <cds-inline-notification
           *ngIf="errorMessage"
