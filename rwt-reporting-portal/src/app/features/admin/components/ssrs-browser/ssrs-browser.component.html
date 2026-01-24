@@ -1,0 +1,120 @@
+<cds-modal
+  [open]="open"
+  size="lg"
+  (overlaySelected)="closeModal()">
+
+  <cds-modal-header (closeSelect)="closeModal()">
+    <p cdsModalHeaderLabel>SSRS Report Server</p>
+    <p cdsModalHeaderHeading>Browse Reports</p>
+  </cds-modal-header>
+
+  <section cdsModalContent class="browser-content" (open)="onModalOpen()">
+    <!-- Toolbar -->
+    <div class="browser-toolbar">
+      <div class="breadcrumb-nav">
+        <button
+          *ngFor="let crumb of breadcrumbs; let last = last; let i = index"
+          class="breadcrumb-item"
+          [class.breadcrumb-item--current]="last"
+          (click)="!last && navigateToBreadcrumb(crumb)">
+          <span *ngIf="i > 0" class="breadcrumb-separator">/</span>
+          {{ crumb.name }}
+        </button>
+      </div>
+
+      <button cdsButton="ghost" size="sm" (click)="refresh()" [disabled]="isLoading">
+        <svg cdsIcon="renew" size="16"></svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ibm-loading [isActive]="true" size="normal"></ibm-loading>
+      <p>Loading SSRS content...</p>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      <strong>Connection Error:</strong> {{ errorMessage }}
+    </div>
+
+    <!-- Browser panels -->
+    <div *ngIf="!isLoading && !errorMessage" class="browser-panels">
+      <!-- Folders panel -->
+      <div class="panel folders-panel">
+        <h4 class="panel-title">
+          <svg cdsIcon="folder" size="16"></svg>
+          Folders
+        </h4>
+        <div class="panel-content">
+          <!-- Up navigation -->
+          <button
+            *ngIf="currentPath !== '/'"
+            class="folder-item"
+            (click)="navigateUp()">
+            <svg cdsIcon="folder--open" size="16"></svg>
+            <span>..</span>
+          </button>
+
+          <!-- Folder list -->
+          <button
+            *ngFor="let folder of folders"
+            class="folder-item"
+            (click)="navigateToFolder(folder)">
+            <svg cdsIcon="folder" size="16"></svg>
+            <span>{{ folder.name }}</span>
+            <svg cdsIcon="chevron--right" size="16" class="chevron"></svg>
+          </button>
+
+          <p *ngIf="folders.length === 0 && currentPath === '/'" class="empty-message">
+            No folders found
+          </p>
+        </div>
+      </div>
+
+      <!-- Reports panel -->
+      <div class="panel reports-panel">
+        <h4 class="panel-title">
+          <svg cdsIcon="document" size="16"></svg>
+          Reports in this folder
+        </h4>
+        <div class="panel-content">
+          <button
+            *ngFor="let report of reports"
+            class="report-item"
+            [class.report-item--selected]="selectedReport?.path === report.path"
+            (click)="selectReport(report)">
+            <svg cdsIcon="document" size="16"></svg>
+            <div class="report-info">
+              <span class="report-name">{{ report.name }}</span>
+              <span *ngIf="report.description" class="report-description">
+                {{ report.description }}
+              </span>
+            </div>
+          </button>
+
+          <p *ngIf="reports.length === 0" class="empty-message">
+            No reports in this folder
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selection preview -->
+    <div *ngIf="selectedReport" class="selection-preview">
+      <strong>Selected:</strong> {{ selectedReport.path }}
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeModal()">Cancel</button>
+    <button
+      cdsButton="primary"
+      (click)="confirmSelection()"
+      [disabled]="!selectedReport">
+      Select Report
+    </button>
+  </cds-modal-footer>
+
+</cds-modal>

@@ -216,6 +216,24 @@
   }
 }
 
+// SSRS-specific form row
+.ssrs-row {
+  grid-template-columns: 1fr 2fr;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ssrs-server-field,
+.ssrs-path-field {
+  input[readonly] {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+  }
+}
+
 // Department checkboxes
 .department-checkboxes {
   display: grid;

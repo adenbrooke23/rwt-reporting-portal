@@ -231,24 +231,37 @@
         </ng-container>
 
         <ng-container *ngIf="formData.type === 'SSRS'">
-          <div class="form-field">
-            <label class="form-label">SSRS Server URL</label>
-            <input
-              ibmText
-              [(ngModel)]="formData.serverUrl"
-              placeholder="http://server/ReportServer"
-              [size]="'md'">
-            <p class="form-helper">The base URL of your SSRS/PBIRS server</p>
+          <div class="form-row ssrs-row">
+            <div class="form-field ssrs-server-field">
+              <label class="form-label">SSRS Server URL</label>
+              <input
+                ibmText
+                [(ngModel)]="formData.serverUrl"
+                placeholder="Select a report to populate"
+                [size]="'md'"
+                [readonly]="true">
+            </div>
+            <div class="form-field ssrs-path-field">
+              <label class="form-label">Report Path</label>
+              <input
+                ibmText
+                [(ngModel)]="formData.reportPath"
+                placeholder="Select a report to populate"
+                [size]="'md'"
+                [readonly]="true">
+            </div>
           </div>
 
           <div class="form-field">
-            <label class="form-label">Report Path</label>
-            <input
-              ibmText
-              [(ngModel)]="formData.reportPath"
-              placeholder="/Folder/ReportName"
-              [size]="'md'">
-            <p class="form-helper">The path to the report on the server</p>
+            <button
+              cdsButton="tertiary"
+              size="sm"
+              type="button"
+              (click)="openSSRSBrowser()">
+              <svg cdsIcon="folder" size="16" class="cds--btn__icon"></svg>
+              Browse SSRS Reports
+            </button>
+            <p class="form-helper">Browse and select a report from the SSRS server</p>
           </div>
         </ng-container>
       </div>
@@ -288,3 +301,10 @@
     </button>
   </cds-modal-footer>
 </cds-modal>
+
+<!-- SSRS Browser Modal -->
+<app-ssrs-browser
+  [(open)]="showSSRSBrowser"
+  [serverUrl]="ssrsServerUrl"
+  (select)="onSSRSReportSelected($event)">
+</app-ssrs-browser>

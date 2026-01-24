@@ -5,6 +5,7 @@ using RWTReportingPortal.API.Data.Repositories;
 using RWTReportingPortal.API.Services.Implementations;
 using RWTReportingPortal.API.Services.Interfaces;
 using RWTReportingPortal.API.Infrastructure.Auth;
+using System.Net;
 using System.Text;
 
 namespace RWTReportingPortal.API.Infrastructure.Extensions;
@@ -37,10 +38,25 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEntraAuthService, EntraAuthService>();
 
+        // Memory cache for SSRS folder caching
+        services.AddMemoryCache();
+
         // HttpClient for Microsoft Graph API calls
         services.AddHttpClient("MicrosoftGraph", client =>
         {
             client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
+        });
+
+        // HttpClient for SSRS with Windows authentication
+        services.AddHttpClient("SSRSClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            UseDefaultCredentials = true,  // Uses App Pool identity for Windows auth
+            PreAuthenticate = true,
+            Credentials = CredentialCache.DefaultNetworkCredentials
         });
 
         // SQL connection factory for stored procedures (ADO.NET)

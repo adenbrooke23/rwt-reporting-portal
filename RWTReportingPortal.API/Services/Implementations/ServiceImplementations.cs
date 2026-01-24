@@ -9,8 +9,14 @@ using RWTReportingPortal.API.Models.DTOs.Auth;
 using RWTReportingPortal.API.Models.DTOs.Departments;
 using RWTReportingPortal.API.Models.DTOs.Hubs;
 using RWTReportingPortal.API.Models.DTOs.Reports;
+using RWTReportingPortal.API.Models.DTOs.SSRS;
 using RWTReportingPortal.API.Models.DTOs.Statistics;
 using RWTReportingPortal.API.Models.DTOs.Users;
+using System.Net;
+using System.Security;
+using System.Text;
+using System.Xml.Linq;
+using Microsoft.Extensions.Caching.Memory;
 using RWTReportingPortal.API.Models.Entities;
 using RWTReportingPortal.API.Services.Interfaces;
 
@@ -1360,10 +1366,22 @@ public class PowerBIService : IPowerBIService
 public class SSRSService : ISSRSService
 {
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
+    private readonly ILogger<SSRSService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public SSRSService(IConfiguration configuration)
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+    public SSRSService(
+        IConfiguration configuration,
+        IMemoryCache cache,
+        ILogger<SSRSService> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _configuration = configuration;
+        _cache = cache;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public string GetReportUrl(string reportPath, string reportServer)
@@ -1371,8 +1389,163 @@ public class SSRSService : ISSRSService
         return $"{reportServer}?{reportPath}&rs:Embed=true";
     }
 
+    public async Task<SSRSFolderListResponse> ListChildrenAsync(string folderPath)
+    {
+        var cacheKey = $"ssrs_folder_{folderPath}";
+
+        if (_cache.TryGetValue(cacheKey, out SSRSFolderListResponse? cached) && cached != null)
+        {
+            return cached;
+        }
+
+        try
+        {
+            var serverUrl = _configuration["SSRS:ReportServerUrl"];
+            if (string.IsNullOrEmpty(serverUrl))
+            {
+                return new SSRSFolderListResponse
+                {
+                    CurrentPath = folderPath,
+                    Success = false,
+                    ErrorMessage = "SSRS server URL not configured"
+                };
+            }
+
+            var soapUrl = $"{serverUrl}/ReportService2010.asmx";
+
+            // Build SOAP envelope for ListChildren
+            var soapEnvelope = BuildListChildrenSoapRequest(folderPath);
+
+            var httpClient = _httpClientFactory.CreateClient("SSRSClient");
+            var content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml");
+            content.Headers.Add("SOAPAction", "http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer/ListChildren");
+
+            var response = await httpClient.PostAsync(soapUrl, content);
+            response.EnsureSuccessStatusCode();
+
+            var result = ParseListChildrenResponse(await response.Content.ReadAsStringAsync());
+            result.CurrentPath = folderPath;
+
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list SSRS children for path {Path}", folderPath);
+            return new SSRSFolderListResponse
+            {
+                CurrentPath = folderPath,
+                Success = false,
+                ErrorMessage = "Unable to connect to SSRS server. Please check your network connection and try again."
+            };
+        }
+    }
+
+    public async Task<SSRSConfigResponse> GetServerConfigAsync()
+    {
+        var serverUrl = _configuration["SSRS:ReportServerUrl"] ?? "";
+        var isAvailable = await TestConnectionAsync();
+
+        return new SSRSConfigResponse
+        {
+            ServerUrl = serverUrl,
+            IsAvailable = isAvailable,
+            ErrorMessage = isAvailable ? null : "SSRS server is not reachable"
+        };
+    }
+
+    public async Task<bool> TestConnectionAsync()
+    {
+        try
+        {
+            var serverUrl = _configuration["SSRS:ReportServerUrl"];
+            if (string.IsNullOrEmpty(serverUrl))
+            {
+                return false;
+            }
+
+            var httpClient = _httpClientFactory.CreateClient("SSRSClient");
+            var response = await httpClient.GetAsync($"{serverUrl}/ReportService2010.asmx");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "SSRS connection test failed");
+            return false;
+        }
+    }
+
     public Task<List<SSRSParameter>> GetReportParametersAsync(string reportPath, string reportServer)
-        => throw new NotImplementedException();
+    {
+        // TODO: Implement parameter extraction
+        return Task.FromResult(new List<SSRSParameter>());
+    }
+
+    private string BuildListChildrenSoapRequest(string folderPath)
+    {
+        return $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<soap:Envelope xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
+  <soap:Body>
+    <ListChildren xmlns=""http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer"">
+      <ItemPath>{SecurityElement.Escape(folderPath)}</ItemPath>
+      <Recursive>false</Recursive>
+    </ListChildren>
+  </soap:Body>
+</soap:Envelope>";
+    }
+
+    private SSRSFolderListResponse ParseListChildrenResponse(string xml)
+    {
+        var result = new SSRSFolderListResponse { Success = true };
+
+        try
+        {
+            var doc = XDocument.Parse(xml);
+            XNamespace ns = "http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer";
+
+            var items = doc.Descendants(ns + "CatalogItem");
+
+            foreach (var item in items)
+            {
+                var hidden = bool.TryParse(item.Element(ns + "Hidden")?.Value, out var h) && h;
+                if (hidden) continue;
+
+                var catalogItem = new SSRSCatalogItem
+                {
+                    Name = item.Element(ns + "Name")?.Value ?? "",
+                    Path = item.Element(ns + "Path")?.Value ?? "",
+                    TypeName = item.Element(ns + "TypeName")?.Value ?? "",
+                    Description = item.Element(ns + "Description")?.Value
+                };
+
+                if (DateTime.TryParse(item.Element(ns + "ModifiedDate")?.Value, out var modDate))
+                {
+                    catalogItem.ModifiedDate = modDate;
+                }
+
+                if (catalogItem.TypeName == "Folder")
+                {
+                    result.Folders.Add(catalogItem);
+                }
+                else if (catalogItem.TypeName == "Report")
+                {
+                    result.Reports.Add(catalogItem);
+                }
+            }
+
+            // Sort folders and reports by name
+            result.Folders = result.Folders.OrderBy(f => f.Name).ToList();
+            result.Reports = result.Reports.OrderBy(r => r.Name).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse SSRS ListChildren response");
+            result.Success = false;
+            result.ErrorMessage = "Failed to parse SSRS response";
+        }
+
+        return result;
+    }
 }
 
 public class AuditService : IAuditService

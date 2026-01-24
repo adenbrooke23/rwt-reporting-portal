@@ -18,6 +18,8 @@ import {
   UpdateReportDto
 } from '../../models/content-management.models';
 import { ReportType, ReportEmbedConfig } from '../../../auth/models/user-management.models';
+import { SSRSBrowserComponent } from '../ssrs-browser/ssrs-browser.component';
+import { SSRSBrowserService, SSRSReportSelection } from '../../services/ssrs-browser.service';
 import {
   TableModule,
   TableModel,
@@ -44,6 +46,7 @@ import Edit from '@carbon/icons/es/edit/16';
 import TrashCan from '@carbon/icons/es/trash-can/16';
 import Renew from '@carbon/icons/es/renew/16';
 import Document from '@carbon/icons/es/document/16';
+import Folder from '@carbon/icons/es/folder/16';
 
 @Component({
   selector: 'app-report-management',
@@ -60,7 +63,8 @@ import Document from '@carbon/icons/es/document/16';
     PaginationModule,
     SearchModule,
     ToggleModule,
-    CheckboxModule
+    CheckboxModule,
+    SSRSBrowserComponent
   ],
   templateUrl: './report-management.component.html',
   styleUrl: './report-management.component.scss'
@@ -75,6 +79,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   private contentService = inject(ContentManagementService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationNotificationService);
+  private ssrsBrowserService = inject(SSRSBrowserService);
   private router = inject(Router);
   private iconService = inject(IconService);
   private platformId = inject(PLATFORM_ID);
@@ -107,6 +112,10 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   isEditing = false;
   editingReport: Report | null = null;
   isSaving = false;
+
+  // SSRS Browser
+  showSSRSBrowser = false;
+  ssrsServerUrl = '';
 
   formData = {
     reportGroupId: '',
@@ -202,7 +211,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Register icons (safe for SSR)
-    this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Document]);
+    this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Document, Folder]);
 
     this.paginationModel.currentPage = 1;
     this.paginationModel.pageLength = 10;
@@ -565,5 +574,30 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
       case 'Paginated': return 'purple';
       default: return 'blue';
     }
+  }
+
+  // SSRS Browser methods
+  openSSRSBrowser(): void {
+    this.ssrsBrowserService.getConfig().subscribe(config => {
+      this.ssrsServerUrl = config.serverUrl;
+      this.showSSRSBrowser = true;
+    });
+  }
+
+  onSSRSReportSelected(selection: SSRSReportSelection): void {
+    this.formData.serverUrl = selection.serverUrl;
+    this.formData.reportPath = selection.reportPath;
+    // Auto-fill name and description if not already set
+    if (!this.formData.name) {
+      this.formData.name = selection.reportName;
+    }
+    if (!this.formData.description && selection.description) {
+      this.formData.description = selection.description;
+    }
+    this.showSSRSBrowser = false;
+  }
+
+  closeSSRSBrowser(): void {
+    this.showSSRSBrowser = false;
   }
 }
