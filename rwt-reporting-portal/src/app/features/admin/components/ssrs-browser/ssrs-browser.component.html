@@ -9,18 +9,25 @@
   </cds-modal-header>
 
   <section cdsModalContent class="browser-content" (open)="onModalOpen()">
-    <!-- Toolbar -->
+    <!-- Toolbar with breadcrumb and actions -->
     <div class="browser-toolbar">
-      <div class="breadcrumb-nav">
-        <button
-          *ngFor="let crumb of breadcrumbs; let last = last; let i = index"
-          class="breadcrumb-item"
-          [class.breadcrumb-item--current]="last"
-          (click)="!last && navigateToBreadcrumb(crumb)">
-          <span *ngIf="i > 0" class="breadcrumb-separator">/</span>
-          {{ crumb.name }}
-        </button>
-      </div>
+      <nav class="breadcrumb-nav" aria-label="Folder navigation">
+        <ol class="breadcrumb-list">
+          <li *ngFor="let crumb of breadcrumbs; let last = last; let i = index" class="breadcrumb-item">
+            <button
+              *ngIf="!last"
+              class="breadcrumb-link"
+              (click)="navigateToBreadcrumb(crumb)"
+              [attr.aria-current]="null">
+              {{ crumb.name }}
+            </button>
+            <span *ngIf="last" class="breadcrumb-current" aria-current="page">
+              {{ crumb.name }}
+            </span>
+            <span *ngIf="!last" class="breadcrumb-separator" aria-hidden="true">/</span>
+          </li>
+        </ol>
+      </nav>
 
       <button cdsButton="ghost" size="sm" (click)="refresh()" [disabled]="isLoading">
         <svg cdsIcon="renew" size="16"></svg>
@@ -30,80 +37,101 @@
 
     <!-- Loading state -->
     <div *ngIf="isLoading" class="loading-container">
-      <ibm-loading [isActive]="true" size="normal"></ibm-loading>
-      <p>Loading SSRS content...</p>
+      <cds-loading [isActive]="true" size="normal" [overlay]="false"></cds-loading>
+      <p class="loading-text">Loading SSRS content...</p>
     </div>
 
     <!-- Error state -->
-    <div *ngIf="errorMessage && !isLoading" class="error-banner">
-      <strong>Connection Error:</strong> {{ errorMessage }}
+    <div *ngIf="errorMessage && !isLoading" class="error-container" role="alert">
+      <div class="error-content">
+        <svg cdsIcon="warning--filled" size="20" class="error-icon"></svg>
+        <div class="error-text">
+          <strong>Connection Error</strong>
+          <p>{{ errorMessage }}</p>
+        </div>
+      </div>
     </div>
 
     <!-- Browser panels -->
     <div *ngIf="!isLoading && !errorMessage" class="browser-panels">
-      <!-- Folders panel -->
+      <!-- Folders panel with TreeView -->
       <div class="panel folders-panel">
-        <h4 class="panel-title">
-          <svg cdsIcon="folder" size="16"></svg>
-          Folders
-        </h4>
-        <div class="panel-content">
-          <!-- Up navigation -->
-          <button
-            *ngIf="currentPath !== '/'"
-            class="folder-item"
-            (click)="navigateUp()">
-            <svg cdsIcon="folder--open" size="16"></svg>
-            <span>..</span>
-          </button>
-
-          <!-- Folder list -->
-          <button
-            *ngFor="let folder of folders"
-            class="folder-item"
-            (click)="navigateToFolder(folder)">
+        <div class="panel-header">
+          <h4 class="panel-title">
             <svg cdsIcon="folder" size="16"></svg>
-            <span>{{ folder.name }}</span>
-            <svg cdsIcon="chevron--right" size="16" class="chevron"></svg>
-          </button>
+            Folders
+          </h4>
+        </div>
+        <div class="panel-content">
+          <cds-tree-view
+            *ngIf="folderTree.length > 0"
+            [tree]="folderTree"
+            [label]="'Folder Navigation'"
+            size="sm"
+            (select)="onTreeNodeSelect($event)">
+          </cds-tree-view>
 
-          <p *ngIf="folders.length === 0 && currentPath === '/'" class="empty-message">
-            No folders found
-          </p>
+          <div *ngIf="folderTree.length === 0 && currentPath === '/'" class="empty-state">
+            <svg cdsIcon="folder" size="24" class="empty-icon"></svg>
+            <p>No folders found</p>
+          </div>
         </div>
       </div>
 
       <!-- Reports panel -->
       <div class="panel reports-panel">
-        <h4 class="panel-title">
-          <svg cdsIcon="document" size="16"></svg>
-          Reports in this folder
-        </h4>
+        <div class="panel-header">
+          <h4 class="panel-title">
+            <svg cdsIcon="report" size="16"></svg>
+            Reports in {{ getCurrentFolderName() }}
+          </h4>
+          <span class="report-count" *ngIf="reports.length > 0">{{ reports.length }} report(s)</span>
+        </div>
         <div class="panel-content">
-          <button
-            *ngFor="let report of reports"
-            class="report-item"
-            [class.report-item--selected]="selectedReport?.path === report.path"
-            (click)="selectReport(report)">
-            <svg cdsIcon="document" size="16"></svg>
-            <div class="report-info">
-              <span class="report-name">{{ report.name }}</span>
-              <span *ngIf="report.description" class="report-description">
-                {{ report.description }}
-              </span>
-            </div>
-          </button>
+          <ul class="report-list" role="listbox" aria-label="Available reports">
+            <li
+              *ngFor="let report of reports"
+              class="report-item"
+              [class.report-item--selected]="selectedReport?.path === report.path"
+              role="option"
+              [attr.aria-selected]="selectedReport?.path === report.path"
+              tabindex="0"
+              (click)="selectReport(report)"
+              (keydown.enter)="selectReport(report)"
+              (keydown.space)="selectReport(report); $event.preventDefault()">
+              <div class="report-icon">
+                <svg cdsIcon="document" size="16"></svg>
+              </div>
+              <div class="report-info">
+                <span class="report-name">{{ report.name }}</span>
+                <span *ngIf="report.description" class="report-description">
+                  {{ report.description }}
+                </span>
+              </div>
+              <div class="report-indicator" *ngIf="selectedReport?.path === report.path">
+                <svg cdsIcon="checkmark" size="16"></svg>
+              </div>
+            </li>
+          </ul>
 
-          <p *ngIf="reports.length === 0" class="empty-message">
-            No reports in this folder
-          </p>
+          <div *ngIf="reports.length === 0" class="empty-state">
+            <svg cdsIcon="document" size="24" class="empty-icon"></svg>
+            <p>No reports in this folder</p>
+            <span class="empty-hint">Select a folder to view its reports</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Selection preview -->
     <div *ngIf="selectedReport" class="selection-preview">
-      <strong>Selected:</strong> {{ selectedReport.path }}
+      <div class="selection-icon">
+        <svg cdsIcon="document" size="16"></svg>
+      </div>
+      <div class="selection-info">
+        <span class="selection-label">Selected Report</span>
+        <span class="selection-path">{{ selectedReport.path }}</span>
+      </div>
     </div>
   </section>
 
