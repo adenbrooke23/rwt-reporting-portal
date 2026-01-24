@@ -4,7 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule, IconModule, IconService, TagModule } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
-import { ReportType, SubReport, REPORT_CATEGORIES, getAllReports } from '../../../auth/models/user-management.models';
+import { ReportType, SubReport } from '../../../auth/models/user-management.models';
+import { ContentManagementService } from '../../../admin/services/content-management.service';
+import { Report } from '../../../admin/models/content-management.models';
 
 @Component({
   selector: 'app-report-viewer',
@@ -18,6 +20,7 @@ export class ReportViewerComponent implements OnInit {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private iconService = inject(IconService);
+  private contentService = inject(ContentManagementService);
 
   reportId: string = '';
   reportName: string = '';
@@ -47,28 +50,43 @@ export class ReportViewerComponent implements OnInit {
     this.error = null;
     this.needsConfiguration = false;
 
-    // Find the report from our data
-    const allReports = getAllReports();
-    const report = allReports.find(r => r.id === this.reportId);
+    // Fetch the report from the API
+    this.contentService.getReportById(this.reportId).subscribe({
+      next: (report) => {
+        if (!report) {
+          this.error = 'Report not found';
+          this.isLoading = false;
+          return;
+        }
 
-    if (!report) {
-      this.error = 'Report not found';
-      this.isLoading = false;
-      return;
-    }
+        this.reportName = report.name;
+        this.reportDescription = report.description;
+        this.reportType = report.type;
 
-    this.reportName = report.name;
-    this.reportDescription = report.description;
-    this.reportType = report.type;
+        // Convert Report to SubReport format for buildEmbedUrl
+        const subReport: SubReport = {
+          id: report.id,
+          name: report.name,
+          description: report.description,
+          type: report.type,
+          route: `/hub/${this.hubId}/report/${report.id}`,
+          embedConfig: report.embedConfig
+        };
 
-    // Build the embed URL based on report type
-    const embedUrl = this.buildEmbedUrl(report);
+        // Build the embed URL based on report type
+        const embedUrl = this.buildEmbedUrl(subReport);
 
-    if (embedUrl) {
-      this.reportUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
-    }
+        if (embedUrl) {
+          this.reportUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+        }
 
-    this.isLoading = false;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.error = 'Failed to load report';
+        this.isLoading = false;
+      }
+    });
   }
 
   private buildEmbedUrl(report: SubReport): string | null {
