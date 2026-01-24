@@ -7,6 +7,7 @@ public class ReportingHub
     public string HubName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? IconName { get; set; }
+    public string? ColorClass { get; set; }
     public string? BackgroundImage { get; set; }
     public int SortOrder { get; set; } = 0;
     public bool IsActive { get; set; } = true;

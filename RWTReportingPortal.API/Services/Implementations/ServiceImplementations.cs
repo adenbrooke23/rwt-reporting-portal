@@ -691,6 +691,7 @@ public class HubService : IHubService
             HubName = hub.HubName,
             Description = hub.Description,
             IconName = hub.IconName,
+            ColorClass = hub.ColorClass,
             BackgroundImage = hub.BackgroundImage,
             SortOrder = hub.SortOrder,
             IsActive = hub.IsActive,
@@ -711,6 +712,7 @@ public class HubService : IHubService
             HubName = h.HubName,
             Description = h.Description,
             IconName = h.IconName,
+            ColorClass = h.ColorClass,
             BackgroundImage = h.BackgroundImage,
             SortOrder = h.SortOrder,
             IsActive = h.IsActive,
@@ -753,6 +755,7 @@ public class HubService : IHubService
             HubName = hub.HubName,
             Description = hub.Description,
             IconName = hub.IconName,
+            ColorClass = hub.ColorClass,
             BackgroundImage = hub.BackgroundImage,
             IsActive = true,
             CreatedBy = createdBy
@@ -767,6 +770,7 @@ public class HubService : IHubService
             HubName = created.HubName,
             Description = created.Description,
             IconName = created.IconName,
+            ColorClass = created.ColorClass,
             BackgroundImage = created.BackgroundImage,
             SortOrder = created.SortOrder,
             IsActive = created.IsActive,
@@ -789,6 +793,7 @@ public class HubService : IHubService
         existing.HubName = hub.HubName;
         existing.Description = hub.Description;
         existing.IconName = hub.IconName;
+        existing.ColorClass = hub.ColorClass;
         existing.BackgroundImage = hub.BackgroundImage;
         existing.SortOrder = hub.SortOrder;
         existing.IsActive = hub.IsActive;
@@ -802,6 +807,7 @@ public class HubService : IHubService
             HubName = existing.HubName,
             Description = existing.Description,
             IconName = existing.IconName,
+            ColorClass = existing.ColorClass,
             BackgroundImage = existing.BackgroundImage,
             SortOrder = existing.SortOrder,
             IsActive = existing.IsActive,

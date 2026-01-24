@@ -27,6 +27,7 @@ export interface HubApiDto {
   hubName: string;
   description?: string;
   iconName?: string;
+  colorClass?: string;
   sortOrder: number;
   isActive: boolean;
   reportGroupCount: number;
@@ -41,6 +42,7 @@ export interface HubRequestDto {
   hubName: string;
   description?: string;
   iconName?: string;
+  colorClass?: string;
   sortOrder?: number;
   isActive?: boolean;
 }
@@ -172,7 +174,8 @@ export class ContentManagementService {
       name: dto.hubName,
       description: dto.description || '',
       iconName: dto.iconName || 'folder',
-      colorClass: this.getColorClassFromCode(dto.hubCode),
+      // Use colorClass from API if available, otherwise derive from hubCode for backwards compatibility
+      colorClass: dto.colorClass || this.getColorClassFromCode(dto.hubCode),
       sortOrder: dto.sortOrder,
       isActive: dto.isActive,
       createdAt: new Date(dto.createdAt),
@@ -220,6 +223,7 @@ export class ContentManagementService {
       hubName: dto.name,
       description: dto.description,
       iconName: dto.iconName,
+      colorClass: dto.colorClass,
       isActive: true
     };
 
@@ -253,6 +257,7 @@ export class ContentManagementService {
       hubName: dto.name || existingHub.name,
       description: dto.description ?? existingHub.description,
       iconName: dto.iconName ?? existingHub.iconName,
+      colorClass: dto.colorClass ?? existingHub.colorClass,
       sortOrder: existingHub.sortOrder,
       isActive: dto.isActive ?? existingHub.isActive
     };
