@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule, IconModule, IconService, TagModule } from 'carbon-components-angular';
@@ -21,6 +21,7 @@ export class ReportViewerComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private iconService = inject(IconService);
   private contentService = inject(ContentManagementService);
+  private platformId = inject(PLATFORM_ID);
 
   // API base URL for proxy endpoints
   private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
@@ -108,7 +109,10 @@ export class ReportViewerComponent implements OnInit {
         // On-premises SSRS/PBIRS report - use API proxy to avoid Windows auth popup
         if (config?.serverUrl && config?.reportPath) {
           // Use the API proxy endpoint which handles authentication server-side
-          return `${this.API_BASE_URL}/reports/${report.id}/render`;
+          // Pass JWT token as query param since iframe requests can't set Authorization header
+          const token = this.getAccessToken();
+          const baseUrl = `${this.API_BASE_URL}/reports/${report.id}/render`;
+          return token ? `${baseUrl}?access_token=${encodeURIComponent(token)}` : baseUrl;
         }
         // No configuration - show setup message
         this.needsConfiguration = true;
@@ -172,5 +176,25 @@ export class ReportViewerComponent implements OnInit {
 
   backToHub(): void {
     this.router.navigate(['/hub', this.hubId]);
+  }
+
+  /**
+   * Get JWT access token from storage for iframe requests
+   * (iframes can't use HttpInterceptor to add Authorization header)
+   */
+  private getAccessToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+    try {
+      const tokenStr = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      if (tokenStr) {
+        const token = JSON.parse(tokenStr);
+        return token?.accessToken || null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 }

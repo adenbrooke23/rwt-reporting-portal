@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RWTReportingPortal.API.Infrastructure.Auth;
 using RWTReportingPortal.API.Services.Interfaces;
 
 namespace RWTReportingPortal.API.Controllers;
@@ -10,32 +11,54 @@ namespace RWTReportingPortal.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/reports")]
-[Authorize]
 public class ReportProxyController : ControllerBase
 {
     private readonly IReportService _reportService;
     private readonly ISSRSService _ssrsService;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<ReportProxyController> _logger;
 
     public ReportProxyController(
         IReportService reportService,
         ISSRSService ssrsService,
+        IJwtTokenService jwtTokenService,
         ILogger<ReportProxyController> logger)
     {
         _reportService = reportService;
         _ssrsService = ssrsService;
+        _jwtTokenService = jwtTokenService;
         _logger = logger;
     }
 
     /// <summary>
     /// Render an SSRS report by report ID.
     /// The report content is fetched server-side using Windows authentication and streamed to the client.
+    /// Accepts JWT token via query string for iframe requests (which can't set Authorization header).
     /// </summary>
     [HttpGet("{reportId}/render")]
-    public async Task<IActionResult> RenderReport(int reportId)
+    public async Task<IActionResult> RenderReport(int reportId, [FromQuery] string? access_token = null)
     {
         try
         {
+            // Validate authentication - check header first, then query string token
+            if (!(User.Identity?.IsAuthenticated ?? false))
+            {
+                if (string.IsNullOrEmpty(access_token))
+                {
+                    _logger.LogWarning("Report render request without authentication");
+                    return Unauthorized(new { error = "Authentication required" });
+                }
+
+                var principal = _jwtTokenService.ValidateToken(access_token);
+                if (principal == null)
+                {
+                    _logger.LogWarning("Report render request with invalid token");
+                    return Unauthorized(new { error = "Invalid or expired token" });
+                }
+
+                _logger.LogDebug("Report render authenticated via query string token");
+            }
+
             // Get report details from database
             var report = await _reportService.GetReportByIdAsync(reportId);
             if (report == null)
