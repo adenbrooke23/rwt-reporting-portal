@@ -112,6 +112,7 @@ export class ReportViewerComponent implements OnInit {
           // Pass JWT token as query param since iframe requests can't set Authorization header
           const token = this.getAccessToken();
           const baseUrl = `${this.API_BASE_URL}/reports/${report.id}/render`;
+          console.log('SSRS Report - Token found:', !!token, 'URL:', token ? `${baseUrl}?access_token=***` : baseUrl);
           return token ? `${baseUrl}?access_token=${encodeURIComponent(token)}` : baseUrl;
         }
         // No configuration - show setup message
