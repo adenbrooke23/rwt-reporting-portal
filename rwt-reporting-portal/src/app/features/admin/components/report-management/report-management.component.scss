@@ -135,16 +135,16 @@
 .group-cell {
   display: flex;
   flex-direction: column;
-  gap: spacing.$spacing-02;
+  gap: 2px;
 }
 
 .category-badge {
   display: inline-flex;
   align-items: center;
-  gap: spacing.$spacing-02;
-  padding: spacing.$spacing-02 spacing.$spacing-03;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
@@ -154,20 +154,24 @@
   .category-icon {
     color: var(--color-text-secondary);
     flex-shrink: 0;
+    width: 12px;
+    height: 12px;
   }
 }
 
 .hub-name {
   display: inline-flex;
   align-items: center;
-  gap: spacing.$spacing-02;
-  font-size: 0.6875rem;
+  gap: 4px;
+  font-size: 0.625rem;
   color: var(--color-text-secondary);
-  padding-left: spacing.$spacing-02;
+  padding-left: 2px;
 
   .hub-icon {
     opacity: 0.7;
     flex-shrink: 0;
+    width: 10px;
+    height: 10px;
   }
 }
 

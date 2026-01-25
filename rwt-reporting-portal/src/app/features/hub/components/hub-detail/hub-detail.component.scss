@@ -639,38 +639,6 @@
     }
   }
 
-  // Search component styling
-  ibm-search {
-    .cds--search {
-      background: var(--color-bg-primary);
-
-      .cds--search-input {
-        background: var(--color-bg-primary);
-        color: var(--color-text-primary);
-        border-bottom-color: var(--color-border-light);
-
-        &:focus {
-          outline: 2px solid var(--color-primary);
-        }
-
-        &::placeholder {
-          color: var(--color-text-tertiary);
-        }
-      }
-
-      .cds--search-magnifier-icon {
-        fill: var(--color-text-secondary);
-      }
-
-      .cds--search-close {
-        fill: var(--color-text-primary);
-
-        &:hover {
-          background: var(--color-bg-hover);
-        }
-      }
-    }
-  }
 }
 
 // Responsive Design
