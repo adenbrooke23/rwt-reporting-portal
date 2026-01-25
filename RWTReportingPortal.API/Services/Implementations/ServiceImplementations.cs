@@ -1769,24 +1769,25 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Build the report viewer URL
-            // Format: {serverUrl}/Pages/ReportViewer.aspx?{reportPath}&rs:Command=Render&rs:Embed=true
+            // Build the SSRS URL Access URL to render directly to PDF
+            // PDF is self-contained with no external JS/CSS dependencies
+            // Format: {serverUrl}?{reportPath}&rs:Command=Render&rs:Format=PDF
             var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
-            var viewerUrl = $"{serverUrl}/Pages/ReportViewer.aspx?{reportPathEncoded}&rs:Command=Render&rs:Embed=true";
+            var renderUrl = $"{serverUrl}?{reportPathEncoded}&rs:Command=Render&rs:Format=PDF";
 
             // Add any parameters
             if (parameters != null)
             {
                 foreach (var param in parameters)
                 {
-                    viewerUrl += $"&{Uri.EscapeDataString(param.Key)}={Uri.EscapeDataString(param.Value)}";
+                    renderUrl += $"&{Uri.EscapeDataString(param.Key)}={Uri.EscapeDataString(param.Value)}";
                 }
             }
 
-            _logger.LogInformation("Rendering SSRS report: {Url}", viewerUrl);
+            _logger.LogInformation("Rendering SSRS report as PDF: {Url}", renderUrl);
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
-            var response = await httpClient.GetAsync(viewerUrl);
+            var response = await httpClient.GetAsync(renderUrl);
 
             if (!response.IsSuccessStatusCode)
             {
