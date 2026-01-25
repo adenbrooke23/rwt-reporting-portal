@@ -1668,8 +1668,8 @@ public class PowerBIService : IPowerBIService
                 {
                     WorkspaceId = group.Id.ToString(),
                     WorkspaceName = group.Name,
-                    Description = group.Description,
-                    Type = group.Type ?? "Workspace",
+                    Description = "", // Group type doesn't have Description property
+                    Type = group.Type?.ToString() ?? "Workspace",
                     ReportCount = reportCount,
                     PaginatedReportCount = paginatedCount
                 });
@@ -1705,11 +1705,11 @@ public class PowerBIService : IPowerBIService
             {
                 ReportId = r.Id.ToString(),
                 ReportName = r.Name,
-                Description = r.Description,
+                Description = "", // Power BI Report type doesn't have Description property
                 DatasetId = r.DatasetId?.ToString() ?? "",
                 EmbedUrl = r.EmbedUrl,
                 ReportType = r.ReportType ?? "PowerBIReport",
-                ModifiedDateTime = r.ModifiedDateTime,
+                ModifiedDateTime = r.ModifiedDateTime ?? DateTime.MinValue,
                 AlreadyImported = existingPowerBIReportIds.ContainsKey(r.Id.ToString()),
                 ExistingReportId = existingPowerBIReportIds.TryGetValue(r.Id.ToString(), out var existingId) ? existingId : null
             }).ToList();
@@ -1757,7 +1757,7 @@ public class PowerBIService : IPowerBIService
                 EmbedUrl = report.EmbedUrl,
                 EmbedToken = tokenResponse.Token,
                 ReportId = reportId,
-                TokenExpiry = tokenResponse.Expiration ?? DateTime.UtcNow.AddHours(1)
+                TokenExpiry = tokenResponse.Expiration?.DateTime ?? DateTime.UtcNow.AddHours(1)
             };
         }
         catch (Exception ex)
