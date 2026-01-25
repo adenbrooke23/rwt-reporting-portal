@@ -1825,7 +1825,7 @@ public class SSRSService : ISSRSService
         }
     }
 
-    public async Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null)
+    public async Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null, string method = "GET", byte[]? requestBody = null, string? contentType = null)
     {
         try
         {
@@ -1854,14 +1854,28 @@ public class SSRSService : ISSRSService
                 resourceUrl += $"?{queryString}";
             }
 
-            _logger.LogDebug("Proxying SSRS resource: {Url}", resourceUrl);
+            _logger.LogDebug("Proxying SSRS resource: {Method} {Url}", method, resourceUrl);
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
-            var response = await httpClient.GetAsync(resourceUrl);
+            HttpResponseMessage response;
+
+            if (method == "POST" && requestBody != null)
+            {
+                var httpContent = new ByteArrayContent(requestBody);
+                if (!string.IsNullOrEmpty(contentType))
+                {
+                    httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType.Split(';')[0].Trim());
+                }
+                response = await httpClient.PostAsync(resourceUrl, httpContent);
+            }
+            else
+            {
+                response = await httpClient.GetAsync(resourceUrl);
+            }
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("SSRS resource proxy failed: {Path} returned {Status}", resourcePath, response.StatusCode);
+                _logger.LogWarning("SSRS resource proxy failed: {Method} {Path} returned {Status}", method, resourcePath, response.StatusCode);
                 return new SSRSRenderResult
                 {
                     Success = false,
@@ -1870,18 +1884,18 @@ public class SSRSService : ISSRSService
             }
 
             var content = await response.Content.ReadAsByteArrayAsync();
-            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+            var responseContentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
 
             return new SSRSRenderResult
             {
                 Success = true,
                 Content = content,
-                ContentType = contentType
+                ContentType = responseContentType
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to proxy SSRS resource {Path}", resourcePath);
+            _logger.LogError(ex, "Failed to proxy SSRS resource {Method} {Path}", method, resourcePath);
             return new SSRSRenderResult
             {
                 Success = false,

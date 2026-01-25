@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RWTReportingPortal.API.Infrastructure.Auth;
@@ -138,9 +139,11 @@ public class ReportProxyController : ControllerBase
     /// <summary>
     /// Proxy SSRS resources (JavaScript, CSS, images, AJAX requests) for the report viewer.
     /// This catch-all endpoint handles all resources that the SSRS ReportViewer HTML references.
+    /// Supports both GET and POST (for SSRS postbacks, session keepalive, etc.)
     /// Authentication is handled via session cookie set during report render, or via query string token.
     /// </summary>
     [HttpGet("ssrs-resource/{**resourcePath}")]
+    [HttpPost("ssrs-resource/{**resourcePath}")]
     public async Task<IActionResult> ProxySSRSResource(string resourcePath, [FromQuery] string? access_token = null)
     {
         try
@@ -178,9 +181,20 @@ public class ReportProxyController : ControllerBase
                 .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value.ToString())}");
             var queryString = string.Join("&", queryParams);
 
-            _logger.LogDebug("Proxying SSRS resource: {Path}", resourcePath);
+            _logger.LogDebug("Proxying SSRS resource: {Method} {Path}", Request.Method, resourcePath);
 
-            var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString);
+            // Read request body for POST requests
+            byte[]? requestBody = null;
+            string? contentType = null;
+            if (Request.Method == "POST" && Request.ContentLength > 0)
+            {
+                using var memoryStream = new MemoryStream();
+                await Request.Body.CopyToAsync(memoryStream);
+                requestBody = memoryStream.ToArray();
+                contentType = Request.ContentType;
+            }
+
+            var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString, Request.Method, requestBody, contentType);
 
             if (!result.Success)
             {
