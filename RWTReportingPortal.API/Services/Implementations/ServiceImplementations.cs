@@ -1769,11 +1769,11 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Build the SSRS URL Access URL to render directly to HTML5
-            // This produces self-contained HTML without needing ReportViewer JavaScript infrastructure
-            // Format: {serverUrl}?{reportPath}&rs:Format=HTML5&rs:Command=Render
+            // Build the SSRS URL Access URL to render directly to HTML4.0
+            // This produces simpler HTML without complex JavaScript dependencies
+            // Format: {serverUrl}?{reportPath}&rs:Format=HTML4.0&rc:Toolbar=false
             var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
-            var viewerUrl = $"{serverUrl}?{reportPathEncoded}&rs:Format=HTML5&rs:Command=Render";
+            var viewerUrl = $"{serverUrl}?{reportPathEncoded}&rs:Format=HTML4.0&rc:Toolbar=false";
 
             // Add any parameters
             if (parameters != null)
@@ -1802,11 +1802,8 @@ public class SSRSService : ISSRSService
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/html";
 
-            // If proxyBaseUrl is provided, rewrite URLs in HTML content
-            if (!string.IsNullOrEmpty(proxyBaseUrl) && contentType.Contains("text/html"))
-            {
-                content = RewriteHtmlUrls(content, serverUrl, proxyBaseUrl);
-            }
+            // URL rewriting is disabled when using HTML4.0 format since output is self-contained
+            // The proxyBaseUrl parameter is kept for potential future use with ReportViewer.aspx
 
             return new SSRSRenderResult
             {
