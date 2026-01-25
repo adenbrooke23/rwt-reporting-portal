@@ -24,6 +24,11 @@ using Microsoft.Extensions.Caching.Memory;
 using RWTReportingPortal.API.Models.Entities;
 using RWTReportingPortal.API.Services.Interfaces;
 
+// Type aliases to resolve conflicts with Power BI SDK types
+using User = RWTReportingPortal.API.Models.Entities.User;
+using Report = RWTReportingPortal.API.Models.Entities.Report;
+using PbiReport = Microsoft.PowerBI.Api.Models.Report;
+
 namespace RWTReportingPortal.API.Services.Implementations;
 
 // Stub implementations - Replace with full implementations
