@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -21,6 +22,7 @@ export class ReportViewerComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private iconService = inject(IconService);
   private contentService = inject(ContentManagementService);
+  private platformId = inject(PLATFORM_ID);
 
   // API base URL for proxy endpoints
   private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
@@ -108,6 +110,11 @@ export class ReportViewerComponent implements OnInit {
         // On-premises SSRS/PBIRS report - use API proxy to avoid Windows auth popup
         if (config?.serverUrl && config?.reportPath) {
           // Use the API proxy endpoint which handles authentication server-side
+          // Include JWT token as query param since iframe requests don't use Authorization header
+          const token = this.getAccessToken();
+          if (token) {
+            return `${this.API_BASE_URL}/reports/${report.id}/render?access_token=${encodeURIComponent(token)}`;
+          }
           return `${this.API_BASE_URL}/reports/${report.id}/render`;
         }
         // No configuration - show setup message
@@ -172,5 +179,26 @@ export class ReportViewerComponent implements OnInit {
 
   backToHub(): void {
     this.router.navigate(['/hub', this.hubId]);
+  }
+
+  /**
+   * Get access token from storage for iframe-based report rendering
+   * (iframe requests don't go through HttpInterceptor)
+   */
+  private getAccessToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    try {
+      const tokenStr = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      if (tokenStr) {
+        const token = JSON.parse(tokenStr);
+        return token?.accessToken || null;
+      }
+    } catch {
+      // JSON parse error - ignore
+    }
+    return null;
   }
 }
