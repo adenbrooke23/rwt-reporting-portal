@@ -206,13 +206,15 @@
 
         <ng-container *ngIf="formData.type === 'PowerBI' || formData.type === 'Paginated'">
           <div class="form-field">
-            <label class="form-label">Embed URL</label>
-            <input
-              ibmText
-              [(ngModel)]="formData.embedUrl"
-              placeholder="https://app.powerbi.com/reportEmbed?..."
-              [size]="'md'">
-            <p class="form-helper">The full Power BI embed URL for this report</p>
+            <button
+              cdsButton="tertiary"
+              size="sm"
+              type="button"
+              (click)="openPowerBIBrowser()">
+              <svg cdsIcon="folder" size="16" class="cds--btn__icon"></svg>
+              Browse Power BI Reports
+            </button>
+            <p class="form-helper">Browse and select a report from Power BI workspaces</p>
           </div>
 
           <div class="form-row">
@@ -221,17 +223,30 @@
               <input
                 ibmText
                 [(ngModel)]="formData.workspaceId"
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                [size]="'md'">
+                placeholder="Select a report to populate"
+                [size]="'md'"
+                [readonly]="true">
             </div>
             <div class="form-field">
               <label class="form-label">Report ID</label>
               <input
                 ibmText
                 [(ngModel)]="formData.reportId"
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                [size]="'md'">
+                placeholder="Select a report to populate"
+                [size]="'md'"
+                [readonly]="true">
             </div>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Embed URL</label>
+            <input
+              ibmText
+              [(ngModel)]="formData.embedUrl"
+              placeholder="Auto-populated from selection"
+              [size]="'md'"
+              [readonly]="true">
+            <p class="form-helper">The Power BI embed URL (auto-populated when selecting a report)</p>
           </div>
         </ng-container>
 
@@ -313,3 +328,9 @@
   [serverUrl]="ssrsServerUrl"
   (select)="onSSRSReportSelected($event)">
 </app-ssrs-browser>
+
+<!-- Power BI Browser Modal -->
+<app-powerbi-browser
+  [(open)]="showPowerBIBrowser"
+  (select)="onPowerBIReportSelected($event)">
+</app-powerbi-browser>

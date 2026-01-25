@@ -13,15 +13,18 @@ public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
     private readonly IPermissionService _permissionService;
+    private readonly IPowerBIService _powerBIService;
     private readonly ILogger<ReportsController> _logger;
 
     public ReportsController(
         IReportService reportService,
         IPermissionService permissionService,
+        IPowerBIService powerBIService,
         ILogger<ReportsController> logger)
     {
         _reportService = reportService;
         _permissionService = permissionService;
+        _powerBIService = powerBIService;
         _logger = logger;
     }
 
@@ -63,6 +66,58 @@ public class ReportsController : ControllerBase
 
         var result = await _reportService.GetReportEmbedAsync(reportId, userId);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Get Power BI embed token for a report.
+    /// This endpoint handles the Power BI specific embedding with token generation.
+    /// </summary>
+    [HttpGet("{reportId}/powerbi-embed")]
+    public async Task<IActionResult> GetPowerBIEmbed(int reportId)
+    {
+        try
+        {
+            var userId = GetUserId();
+
+            // Get report details
+            var report = await _reportService.GetReportByIdAsync(reportId);
+            if (report == null)
+            {
+                return NotFound(new { error = "Report not found" });
+            }
+
+            // Check if it's a Power BI report
+            if (report.ReportType != "PowerBI" && report.ReportType != "Paginated")
+            {
+                return BadRequest(new { error = "This endpoint is only for Power BI reports" });
+            }
+
+            // Check if Power BI configuration is present
+            if (string.IsNullOrEmpty(report.PowerBIWorkspaceId) || string.IsNullOrEmpty(report.PowerBIReportId))
+            {
+                return BadRequest(new { error = "Report is missing Power BI workspace or report ID configuration" });
+            }
+
+            // Get embed info from Power BI service
+            var embedInfo = await _powerBIService.GetEmbedInfoAsync(
+                report.PowerBIWorkspaceId,
+                report.PowerBIReportId
+            );
+
+            _logger.LogInformation("Generated Power BI embed token for report {ReportId} for user {UserId}", reportId, userId);
+
+            return Ok(embedInfo);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Power BI not configured");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Power BI embed for report {ReportId}", reportId);
+            return StatusCode(500, new { error = "Failed to generate Power BI embed token" });
+        }
     }
 
     /// <summary>

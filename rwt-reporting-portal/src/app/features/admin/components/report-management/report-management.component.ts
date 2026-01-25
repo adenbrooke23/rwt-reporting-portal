@@ -20,6 +20,8 @@ import {
 import { ReportType, ReportEmbedConfig } from '../../../auth/models/user-management.models';
 import { SSRSBrowserComponent } from '../ssrs-browser/ssrs-browser.component';
 import { SSRSBrowserService, SSRSReportSelection } from '../../services/ssrs-browser.service';
+import { PowerBIBrowserComponent } from '../powerbi-browser/powerbi-browser.component';
+import { PowerBIBrowserService, PowerBIReportSelection } from '../../services/powerbi-browser.service';
 import {
   TableModule,
   TableModel,
@@ -65,7 +67,8 @@ import Category from '@carbon/icons/es/category/16';
     SearchModule,
     ToggleModule,
     CheckboxModule,
-    SSRSBrowserComponent
+    SSRSBrowserComponent,
+    PowerBIBrowserComponent
   ],
   templateUrl: './report-management.component.html',
   styleUrl: './report-management.component.scss'
@@ -81,6 +84,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationNotificationService);
   private ssrsBrowserService = inject(SSRSBrowserService);
+  private powerBIBrowserService = inject(PowerBIBrowserService);
   private router = inject(Router);
   private iconService = inject(IconService);
   private platformId = inject(PLATFORM_ID);
@@ -117,6 +121,9 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   // SSRS Browser
   showSSRSBrowser = false;
   ssrsServerUrl = '';
+
+  // Power BI Browser
+  showPowerBIBrowser = false;
 
   formData = {
     reportGroupId: '',
@@ -600,5 +607,37 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
 
   closeSSRSBrowser(): void {
     this.showSSRSBrowser = false;
+  }
+
+  // Power BI Browser methods
+  openPowerBIBrowser(): void {
+    this.showPowerBIBrowser = true;
+  }
+
+  onPowerBIReportSelected(selection: PowerBIReportSelection): void {
+    this.formData.workspaceId = selection.workspaceId;
+    this.formData.reportId = selection.reportId;
+    this.formData.embedUrl = selection.embedUrl;
+
+    // Set report type based on selection
+    if (selection.reportType === 'PaginatedReport') {
+      this.formData.type = 'Paginated';
+    } else {
+      this.formData.type = 'PowerBI';
+    }
+
+    // Auto-fill name and description if not already set
+    if (!this.formData.name) {
+      this.formData.name = selection.reportName;
+    }
+    if (!this.formData.description && selection.description) {
+      this.formData.description = selection.description;
+    }
+
+    this.showPowerBIBrowser = false;
+  }
+
+  closePowerBIBrowser(): void {
+    this.showPowerBIBrowser = false;
   }
 }

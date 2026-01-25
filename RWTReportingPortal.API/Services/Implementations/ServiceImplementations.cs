@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Identity.Client;
+using Microsoft.PowerBI.Api;
+using Microsoft.PowerBI.Api.Models;
+using Microsoft.Rest;
 using RWTReportingPortal.API.Data;
 using RWTReportingPortal.API.Data.Repositories;
 using RWTReportingPortal.API.Infrastructure.Auth;
@@ -1558,17 +1562,257 @@ public class UserStatsService : IUserStatsService
 public class PowerBIService : IPowerBIService
 {
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<PowerBIService> _logger;
+    private readonly IReportRepository _reportRepository;
 
-    public PowerBIService(IConfiguration configuration, ILogger<PowerBIService> logger)
+    private const string PowerBIApiUrl = "https://api.powerbi.com";
+    private const string TokenCacheKey = "powerbi_access_token";
+    private static readonly string[] Scopes = new[] { "https://analysis.windows.net/powerbi/api/.default" };
+
+    public PowerBIService(
+        IConfiguration configuration,
+        IMemoryCache cache,
+        ILogger<PowerBIService> logger,
+        IReportRepository reportRepository)
     {
         _configuration = configuration;
+        _cache = cache;
         _logger = logger;
+        _reportRepository = reportRepository;
     }
 
-    public Task<PowerBIEmbedInfo> GetEmbedInfoAsync(string workspaceId, string reportId) => throw new NotImplementedException();
-    public Task<List<PowerBIWorkspace>> GetWorkspacesAsync() => throw new NotImplementedException();
-    public Task<List<PowerBIReport>> GetWorkspaceReportsAsync(string workspaceId) => throw new NotImplementedException();
+    /// <summary>
+    /// Get configuration status for Power BI integration.
+    /// </summary>
+    public async Task<PowerBIConfigResponse> GetConfigAsync()
+    {
+        var tenantId = _configuration["PowerBI:TenantId"];
+        var clientId = _configuration["PowerBI:ClientId"];
+        var clientSecret = _configuration["PowerBI:ClientSecret"];
+
+        var isConfigured = !string.IsNullOrEmpty(tenantId) &&
+                          !string.IsNullOrEmpty(clientId) &&
+                          !string.IsNullOrEmpty(clientSecret) &&
+                          !tenantId.StartsWith("YOUR_") &&
+                          !clientId.StartsWith("YOUR_") &&
+                          !clientSecret.StartsWith("YOUR_");
+
+        var response = new PowerBIConfigResponse
+        {
+            IsConfigured = isConfigured,
+            TenantId = isConfigured ? tenantId : null,
+            ClientId = isConfigured ? clientId : null
+        };
+
+        if (isConfigured)
+        {
+            response.IsConnected = await TestConnectionAsync();
+            if (!response.IsConnected)
+            {
+                response.ErrorMessage = "Configuration is present but connection test failed. Check credentials.";
+            }
+        }
+        else
+        {
+            response.ErrorMessage = "Power BI is not configured. Please set TenantId, ClientId, and ClientSecret in appsettings.";
+        }
+
+        return response;
+    }
+
+    /// <summary>
+    /// Test the connection to Power BI service.
+    /// </summary>
+    public async Task<bool> TestConnectionAsync()
+    {
+        try
+        {
+            var client = await GetPowerBIClientAsync();
+            // Try to get workspaces - this will fail if credentials are invalid
+            await client.Groups.GetGroupsAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Power BI connection test failed");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Get all workspaces the service principal has access to.
+    /// </summary>
+    public async Task<List<Interfaces.PowerBIWorkspace>> GetWorkspacesAsync()
+    {
+        try
+        {
+            var client = await GetPowerBIClientAsync();
+            var groups = await client.Groups.GetGroupsAsync();
+
+            var workspaces = new List<Interfaces.PowerBIWorkspace>();
+
+            foreach (var group in groups.Value)
+            {
+                // Get report counts for each workspace
+                var reports = await client.Reports.GetReportsInGroupAsync(new Guid(group.Id.ToString()));
+                var reportCount = reports.Value.Count(r => r.ReportType == "PowerBIReport");
+                var paginatedCount = reports.Value.Count(r => r.ReportType == "PaginatedReport");
+
+                workspaces.Add(new Interfaces.PowerBIWorkspace
+                {
+                    WorkspaceId = group.Id.ToString(),
+                    WorkspaceName = group.Name,
+                    Description = group.Description,
+                    Type = group.Type ?? "Workspace",
+                    ReportCount = reportCount,
+                    PaginatedReportCount = paginatedCount
+                });
+            }
+
+            _logger.LogInformation("Retrieved {Count} Power BI workspaces", workspaces.Count);
+            return workspaces.OrderBy(w => w.WorkspaceName).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get Power BI workspaces");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get all reports in a specific workspace.
+    /// </summary>
+    public async Task<List<Interfaces.PowerBIReport>> GetWorkspaceReportsAsync(string workspaceId)
+    {
+        try
+        {
+            var client = await GetPowerBIClientAsync();
+            var reports = await client.Reports.GetReportsInGroupAsync(new Guid(workspaceId));
+
+            // Get existing reports from database to mark already imported ones
+            var existingReports = await _reportRepository.GetAllAsync(includeInactive: true);
+            var existingPowerBIReportIds = existingReports
+                .Where(r => !string.IsNullOrEmpty(r.PowerBIReportId))
+                .ToDictionary(r => r.PowerBIReportId!, r => r.ReportId);
+
+            var result = reports.Value.Select(r => new Interfaces.PowerBIReport
+            {
+                ReportId = r.Id.ToString(),
+                ReportName = r.Name,
+                Description = r.Description,
+                DatasetId = r.DatasetId?.ToString() ?? "",
+                EmbedUrl = r.EmbedUrl,
+                ReportType = r.ReportType ?? "PowerBIReport",
+                ModifiedDateTime = r.ModifiedDateTime,
+                AlreadyImported = existingPowerBIReportIds.ContainsKey(r.Id.ToString()),
+                ExistingReportId = existingPowerBIReportIds.TryGetValue(r.Id.ToString(), out var existingId) ? existingId : null
+            }).ToList();
+
+            _logger.LogInformation("Retrieved {Count} reports from workspace {WorkspaceId}", result.Count, workspaceId);
+            return result.OrderBy(r => r.ReportName).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get reports from workspace {WorkspaceId}", workspaceId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get embed information (URL and token) for a specific report.
+    /// </summary>
+    public async Task<PowerBIEmbedInfo> GetEmbedInfoAsync(string workspaceId, string reportId)
+    {
+        try
+        {
+            var client = await GetPowerBIClientAsync();
+            var workspaceGuid = new Guid(workspaceId);
+            var reportGuid = new Guid(reportId);
+
+            // Get report details
+            var report = await client.Reports.GetReportInGroupAsync(workspaceGuid, reportGuid);
+
+            // Generate embed token
+            var generateTokenRequest = new GenerateTokenRequest(
+                accessLevel: "View",
+                allowSaveAs: false
+            );
+
+            var tokenResponse = await client.Reports.GenerateTokenInGroupAsync(
+                workspaceGuid,
+                reportGuid,
+                generateTokenRequest
+            );
+
+            _logger.LogInformation("Generated embed token for report {ReportId} in workspace {WorkspaceId}", reportId, workspaceId);
+
+            return new PowerBIEmbedInfo
+            {
+                EmbedUrl = report.EmbedUrl,
+                EmbedToken = tokenResponse.Token,
+                ReportId = reportId,
+                TokenExpiry = tokenResponse.Expiration ?? DateTime.UtcNow.AddHours(1)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get embed info for report {ReportId}", reportId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get an authenticated Power BI client using client credentials flow.
+    /// </summary>
+    private async Task<PowerBIClient> GetPowerBIClientAsync()
+    {
+        var accessToken = await GetAccessTokenAsync();
+        var tokenCredentials = new TokenCredentials(accessToken, "Bearer");
+        return new PowerBIClient(new Uri(PowerBIApiUrl), tokenCredentials);
+    }
+
+    /// <summary>
+    /// Get an access token using MSAL client credentials flow.
+    /// Tokens are cached to avoid unnecessary authentication calls.
+    /// </summary>
+    private async Task<string> GetAccessTokenAsync()
+    {
+        // Check cache first
+        if (_cache.TryGetValue(TokenCacheKey, out string? cachedToken) && !string.IsNullOrEmpty(cachedToken))
+        {
+            return cachedToken;
+        }
+
+        var tenantId = _configuration["PowerBI:TenantId"];
+        var clientId = _configuration["PowerBI:ClientId"];
+        var clientSecret = _configuration["PowerBI:ClientSecret"];
+
+        if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+        {
+            throw new InvalidOperationException("Power BI configuration is missing. Please set TenantId, ClientId, and ClientSecret.");
+        }
+
+        var authority = $"https://login.microsoftonline.com/{tenantId}";
+
+        var app = ConfidentialClientApplicationBuilder
+            .Create(clientId)
+            .WithClientSecret(clientSecret)
+            .WithAuthority(new Uri(authority))
+            .Build();
+
+        var result = await app.AcquireTokenForClient(Scopes).ExecuteAsync();
+
+        // Cache the token with expiration buffer (5 minutes before actual expiry)
+        var cacheExpiration = result.ExpiresOn.AddMinutes(-5) - DateTimeOffset.UtcNow;
+        if (cacheExpiration > TimeSpan.Zero)
+        {
+            _cache.Set(TokenCacheKey, result.AccessToken, cacheExpiration);
+        }
+
+        _logger.LogDebug("Acquired new Power BI access token, expires at {Expiry}", result.ExpiresOn);
+        return result.AccessToken;
+    }
 }
 
 public class SSRSService : ISSRSService

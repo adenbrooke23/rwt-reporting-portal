@@ -54,8 +54,15 @@
       <button cdsButton="secondary" size="sm" (click)="backToHub()">Return to Hub</button>
     </div>
 
-    <!-- Report Iframe -->
-    <div class="report-iframe-container" *ngIf="reportUrl && !isLoading && !error && !needsConfiguration">
+    <!-- Power BI Embedded Report -->
+    <div
+      class="powerbi-container"
+      *ngIf="usePowerBIEmbed && !error && !needsConfiguration"
+      #powerbiContainer>
+    </div>
+
+    <!-- Report Iframe (SSRS or fallback) -->
+    <div class="report-iframe-container" *ngIf="reportUrl && !usePowerBIEmbed && !isLoading && !error && !needsConfiguration">
       <iframe
         [src]="reportUrl"
         [title]="reportName"

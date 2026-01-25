@@ -1,0 +1,169 @@
+<cds-modal
+  [open]="open"
+  size="md"
+  (overlaySelected)="closeModal()">
+
+  <cds-modal-header (closeSelect)="closeModal()">
+    <p cdsModalHeaderLabel>Power BI Service</p>
+    <p cdsModalHeaderHeading>Browse Reports</p>
+  </cds-modal-header>
+
+  <section cdsModalContent class="browser-content" (open)="onModalOpen()">
+    <!-- Toolbar -->
+    <div class="browser-toolbar">
+      <div class="toolbar-left">
+        <button
+          *ngIf="currentView === 'reports'"
+          cdsButton="ghost"
+          size="sm"
+          (click)="backToWorkspaces()">
+          <svg cdsIcon="chevron--left" size="16"></svg>
+          Back to Workspaces
+        </button>
+        <span *ngIf="currentView === 'workspaces'" class="toolbar-title">
+          Select a Workspace
+        </span>
+        <span *ngIf="currentView === 'reports' && selectedWorkspace" class="toolbar-title">
+          {{ selectedWorkspace.workspaceName }}
+        </span>
+      </div>
+
+      <button cdsButton="ghost" size="sm" (click)="refresh()" [disabled]="isLoading">
+        <svg cdsIcon="renew" size="16"></svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Loading state with skeleton -->
+    <div *ngIf="isLoading" class="skeleton-container">
+      <div class="skeleton-item" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="skeleton skeleton-icon"></div>
+        <div class="skeleton-info">
+          <div class="skeleton skeleton-name"></div>
+          <div class="skeleton skeleton-description"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="errorMessage && !isLoading" class="error-container" role="alert">
+      <div class="error-content">
+        <svg cdsIcon="warning--filled" size="20" class="error-icon"></svg>
+        <div class="error-text">
+          <strong>Error</strong>
+          <p>{{ errorMessage }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workspaces list -->
+    <div *ngIf="!isLoading && !errorMessage && currentView === 'workspaces'" class="workspace-list">
+      <div
+        *ngFor="let workspace of workspaces"
+        class="workspace-item"
+        (click)="selectWorkspace(workspace)"
+        (keydown.enter)="selectWorkspace(workspace)"
+        tabindex="0"
+        role="button">
+        <div class="workspace-icon">
+          <svg cdsIcon="folder" size="16"></svg>
+        </div>
+        <div class="workspace-info">
+          <span class="workspace-name">{{ workspace.workspaceName }}</span>
+          <span *ngIf="workspace.description" class="workspace-description">
+            {{ workspace.description }}
+          </span>
+          <span class="workspace-counts">
+            <span *ngIf="workspace.reportCount > 0">{{ workspace.reportCount }} report(s)</span>
+            <span *ngIf="workspace.reportCount > 0 && workspace.paginatedReportCount > 0"> · </span>
+            <span *ngIf="workspace.paginatedReportCount > 0">{{ workspace.paginatedReportCount }} paginated</span>
+            <span *ngIf="getTotalReportCount(workspace) === 0">No reports</span>
+          </span>
+        </div>
+        <div class="workspace-arrow">
+          <svg cdsIcon="chevron--left" size="16" style="transform: rotate(180deg)"></svg>
+        </div>
+      </div>
+
+      <div *ngIf="workspaces.length === 0" class="empty-state">
+        <svg cdsIcon="folder" size="32" class="empty-icon"></svg>
+        <p>No workspaces available</p>
+        <span class="empty-hint">Ensure the service principal has access to Power BI workspaces</span>
+      </div>
+    </div>
+
+    <!-- Reports list -->
+    <div *ngIf="!isLoading && !errorMessage && currentView === 'reports'" class="report-list-container">
+      <ul class="report-list" role="listbox" aria-label="Available reports">
+        <li
+          *ngFor="let report of reports"
+          class="report-item"
+          [class.report-item--selected]="selectedReport?.reportId === report.reportId"
+          [class.report-item--imported]="report.alreadyImported"
+          role="option"
+          [attr.aria-selected]="selectedReport?.reportId === report.reportId"
+          tabindex="0"
+          (click)="selectReport(report)"
+          (keydown.enter)="selectReport(report)"
+          (keydown.space)="selectReport(report); $event.preventDefault()">
+          <div class="report-icon">
+            <svg *ngIf="report.reportType === 'PowerBIReport'" cdsIcon="analytics" size="16"></svg>
+            <svg *ngIf="report.reportType === 'PaginatedReport'" cdsIcon="document" size="16"></svg>
+          </div>
+          <div class="report-info">
+            <div class="report-name-row">
+              <span class="report-name">{{ report.reportName }}</span>
+              <ibm-tag
+                [type]="getReportTypeTagColor(report.reportType)"
+                size="sm">
+                {{ getReportTypeLabel(report.reportType) }}
+              </ibm-tag>
+              <ibm-tag
+                *ngIf="report.alreadyImported"
+                type="gray"
+                size="sm">
+                Already Added
+              </ibm-tag>
+            </div>
+            <span *ngIf="report.description" class="report-description">
+              {{ report.description }}
+            </span>
+          </div>
+          <div class="report-indicator" *ngIf="selectedReport?.reportId === report.reportId">
+            <svg cdsIcon="checkmark" size="16"></svg>
+          </div>
+        </li>
+      </ul>
+
+      <div *ngIf="reports.length === 0" class="empty-state">
+        <svg cdsIcon="document" size="32" class="empty-icon"></svg>
+        <p>No reports in this workspace</p>
+        <span class="empty-hint">This workspace doesn't contain any Power BI reports</span>
+      </div>
+    </div>
+
+    <!-- Selection preview -->
+    <div *ngIf="selectedReport" class="selection-preview">
+      <div class="selection-icon">
+        <svg *ngIf="selectedReport.reportType === 'PowerBIReport'" cdsIcon="analytics" size="16"></svg>
+        <svg *ngIf="selectedReport.reportType === 'PaginatedReport'" cdsIcon="document" size="16"></svg>
+      </div>
+      <div class="selection-info">
+        <span class="selection-label">Selected Report</span>
+        <span class="selection-name">{{ selectedReport.reportName }}</span>
+        <span class="selection-workspace">{{ selectedWorkspace?.workspaceName }}</span>
+      </div>
+    </div>
+  </section>
+
+  <cds-modal-footer>
+    <button cdsButton="secondary" (click)="closeModal()">Cancel</button>
+    <button
+      cdsButton="primary"
+      (click)="confirmSelection()"
+      [disabled]="!selectedReport">
+      Select Report
+    </button>
+  </cds-modal-footer>
+
+</cds-modal>
