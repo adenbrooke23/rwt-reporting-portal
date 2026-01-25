@@ -79,10 +79,20 @@ public class ReportProxyController : ControllerBase
 
             _logger.LogInformation("Proxying SSRS report {ReportId} for user", reportId);
 
-            // Render the report via SSRS service
+            // Set a session cookie for subsequent resource requests
+            // This allows the browser to automatically authenticate resource requests
+            // without needing the token in every URL
+            SetProxySessionCookie(access_token);
+
+            // Build proxy base URL for URL rewriting (just the path, no token needed)
+            var proxyBaseUrl = $"{Request.Scheme}://{Request.Host}/api/reports/ssrs-resource";
+
+            // Render the report via SSRS service with URL rewriting
             var result = await _ssrsService.RenderReportAsync(
                 report.SSRSReportPath,
-                report.SSRSReportServer
+                report.SSRSReportServer,
+                null,  // parameters
+                proxyBaseUrl
             );
 
             if (!result.Success)
@@ -123,5 +133,96 @@ public class ReportProxyController : ControllerBase
         }
 
         return File(result.Content!, result.ContentType);
+    }
+
+    /// <summary>
+    /// Proxy SSRS resources (JavaScript, CSS, images, AJAX requests) for the report viewer.
+    /// This catch-all endpoint handles all resources that the SSRS ReportViewer HTML references.
+    /// Authentication is handled via session cookie set during report render, or via query string token.
+    /// </summary>
+    [HttpGet("ssrs-resource/{**resourcePath}")]
+    public async Task<IActionResult> ProxySSRSResource(string resourcePath, [FromQuery] string? access_token = null)
+    {
+        try
+        {
+            // Validate authentication - check header, cookie, or query string
+            if (!(User.Identity?.IsAuthenticated ?? false))
+            {
+                // Check for session cookie first (set during report render)
+                var cookieToken = Request.Cookies["ssrs_proxy_session"];
+                var tokenToValidate = !string.IsNullOrEmpty(cookieToken) ? cookieToken : access_token;
+
+                if (string.IsNullOrEmpty(tokenToValidate))
+                {
+                    _logger.LogWarning("SSRS resource request without authentication: {Path}", resourcePath);
+                    return Unauthorized(new { error = "Authentication required" });
+                }
+
+                var principal = _jwtTokenService.ValidateToken(tokenToValidate);
+                if (principal == null)
+                {
+                    _logger.LogWarning("SSRS resource request with invalid token: {Path}", resourcePath);
+                    return Unauthorized(new { error = "Invalid or expired token" });
+                }
+            }
+
+            // Ensure resourcePath starts with /
+            if (!resourcePath.StartsWith("/"))
+            {
+                resourcePath = "/" + resourcePath;
+            }
+
+            // Get query string (excluding access_token for the upstream request)
+            var queryParams = Request.Query
+                .Where(q => q.Key != "access_token")
+                .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value.ToString())}");
+            var queryString = string.Join("&", queryParams);
+
+            _logger.LogDebug("Proxying SSRS resource: {Path}", resourcePath);
+
+            var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Failed to proxy SSRS resource {Path}: {Error}", resourcePath, result.ErrorMessage);
+                return StatusCode(502, new { error = result.ErrorMessage ?? "Failed to fetch resource" });
+            }
+
+            // Set appropriate cache headers for static resources
+            if (resourcePath.EndsWith(".js") || resourcePath.EndsWith(".css") ||
+                resourcePath.EndsWith(".png") || resourcePath.EndsWith(".gif") ||
+                resourcePath.EndsWith(".jpg") || resourcePath.EndsWith(".ico"))
+            {
+                Response.Headers.CacheControl = "public, max-age=3600";  // Cache for 1 hour
+            }
+
+            return File(result.Content!, result.ContentType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error proxying SSRS resource {Path}", resourcePath);
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Set a session cookie for SSRS proxy authentication.
+    /// This cookie is automatically sent by the browser with subsequent resource requests.
+    /// </summary>
+    private void SetProxySessionCookie(string? accessToken)
+    {
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            return;
+        }
+
+        Response.Cookies.Append("ssrs_proxy_session", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,  // Required for iframe cross-origin
+            MaxAge = TimeSpan.FromHours(1),  // Match typical session duration
+            Path = "/api/reports/ssrs-resource"  // Only send for SSRS resource requests
+        });
     }
 }

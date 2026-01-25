@@ -14,7 +14,10 @@ public interface ISSRSService
     Task<bool> TestConnectionAsync();
 
     // Report rendering/proxy
-    Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null);
+    Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null, string? proxyBaseUrl = null);
+
+    // Proxy arbitrary SSRS resources (JS, CSS, images, etc.)
+    Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null);
 }
 
 /// <summary>

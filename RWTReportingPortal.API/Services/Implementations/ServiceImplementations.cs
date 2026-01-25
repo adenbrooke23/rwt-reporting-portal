@@ -1755,7 +1755,7 @@ public class SSRSService : ISSRSService
         return result;
     }
 
-    public async Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null)
+    public async Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null, string? proxyBaseUrl = null)
     {
         try
         {
@@ -1801,6 +1801,12 @@ public class SSRSService : ISSRSService
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/html";
 
+            // If proxyBaseUrl is provided, rewrite URLs in HTML content
+            if (!string.IsNullOrEmpty(proxyBaseUrl) && contentType.Contains("text/html"))
+            {
+                content = RewriteHtmlUrls(content, serverUrl, proxyBaseUrl);
+            }
+
             return new SSRSRenderResult
             {
                 Success = true,
@@ -1817,6 +1823,104 @@ public class SSRSService : ISSRSService
                 ErrorMessage = "Failed to connect to SSRS server"
             };
         }
+    }
+
+    public async Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null)
+    {
+        try
+        {
+            var serverUrl = _configuration["SSRS:ReportServerUrl"];
+            if (string.IsNullOrEmpty(serverUrl))
+            {
+                return new SSRSRenderResult
+                {
+                    Success = false,
+                    ErrorMessage = "SSRS server URL not configured"
+                };
+            }
+
+            // Extract base URL (e.g., https://ssrs.example.com from https://ssrs.example.com/ReportServer)
+            var uri = new Uri(serverUrl);
+            var baseUrl = $"{uri.Scheme}://{uri.Host}";
+            if (!uri.IsDefaultPort)
+            {
+                baseUrl += $":{uri.Port}";
+            }
+
+            // Build the full resource URL
+            var resourceUrl = $"{baseUrl}{resourcePath}";
+            if (!string.IsNullOrEmpty(queryString))
+            {
+                resourceUrl += $"?{queryString}";
+            }
+
+            _logger.LogDebug("Proxying SSRS resource: {Url}", resourceUrl);
+
+            var httpClient = _httpClientFactory.CreateClient("SSRSClient");
+            var response = await httpClient.GetAsync(resourceUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("SSRS resource proxy failed: {Path} returned {Status}", resourcePath, response.StatusCode);
+                return new SSRSRenderResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Resource returned status {response.StatusCode}"
+                };
+            }
+
+            var content = await response.Content.ReadAsByteArrayAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+            return new SSRSRenderResult
+            {
+                Success = true,
+                Content = content,
+                ContentType = contentType
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to proxy SSRS resource {Path}", resourcePath);
+            return new SSRSRenderResult
+            {
+                Success = false,
+                ErrorMessage = "Failed to fetch resource from SSRS server"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Rewrite URLs in SSRS HTML to point to the proxy endpoint
+    /// </summary>
+    private byte[] RewriteHtmlUrls(byte[] content, string ssrsServerUrl, string proxyBaseUrl)
+    {
+        var html = Encoding.UTF8.GetString(content);
+        var uri = new Uri(ssrsServerUrl);
+        var ssrsBaseUrl = $"{uri.Scheme}://{uri.Host}";
+        if (!uri.IsDefaultPort)
+        {
+            ssrsBaseUrl += $":{uri.Port}";
+        }
+
+        // Rewrite absolute URLs to SSRS server
+        html = html.Replace($"\"{ssrsBaseUrl}/", $"\"{proxyBaseUrl}/");
+        html = html.Replace($"'{ssrsBaseUrl}/", $"'{proxyBaseUrl}/");
+
+        // Rewrite relative URLs starting with /ReportServer
+        html = html.Replace("\"/ReportServer/", $"\"{proxyBaseUrl}/ReportServer/");
+        html = html.Replace("'/ReportServer/", $"'{proxyBaseUrl}/ReportServer/");
+
+        // Rewrite relative URLs starting with /Reports (common SSRS path)
+        html = html.Replace("\"/Reports/", $"\"{proxyBaseUrl}/Reports/");
+        html = html.Replace("'/Reports/", $"'{proxyBaseUrl}/Reports/");
+
+        // Rewrite URLs in JavaScript (often uses escaped quotes or concatenation)
+        html = html.Replace("src=\"/ReportServer/", $"src=\"{proxyBaseUrl}/ReportServer/");
+        html = html.Replace("href=\"/ReportServer/", $"href=\"{proxyBaseUrl}/ReportServer/");
+        html = html.Replace("action=\"/ReportServer/", $"action=\"{proxyBaseUrl}/ReportServer/");
+
+        return Encoding.UTF8.GetBytes(html);
     }
 }
 
