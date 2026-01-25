@@ -2234,7 +2234,7 @@ public class AuditService : IAuditService
 
     public async Task LogAsync(int? userId, string? userEmail, string action, string? entityType = null,
         int? entityId = null, object? oldValues = null, object? newValues = null,
-        string? ipAddress = null, string? userAgent = null)
+        string? description = null, string? ipAddress = null, string? userAgent = null)
     {
         try
         {
@@ -2248,7 +2248,8 @@ public class AuditService : IAuditService
             // Add parameters
             AddParameter(command, "@UserId", userId ?? (object)DBNull.Value);
             AddParameter(command, "@EventType", action);
-            AddParameter(command, "@EventDescription", userEmail ?? (object)DBNull.Value);
+            // Use description if provided, otherwise fall back to a generic message
+            AddParameter(command, "@EventDescription", description ?? $"Action by {userEmail ?? "unknown"}" ?? (object)DBNull.Value);
             AddParameter(command, "@TargetType", entityType ?? (object)DBNull.Value);
             AddParameter(command, "@TargetId", entityId ?? (object)DBNull.Value);
             AddParameter(command, "@OldValues", oldValues != null ? System.Text.Json.JsonSerializer.Serialize(oldValues) : (object)DBNull.Value);
@@ -2257,7 +2258,7 @@ public class AuditService : IAuditService
             AddParameter(command, "@UserAgent", userAgent ?? (object)DBNull.Value);
 
             await Task.Run(() => command.ExecuteNonQuery());
-            _logger.LogDebug("Audit logged: {Action} by User {UserId}", action, userId);
+            _logger.LogDebug("Audit logged: {Action} by User {UserId} - {Description}", action, userId, description);
         }
         catch (Exception ex)
         {
@@ -2271,6 +2272,10 @@ public class AuditService : IAuditService
     {
         // Login history is already being logged elsewhere in AuthService
         // This method can be used for additional login audit entries if needed
+        var description = success
+            ? $"User logged in via {loginMethod}"
+            : $"Login failed via {loginMethod}: {failureReason ?? "Unknown reason"}";
+
         await LogAsync(
             userId,
             email,
@@ -2279,6 +2284,7 @@ public class AuditService : IAuditService
             userId,
             null,
             new { LoginMethod = loginMethod, Success = success, FailureReason = failureReason },
+            description,
             ipAddress,
             userAgent
         );

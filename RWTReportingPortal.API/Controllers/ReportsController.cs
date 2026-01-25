@@ -47,6 +47,11 @@ public class ReportsController : ControllerBase
         {
             return NotFound();
         }
+
+        // Log report access
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        _ = _reportService.LogReportAccessAsync(reportId, userId, "View", ipAddress);
+
         return Ok(result);
     }
 
@@ -65,6 +70,11 @@ public class ReportsController : ControllerBase
         }
 
         var result = await _reportService.GetReportEmbedAsync(reportId, userId);
+
+        // Log report access
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        _ = _reportService.LogReportAccessAsync(reportId, userId, "Embed", ipAddress);
+
         return Ok(result);
     }
 
@@ -103,6 +113,10 @@ public class ReportsController : ControllerBase
                 report.PowerBIWorkspaceId,
                 report.PowerBIReportId
             );
+
+            // Log report access
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            _ = _reportService.LogReportAccessAsync(reportId, userId, "PowerBI_Embed", ipAddress);
 
             _logger.LogInformation("Generated Power BI embed token for report {ReportId} for user {UserId}", reportId, userId);
 
