@@ -35,10 +35,42 @@
       </button>
     </div>
 
-    <!-- Loading state -->
-    <div *ngIf="isLoading" class="loading-container">
-      <cds-loading [isActive]="true" size="normal" [overlay]="false"></cds-loading>
-      <p class="loading-text">Loading SSRS content...</p>
+    <!-- Loading state with skeleton -->
+    <div *ngIf="isLoading" class="browser-panels">
+      <!-- Skeleton folders panel -->
+      <div class="panel folders-panel">
+        <div class="panel-header">
+          <h4 class="panel-title">
+            <svg cdsIcon="folder" size="16"></svg>
+            Folders
+          </h4>
+        </div>
+        <div class="panel-content skeleton-content">
+          <div class="skeleton-item" *ngFor="let i of [1,2,3,4,5]">
+            <div class="skeleton skeleton-icon"></div>
+            <div class="skeleton skeleton-text"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skeleton reports panel -->
+      <div class="panel reports-panel">
+        <div class="panel-header">
+          <h4 class="panel-title">
+            <svg cdsIcon="report" size="16"></svg>
+            Reports
+          </h4>
+        </div>
+        <div class="panel-content skeleton-content">
+          <div class="skeleton-report-item" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="skeleton skeleton-icon"></div>
+            <div class="skeleton-report-info">
+              <div class="skeleton skeleton-name"></div>
+              <div class="skeleton skeleton-description"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error state -->

@@ -6,7 +6,6 @@ import {
   ButtonModule,
   IconModule,
   IconService,
-  LoadingModule,
   TreeviewModule
 } from 'carbon-components-angular';
 
@@ -45,7 +44,6 @@ import WarningFilled from '@carbon/icons/es/warning--filled/20';
     ModalModule,
     ButtonModule,
     IconModule,
-    LoadingModule,
     TreeviewModule
   ],
   templateUrl: './ssrs-browser.component.html',
