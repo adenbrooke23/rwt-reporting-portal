@@ -860,7 +860,52 @@ public class ReportService : IReportService
     // User-facing methods (to be implemented later)
     public Task<ReportDto?> GetReportAsync(int reportId, int userId) => throw new NotImplementedException();
     public Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId) => throw new NotImplementedException();
-    public Task LogReportAccessAsync(int reportId, int userId, string accessType, string ipAddress) => throw new NotImplementedException();
+
+    public async Task LogReportAccessAsync(int reportId, int userId, string accessType, string ipAddress)
+    {
+        try
+        {
+            using var connection = _sqlConnectionFactory.CreateConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "portal.usp_ReportAccess_Log";
+            command.CommandType = System.Data.CommandType.StoredProcedure;
+
+            // Add parameters
+            var userIdParam = command.CreateParameter();
+            userIdParam.ParameterName = "@UserId";
+            userIdParam.Value = userId;
+            command.Parameters.Add(userIdParam);
+
+            var reportIdParam = command.CreateParameter();
+            reportIdParam.ParameterName = "@ReportId";
+            reportIdParam.Value = reportId;
+            command.Parameters.Add(reportIdParam);
+
+            var accessTypeParam = command.CreateParameter();
+            accessTypeParam.ParameterName = "@AccessType";
+            accessTypeParam.Value = accessType ?? "VIEW";
+            command.Parameters.Add(accessTypeParam);
+
+            var ipParam = command.CreateParameter();
+            ipParam.ParameterName = "@IPAddress";
+            ipParam.Value = ipAddress ?? (object)DBNull.Value;
+            command.Parameters.Add(ipParam);
+
+            var userAgentParam = command.CreateParameter();
+            userAgentParam.ParameterName = "@UserAgent";
+            userAgentParam.Value = DBNull.Value; // Not passed from current interface
+            command.Parameters.Add(userAgentParam);
+
+            await Task.Run(() => command.ExecuteNonQuery());
+        }
+        catch (Exception)
+        {
+            // Don't let logging failures break report access
+            // Could add ILogger here if needed for debugging
+        }
+    }
     public Task<List<FavoriteDto>> GetFavoritesAsync(int userId) => throw new NotImplementedException();
     public Task AddFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
     public Task RemoveFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
@@ -1777,30 +1822,73 @@ public class SSRSService : ISSRSService
 
 public class AuditService : IAuditService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ISqlConnectionFactory _sqlConnectionFactory;
     private readonly ILogger<AuditService> _logger;
 
-    public AuditService(ApplicationDbContext context, ILogger<AuditService> logger)
+    public AuditService(ISqlConnectionFactory sqlConnectionFactory, ILogger<AuditService> logger)
     {
-        _context = context;
+        _sqlConnectionFactory = sqlConnectionFactory;
         _logger = logger;
     }
 
-    public Task LogAsync(int? userId, string? userEmail, string action, string? entityType = null,
+    public async Task LogAsync(int? userId, string? userEmail, string action, string? entityType = null,
         int? entityId = null, object? oldValues = null, object? newValues = null,
         string? ipAddress = null, string? userAgent = null)
     {
-        // TODO: Implement audit logging to database
-        _logger.LogInformation("Audit: {Action} by User {UserId}", action, userId);
-        return Task.CompletedTask;
+        try
+        {
+            using var connection = _sqlConnectionFactory.CreateConnection();
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "portal.usp_AuditLog_Insert";
+            command.CommandType = System.Data.CommandType.StoredProcedure;
+
+            // Add parameters
+            AddParameter(command, "@UserId", userId ?? (object)DBNull.Value);
+            AddParameter(command, "@EventType", action);
+            AddParameter(command, "@EventDescription", userEmail ?? (object)DBNull.Value);
+            AddParameter(command, "@TargetType", entityType ?? (object)DBNull.Value);
+            AddParameter(command, "@TargetId", entityId ?? (object)DBNull.Value);
+            AddParameter(command, "@OldValues", oldValues != null ? System.Text.Json.JsonSerializer.Serialize(oldValues) : (object)DBNull.Value);
+            AddParameter(command, "@NewValues", newValues != null ? System.Text.Json.JsonSerializer.Serialize(newValues) : (object)DBNull.Value);
+            AddParameter(command, "@IPAddress", ipAddress ?? (object)DBNull.Value);
+            AddParameter(command, "@UserAgent", userAgent ?? (object)DBNull.Value);
+
+            await Task.Run(() => command.ExecuteNonQuery());
+            _logger.LogDebug("Audit logged: {Action} by User {UserId}", action, userId);
+        }
+        catch (Exception ex)
+        {
+            // Don't let audit failures break the application
+            _logger.LogError(ex, "Failed to log audit entry: {Action} by User {UserId}", action, userId);
+        }
     }
 
-    public Task LogLoginAsync(int? userId, string? email, string loginMethod, bool success,
+    public async Task LogLoginAsync(int? userId, string? email, string loginMethod, bool success,
         string? failureReason = null, string? ipAddress = null, string? userAgent = null)
     {
-        // TODO: Implement login history logging
-        _logger.LogInformation("Login: {Email} via {Method} - Success: {Success}", email, loginMethod, success);
-        return Task.CompletedTask;
+        // Login history is already being logged elsewhere in AuthService
+        // This method can be used for additional login audit entries if needed
+        await LogAsync(
+            userId,
+            email,
+            success ? "LOGIN_SUCCESS" : "LOGIN_FAILED",
+            "User",
+            userId,
+            null,
+            new { LoginMethod = loginMethod, Success = success, FailureReason = failureReason },
+            ipAddress,
+            userAgent
+        );
+    }
+
+    private static void AddParameter(System.Data.IDbCommand command, string name, object value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
     }
 }
 
