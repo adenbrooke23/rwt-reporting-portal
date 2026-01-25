@@ -1769,10 +1769,11 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Build the report viewer URL
-            // Format: {serverUrl}/Pages/ReportViewer.aspx?{reportPath}&rs:Command=Render&rs:Embed=true
+            // Build the SSRS URL Access URL to render directly to HTML5
+            // This produces self-contained HTML without needing ReportViewer JavaScript infrastructure
+            // Format: {serverUrl}?{reportPath}&rs:Format=HTML5&rs:Command=Render
             var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
-            var viewerUrl = $"{serverUrl}/Pages/ReportViewer.aspx?{reportPathEncoded}&rs:Command=Render&rs:Embed=true";
+            var viewerUrl = $"{serverUrl}?{reportPathEncoded}&rs:Format=HTML5&rs:Command=Render";
 
             // Add any parameters
             if (parameters != null)
