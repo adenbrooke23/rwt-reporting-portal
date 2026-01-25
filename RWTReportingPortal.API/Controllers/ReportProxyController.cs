@@ -80,12 +80,14 @@ public class ReportProxyController : ControllerBase
 
             _logger.LogInformation("Proxying SSRS report {ReportId} for user", reportId);
 
-            // Set a session cookie for subsequent resource requests
-            // This allows the browser to automatically authenticate resource requests
-            // without needing the token in every URL
-            SetProxySessionCookie(access_token);
+            // Generate session key for SSRS cookie management (based on report path hash)
+            var sessionKey = report.SSRSReportPath.GetHashCode().ToString();
 
-            // Build proxy base URL for URL rewriting (just the path, no token needed)
+            // Set cookies for subsequent resource requests
+            SetProxySessionCookie(access_token);
+            SetSSRSSessionCookie(sessionKey);
+
+            // Build proxy base URL for URL rewriting
             var proxyBaseUrl = $"{Request.Scheme}://{Request.Host}/api/reports/ssrs-resource";
 
             // Render the report via SSRS service with URL rewriting
@@ -194,7 +196,10 @@ public class ReportProxyController : ControllerBase
                 contentType = Request.ContentType;
             }
 
-            var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString, Request.Method, requestBody, contentType);
+            // Get SSRS session key from cookie for cookie forwarding
+            var sessionKey = Request.Cookies["ssrs_session_key"];
+
+            var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString, Request.Method, requestBody, contentType, sessionKey);
 
             if (!result.Success)
             {
@@ -237,6 +242,21 @@ public class ReportProxyController : ControllerBase
             SameSite = SameSiteMode.None,  // Required for iframe cross-origin
             MaxAge = TimeSpan.FromHours(1),  // Match typical session duration
             Path = "/api/reports/ssrs-resource"  // Only send for SSRS resource requests
+        });
+    }
+
+    /// <summary>
+    /// Set a cookie to track the SSRS session for cookie forwarding.
+    /// </summary>
+    private void SetSSRSSessionCookie(string sessionKey)
+    {
+        Response.Cookies.Append("ssrs_session_key", sessionKey, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            MaxAge = TimeSpan.FromHours(1),
+            Path = "/api/reports/ssrs-resource"
         });
     }
 }

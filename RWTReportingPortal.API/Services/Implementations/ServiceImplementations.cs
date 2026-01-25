@@ -1769,11 +1769,11 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Build the SSRS URL Access URL to render directly to HTML4.0
-            // This produces simpler HTML without complex JavaScript dependencies
-            // Format: {serverUrl}?{reportPath}&rs:Format=HTML4.0&rc:Toolbar=false
+            // Build the ReportViewer.aspx URL for full interactive report viewing
+            // This provides the complete SSRS experience with toolbar, parameters, and interactivity
+            // Format: {serverUrl}/Pages/ReportViewer.aspx?{reportPath}&rs:Command=Render&rs:Embed=true
             var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
-            var viewerUrl = $"{serverUrl}?{reportPathEncoded}&rs:Format=HTML4.0&rc:Toolbar=false";
+            var viewerUrl = $"{serverUrl}/Pages/ReportViewer.aspx?{reportPathEncoded}&rs:Command=Render&rs:Embed=true";
 
             // Add any parameters
             if (parameters != null)
@@ -1799,17 +1799,32 @@ public class SSRSService : ISSRSService
                 };
             }
 
+            // Capture cookies from SSRS response and store for subsequent requests
+            var cookies = new List<string>();
+            if (response.Headers.TryGetValues("Set-Cookie", out var cookieHeaders))
+            {
+                cookies.AddRange(cookieHeaders);
+                // Store cookies in cache for this session (keyed by report path)
+                var cacheKey = $"ssrs_cookies_{reportPath.GetHashCode().ToString()}";
+                _cache.Set(cacheKey, cookies, TimeSpan.FromMinutes(30));
+                _logger.LogDebug("Stored {Count} cookies for SSRS session", cookies.Count);
+            }
+
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/html";
 
-            // URL rewriting is disabled when using HTML4.0 format since output is self-contained
-            // The proxyBaseUrl parameter is kept for potential future use with ReportViewer.aspx
+            // Rewrite URLs in HTML to point to proxy endpoints
+            if (!string.IsNullOrEmpty(proxyBaseUrl) && contentType.Contains("text/html"))
+            {
+                content = RewriteHtmlUrls(content, serverUrl, proxyBaseUrl);
+            }
 
             return new SSRSRenderResult
             {
                 Success = true,
                 Content = content,
-                ContentType = contentType
+                ContentType = contentType,
+                Cookies = cookies
             };
         }
         catch (Exception ex)
@@ -1823,7 +1838,7 @@ public class SSRSService : ISSRSService
         }
     }
 
-    public async Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null, string method = "GET", byte[]? requestBody = null, string? contentType = null)
+    public async Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null, string method = "GET", byte[]? requestBody = null, string? contentType = null, string? sessionKey = null)
     {
         try
         {
@@ -1855,7 +1870,30 @@ public class SSRSService : ISSRSService
             _logger.LogDebug("Proxying SSRS resource: {Method} {Url}", method, resourceUrl);
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
-            HttpResponseMessage response;
+
+            // Create request message to add cookies
+            var request = new HttpRequestMessage(
+                method == "POST" ? HttpMethod.Post : HttpMethod.Get,
+                resourceUrl
+            );
+
+            // Try to retrieve cached cookies for this session
+            if (!string.IsNullOrEmpty(sessionKey))
+            {
+                var cacheKey = $"ssrs_cookies_{sessionKey}";
+                if (_cache.TryGetValue(cacheKey, out List<string>? cachedCookies) && cachedCookies != null)
+                {
+                    // Extract cookie name=value pairs and add to request
+                    var cookieValues = cachedCookies
+                        .Select(c => c.Split(';')[0].Trim())
+                        .ToList();
+                    if (cookieValues.Any())
+                    {
+                        request.Headers.Add("Cookie", string.Join("; ", cookieValues));
+                        _logger.LogDebug("Added {Count} cookies to SSRS request", cookieValues.Count);
+                    }
+                }
+            }
 
             if (method == "POST" && requestBody != null)
             {
@@ -1864,12 +1902,10 @@ public class SSRSService : ISSRSService
                 {
                     httpContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType.Split(';')[0].Trim());
                 }
-                response = await httpClient.PostAsync(resourceUrl, httpContent);
+                request.Content = httpContent;
             }
-            else
-            {
-                response = await httpClient.GetAsync(resourceUrl);
-            }
+
+            var response = await httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {

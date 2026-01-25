@@ -17,7 +17,7 @@ public interface ISSRSService
     Task<SSRSRenderResult> RenderReportAsync(string reportPath, string? reportServer = null, Dictionary<string, string>? parameters = null, string? proxyBaseUrl = null);
 
     // Proxy arbitrary SSRS resources (JS, CSS, images, AJAX, postbacks)
-    Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null, string method = "GET", byte[]? requestBody = null, string? contentType = null);
+    Task<SSRSRenderResult> ProxyResourceAsync(string resourcePath, string? queryString = null, string method = "GET", byte[]? requestBody = null, string? contentType = null, string? sessionKey = null);
 }
 
 /// <summary>
@@ -29,6 +29,7 @@ public class SSRSRenderResult
     public byte[]? Content { get; set; }
     public string ContentType { get; set; } = "text/html";
     public string? ErrorMessage { get; set; }
+    public List<string>? Cookies { get; set; }
 }
 
 public class SSRSParameter
