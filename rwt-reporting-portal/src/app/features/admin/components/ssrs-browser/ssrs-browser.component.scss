@@ -6,7 +6,7 @@
   min-height: 400px;
 }
 
-// Toolbar with breadcrumb and actions
+// Toolbar
 .browser-toolbar {
   display: flex;
   justify-content: space-between;
@@ -16,59 +16,21 @@
   margin-bottom: spacing.$spacing-05;
 }
 
-// Breadcrumb navigation
-.breadcrumb-nav {
-  flex: 1;
-  min-width: 0;
-}
-
-.breadcrumb-list {
+.toolbar-left {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-01;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: spacing.$spacing-03;
 }
 
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-  gap: spacing.$spacing-02;
-}
-
-.breadcrumb-link {
-  @include type.type-style('body-compact-01');
-  background: none;
-  border: none;
-  padding: spacing.$spacing-02 spacing.$spacing-03;
-  color: var(--cds-link-primary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 150ms ease, color 150ms ease;
-
-  &:hover {
-    background: var(--cds-layer-hover);
-    color: var(--cds-link-primary-hover);
-  }
-
-  &:focus {
-    outline: 2px solid var(--cds-focus);
-    outline-offset: -2px;
-  }
-}
-
-.breadcrumb-current {
-  @include type.type-style('body-compact-01');
-  padding: spacing.$spacing-02 spacing.$spacing-03;
+.toolbar-title {
+  @include type.type-style('heading-compact-01');
   color: var(--cds-text-primary);
-  font-weight: 600;
 }
 
-.breadcrumb-separator {
-  color: var(--cds-text-secondary);
-  user-select: none;
+.toolbar-path {
+  @include type.type-style('label-01');
+  color: var(--cds-text-helper);
+  font-family: var(--cds-code-01-font-family, monospace);
 }
 
 // Skeleton loading state
@@ -93,36 +55,27 @@
   border-radius: 4px;
 }
 
-.skeleton-content {
-  padding: spacing.$spacing-03;
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .skeleton-item {
   display: flex;
   align-items: center;
-  gap: spacing.$spacing-03;
-  padding: spacing.$spacing-03 spacing.$spacing-04;
+  gap: spacing.$spacing-04;
+  padding: spacing.$spacing-04;
+  border-bottom: 1px solid var(--cds-border-subtle);
 }
 
 .skeleton-icon {
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 
-.skeleton-text {
-  height: 14px;
-  width: 70%;
-}
-
-.skeleton-report-item {
-  display: flex;
-  align-items: center;
-  gap: spacing.$spacing-03;
-  padding: spacing.$spacing-03 spacing.$spacing-04;
-}
-
-.skeleton-report-info {
+.skeleton-info {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -130,13 +83,13 @@
 }
 
 .skeleton-name {
-  height: 14px;
-  width: 60%;
+  height: 16px;
+  width: 50%;
 }
 
 .skeleton-description {
   height: 12px;
-  width: 40%;
+  width: 30%;
 }
 
 // Error state
@@ -173,29 +126,84 @@
   }
 }
 
-// Browser panels layout
-.browser-panels {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: spacing.$spacing-05;
-  min-height: 300px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+// Item list container
+.item-list-container {
+  max-height: 360px;
+  overflow-y: auto;
 }
 
-// Panel styling
-.panel {
-  border: 1px solid var(--cds-border-subtle);
-  border-radius: 4px;
-  background: var(--cds-layer-01);
-  overflow: hidden;
+// Folder list
+.folder-list {
   display: flex;
   flex-direction: column;
 }
 
-.panel-header {
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  padding: spacing.$spacing-04;
+  border-bottom: 1px solid var(--cds-border-subtle);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &:hover {
+    background: var(--cds-layer-hover);
+  }
+
+  &:focus {
+    outline: 2px solid var(--cds-focus);
+    outline-offset: -2px;
+  }
+}
+
+.folder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--cds-layer-02);
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  svg {
+    color: var(--cds-icon-secondary);
+  }
+}
+
+.folder-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-name {
+  @include type.type-style('body-compact-01');
+  color: var(--cds-text-primary);
+  font-weight: 600;
+}
+
+.folder-description {
+  @include type.type-style('label-01');
+  color: var(--cds-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-arrow {
+  flex-shrink: 0;
+
+  svg {
+    color: var(--cds-icon-secondary);
+  }
+}
+
+// Section header (for reports section when folders are present)
+.section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -204,59 +212,21 @@
   border-bottom: 1px solid var(--cds-border-subtle);
 }
 
-.panel-title {
+.section-title {
   @include type.type-style('heading-compact-01');
-  display: flex;
-  align-items: center;
-  gap: spacing.$spacing-03;
-  margin: 0;
   color: var(--cds-text-primary);
-
-  svg {
-    color: var(--cds-icon-secondary);
-  }
 }
 
-.report-count {
+.section-count {
   @include type.type-style('label-01');
   color: var(--cds-text-secondary);
 }
 
-.panel-content {
-  flex: 1;
-  max-height: 320px;
-  overflow-y: auto;
-
-  // Style the TreeView within the panel
-  ::ng-deep {
-    .cds--tree {
-      background: transparent;
-    }
-
-    .cds--tree-node {
-      border-left: 3px solid transparent;
-
-      &:hover {
-        background: var(--cds-layer-hover);
-      }
-
-      &--selected {
-        background: var(--cds-layer-selected);
-        border-left-color: var(--cds-border-interactive);
-      }
-    }
-
-    .cds--tree-node__label {
-      color: var(--cds-text-primary);
-    }
-
-    .cds--tree-node__icon {
-      color: var(--cds-icon-secondary);
-    }
-  }
+// Report list
+.report-list-section {
+  margin-top: spacing.$spacing-03;
 }
 
-// Report list
 .report-list {
   margin: 0;
   padding: 0;
@@ -265,10 +235,11 @@
 
 .report-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: spacing.$spacing-03;
-  padding: spacing.$spacing-03 spacing.$spacing-04;
+  padding: spacing.$spacing-04;
   border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--cds-border-subtle);
   cursor: pointer;
   transition: background-color 150ms ease, border-color 150ms ease;
 
@@ -298,6 +269,7 @@
 
 .report-icon {
   flex-shrink: 0;
+  margin-top: 2px;
 
   svg {
     color: var(--cds-icon-secondary);
@@ -309,27 +281,33 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: spacing.$spacing-02;
+}
+
+.report-name-row {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-03;
+  flex-wrap: wrap;
 }
 
 .report-name {
   @include type.type-style('body-compact-01');
   color: var(--cds-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .report-description {
   @include type.type-style('label-01');
   color: var(--cds-text-secondary);
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .report-indicator {
   flex-shrink: 0;
+  margin-top: 2px;
 
   svg {
     color: var(--cds-icon-interactive);
@@ -347,7 +325,7 @@
 
   .empty-icon {
     color: var(--cds-icon-disabled);
-    margin-bottom: spacing.$spacing-03;
+    margin-bottom: spacing.$spacing-04;
   }
 
   p {
@@ -397,9 +375,15 @@
   color: var(--cds-text-secondary);
 }
 
-.selection-path {
+.selection-name {
   @include type.type-style('body-compact-01');
   color: var(--cds-text-primary);
+  font-weight: 600;
+}
+
+.selection-path {
+  @include type.type-style('label-01');
+  color: var(--cds-text-helper);
   font-family: var(--cds-code-01-font-family, monospace);
   white-space: nowrap;
   overflow: hidden;
