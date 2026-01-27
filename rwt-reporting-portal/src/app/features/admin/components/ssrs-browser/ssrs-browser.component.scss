@@ -1,12 +1,10 @@
 @use '@carbon/styles/scss/spacing';
 @use '@carbon/styles/scss/type';
 
-// Browser content container
 .browser-content {
   min-height: 400px;
 }
 
-// Toolbar
 .browser-toolbar {
   display: flex;
   justify-content: space-between;
@@ -33,7 +31,6 @@
   font-family: var(--cds-code-01-font-family, monospace);
 }
 
-// Skeleton loading state
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200px 0;
@@ -92,7 +89,6 @@
   width: 30%;
 }
 
-// Error state
 .error-container {
   padding: spacing.$spacing-05;
   background: var(--cds-support-error);
@@ -126,13 +122,11 @@
   }
 }
 
-// Item list container
 .item-list-container {
   max-height: 360px;
   overflow-y: auto;
 }
 
-// Folder list
 .folder-list {
   display: flex;
   flex-direction: column;
@@ -202,7 +196,6 @@
   }
 }
 
-// Section header (for reports section when folders are present)
 .section-header {
   display: flex;
   align-items: center;
@@ -222,7 +215,6 @@
   color: var(--cds-text-secondary);
 }
 
-// Report list
 .report-list-section {
   margin-top: spacing.$spacing-03;
 }
@@ -314,7 +306,6 @@
   }
 }
 
-// Empty state
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -341,7 +332,6 @@
   }
 }
 
-// Selection preview
 .selection-preview {
   display: flex;
   align-items: center;

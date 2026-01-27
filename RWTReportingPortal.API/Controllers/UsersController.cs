@@ -31,9 +31,6 @@ public class UsersController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get user profile (includes avatar)
-    /// </summary>
     [HttpGet("profile")]
     public async Task<ActionResult<UserProfileDto>> GetProfile()
     {
@@ -45,9 +42,6 @@ public class UsersController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Update user avatar
-    /// </summary>
     [HttpPut("profile/avatar")]
     public async Task<ActionResult<UpdateAvatarResponse>> UpdateAvatar([FromBody] UpdateAvatarRequest request)
     {
@@ -56,9 +50,6 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get user preferences
-    /// </summary>
     [HttpGet("preferences")]
     public async Task<ActionResult<PreferencesDto>> GetPreferences()
     {
@@ -75,9 +66,6 @@ public class UsersController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Update user preferences
-    /// </summary>
     [HttpPut("preferences")]
     public async Task<ActionResult<UpdatePreferencesResponse>> UpdatePreferences([FromBody] UpdatePreferencesRequest request)
     {
@@ -86,9 +74,6 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get user dashboard statistics
-    /// </summary>
     [HttpGet("stats")]
     public async Task<ActionResult<UserStatsResponse>> GetStats()
     {

@@ -39,12 +39,9 @@ public class HubReportDto
     public string ReportType { get; set; } = string.Empty;
     public int GroupId { get; set; }
     public string GroupName { get; set; } = string.Empty;
-    public string AccessLevel { get; set; } = string.Empty; // Hub, Group, Report, Department
+    public string AccessLevel { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Hub with reports for permission management UI
-/// </summary>
 public class HubWithReportsDto
 {
     public int HubId { get; set; }
@@ -54,9 +51,6 @@ public class HubWithReportsDto
     public List<HubReportSimpleDto> Reports { get; set; } = new();
 }
 
-/// <summary>
-/// Simplified report DTO for permission UI
-/// </summary>
 public class HubReportSimpleDto
 {
     public int ReportId { get; set; }

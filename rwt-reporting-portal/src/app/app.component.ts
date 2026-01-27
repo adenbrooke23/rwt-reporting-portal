@@ -31,11 +31,10 @@ export class AppComponent implements OnInit {
   remainingSeconds = 0;
   isAuthenticated = false;
   isLoading = true;
-  sidebarOpen = true; // Start with sidebar expanded (Carbon pattern)
+  sidebarOpen = true;
 
   constructor() {
-    // Initialize auth state synchronously to prevent flash
-    // Only check in browser - during SSR, auth state is always false
+
     if (isPlatformBrowser(this.platformId)) {
       const authState = this.authService.getCurrentAuthState();
       this.isAuthenticated = authState.isAuthenticated;
@@ -43,7 +42,7 @@ export class AppComponent implements OnInit {
   }
 
   get showHeader(): boolean {
-    // Check if we're on any login route (including with query params like /login?admin=true)
+
     const isLoginPage = this.router.url.startsWith('/login');
     return !this.isLoading && this.isAuthenticated && !isLoginPage;
   }
@@ -55,15 +54,13 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Initialize theme service and listen to system theme changes
+
     this.themeService.initSystemThemeListener();
 
-    // Mark as loaded after a brief delay to prevent flash
     setTimeout(() => {
       this.isLoading = false;
     }, 0);
 
-    // Auth and idle timeout setup
     this.authService.authState$.subscribe(state => {
       this.isAuthenticated = state.isAuthenticated;
 

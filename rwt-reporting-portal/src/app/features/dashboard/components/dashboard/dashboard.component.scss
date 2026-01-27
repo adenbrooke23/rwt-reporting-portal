@@ -6,28 +6,26 @@
   transition: background-color 0.3s ease;
 }
 
-// Welcome Banner - Hero section with background image
 .welcome-banner {
   position: relative;
-  min-height: 280px; // Reduced from 360px
+  min-height: 280px;
   display: flex;
   align-items: flex-end;
-  background-image: url('/images/hub-enterprise-bg.jpg'); // TODO: Replace with dashboard-hero-bg.jpg
+  background-image: url('/images/hub-enterprise-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
 
   @media (max-width: 768px) {
-    min-height: 240px; // Reduced from 280px
+    min-height: 240px;
   }
 
   @media (max-width: 480px) {
-    min-height: 200px; // Reduced from 240px
+    min-height: 200px;
   }
 }
 
-// Dark overlay for text readability
 .banner-overlay {
   position: absolute;
   inset: 0;
@@ -49,7 +47,7 @@
 }
 
 .welcome-title {
-  font-size: 2.5rem; // 40px
+  font-size: 2.5rem;
   font-weight: 300;
   line-height: 1.2;
   margin: 0 0 spacing.$spacing-04 0;
@@ -57,31 +55,30 @@
   letter-spacing: -0.02em;
 
   @media (max-width: 768px) {
-    font-size: 2rem; // 32px
+    font-size: 2rem;
   }
 
   @media (max-width: 480px) {
-    font-size: 1.5rem; // 24px
+    font-size: 1.5rem;
   }
 }
 
 .welcome-description {
-  font-size: 1.125rem; // 18px
+  font-size: 1.125rem;
   line-height: 1.5;
   margin: 0;
   color: rgba(255, 255, 255, 0.95);
   max-width: 700px;
 
   @media (max-width: 768px) {
-    font-size: 1rem; // 16px
+    font-size: 1rem;
   }
 
   @media (max-width: 480px) {
-    font-size: 0.875rem; // 14px
+    font-size: 0.875rem;
   }
 }
 
-// Quick Stats Row
 .quick-stats {
   display: flex;
   gap: spacing.$spacing-07;
@@ -122,7 +119,7 @@
 }
 
 .dashboard-main {
-  padding: spacing.$spacing-05 0; // Reduced from spacing-06 (24px) to spacing-05 (16px)
+  padding: spacing.$spacing-05 0;
 }
 
 .dashboard-content {
@@ -135,9 +132,8 @@
   }
 }
 
-// Page Title - "Reporting Hub"
 .page-title {
-  font-size: 1.25rem; // 20px - refined from 28px
+  font-size: 1.25rem;
   font-weight: 400;
   line-height: 1.4;
   letter-spacing: 0.01em;
@@ -145,28 +141,26 @@
   color: var(--color-text-primary);
 
   @media (max-width: 768px) {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
   }
 }
 
-// Feature Cards Grid - Compact layout
 .feature-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); // Reduced from 256px to 200px
-  gap: spacing.$spacing-04; // Reduced from spacing-05 (16px) to spacing-04 (12px)
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: spacing.$spacing-04;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: spacing.$spacing-04; // 12px - tighter on mobile
+    gap: spacing.$spacing-04;
   }
 }
 
-// Feature Card - Horizontal layout with color theme
 .feature-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 320px; // Match approximate total height of update cards
+  min-height: 320px;
   text-decoration: none;
   overflow: hidden;
   border: 1px solid var(--color-border-light);
@@ -182,7 +176,6 @@
     outline-offset: 2px;
   }
 
-  // Color theme variants
   &--default {
     background: linear-gradient(135deg, #393939 0%, #262626 100%);
   }
@@ -215,7 +208,6 @@
     background: linear-gradient(135deg, #da1e28 0%, #a2191f 100%);
   }
 
-  // Brand-specific color themes
   &--sequoia {
     background: linear-gradient(135deg, #2d5a27 0%, #1a3d16 100%);
   }
@@ -233,7 +225,6 @@
   }
 }
 
-// Dark Overlay - Covers the background image
 .card-overlay {
   position: absolute;
   inset: 0;
@@ -246,7 +237,6 @@
   }
 }
 
-// Feature Card Header - Title and Arrow
 .feature-card-header {
   position: relative;
   z-index: 2;
@@ -257,9 +247,8 @@
   margin-bottom: auto;
 }
 
-// Feature Card Title (Always visible)
 .feature-card-title {
-  font-size: 1.25rem; // 20px
+  font-size: 1.25rem;
   font-weight: 400;
   margin: 0;
   line-height: 1.4;
@@ -267,7 +256,6 @@
   color: #ffffff;
 }
 
-// Arrow icon (Always visible)
 .feature-card-arrow {
   flex-shrink: 0;
   color: #ffffff;
@@ -278,7 +266,6 @@
   }
 }
 
-// Feature Card Details (Hidden by default, revealed on hover)
 .feature-card-details {
   position: relative;
   z-index: 2;
@@ -294,20 +281,18 @@
   }
 }
 
-// Feature Card Description
 .feature-card-description {
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   line-height: 1.43;
   margin: 0 0 spacing.$spacing-05 0;
   color: rgba(255, 255, 255, 0.95);
 }
 
-// Feature Card Footer
 .feature-card-footer {
   display: flex;
   align-items: center;
   gap: spacing.$spacing-04;
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -320,7 +305,6 @@
   font-weight: 400;
 }
 
-// Reduced motion support
 @media (prefers-reduced-motion: reduce) {
   .feature-card,
   .card-overlay,
@@ -330,7 +314,6 @@
   }
 }
 
-// No Hubs State
 .no-hubs {
   text-align: center;
   padding: spacing.$spacing-10 spacing.$spacing-06;
@@ -346,7 +329,7 @@
   }
 
   h3 {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--color-text-secondary);
     margin: 0 0 spacing.$spacing-03 0;
@@ -355,11 +338,10 @@
   p {
     color: var(--color-text-tertiary);
     margin: 0;
-    font-size: 0.875rem; // 14px
+    font-size: 0.875rem;
   }
 }
 
-// Latest Updates Section
 .updates-section {
   padding: spacing.$spacing-07 0 spacing.$spacing-09 0;
   background: var(--color-bg-secondary);
@@ -380,7 +362,6 @@
   }
 }
 
-// Section Header with "View All" link
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -395,7 +376,7 @@
 }
 
 .section-title {
-  font-size: 1.25rem; // 20px - refined from 28px
+  font-size: 1.25rem;
   font-weight: 400;
   line-height: 1.4;
   letter-spacing: 0.01em;
@@ -403,11 +384,10 @@
   color: var(--color-text-primary);
 
   @media (max-width: 768px) {
-    font-size: 1.125rem; // 18px
+    font-size: 1.125rem;
   }
 }
 
-// View All Updates Link - Compact text link
 .view-all-link {
   display: inline-flex;
   align-items: center;
@@ -432,7 +412,6 @@
   }
 }
 
-// Featured + Grid Layout Container
 .updates-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -443,7 +422,6 @@
   }
 }
 
-// Featured Article Card (Left side - large)
 .featured-card {
   position: relative;
   display: flex;
@@ -523,7 +501,6 @@
   color: var(--color-primary);
 }
 
-// Category Tag
 .category-tag {
   display: inline-block;
   font-size: 0.6875rem;
@@ -538,7 +515,6 @@
   }
 }
 
-// Meta text styles
 .meta-author,
 .meta-date,
 .meta-read-time {
@@ -549,14 +525,12 @@
   color: var(--color-text-tertiary);
 }
 
-// Updates Grid (Right side - stacked list)
 .updates-grid {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-// Article Card (Compact list item style)
 .article-card {
   display: flex;
   align-items: flex-start;
@@ -617,7 +591,6 @@
   align-self: center;
 }
 
-// Responsive Design
 @media (max-width: 768px) {
   .dashboard-main {
     padding: spacing.$spacing-08 0;
@@ -640,11 +613,6 @@
   }
 }
 
-// ========================================
-// SKELETON LOADING STYLES
-// ========================================
-
-// Base skeleton animation
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -666,7 +634,6 @@
   border-radius: 2px;
 }
 
-// Welcome banner skeleton
 .skeleton-title {
   height: 2.5rem;
   width: 300px;
@@ -680,7 +647,6 @@
   max-width: 90%;
 }
 
-// Hub card skeleton
 .feature-card--skeleton {
   background-color: #262626;
 
@@ -739,7 +705,6 @@
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
-// Featured card skeleton
 .featured-card--skeleton {
   pointer-events: none;
 
@@ -748,7 +713,6 @@
   }
 }
 
-// Article card skeleton
 .article-card--skeleton {
   pointer-events: none;
 }
@@ -835,10 +799,6 @@
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
-// ========================================
-// ANNOUNCEMENT DETAIL MODAL
-// ========================================
-
 ::ng-deep {
   .cds--modal-container {
     background: var(--color-bg-primary);
@@ -916,7 +876,6 @@
   line-height: 1.6;
   color: var(--color-text-primary);
 
-  // Markdown rendered content styling
   h1, h2, h3, h4, h5, h6 {
     margin-top: spacing.$spacing-06;
     margin-bottom: spacing.$spacing-03;

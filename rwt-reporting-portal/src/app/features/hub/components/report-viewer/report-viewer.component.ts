@@ -9,7 +9,6 @@ import { ReportType, SubReport } from '../../../auth/models/user-management.mode
 import { ContentManagementService } from '../../../admin/services/content-management.service';
 import { Report } from '../../../admin/models/content-management.models';
 
-// Power BI types - declared here to avoid SSR issues
 declare const powerbi: any;
 
 interface PowerBIEmbedInfo {
@@ -48,18 +47,16 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   isLoading = true;
   error: string | null = null;
 
-  // For SSRS reports that need configuration
   needsConfiguration = false;
   configMessage: string = '';
 
-  // For Power BI embedding
   usePowerBIEmbed = false;
   private powerbiService: any = null;
   private embeddedReport: any = null;
   private currentReport: Report | null = null;
 
   constructor() {
-    // Load Power BI client library after render (browser only)
+
     afterNextRender(() => {
       this.loadPowerBILibrary();
     });
@@ -76,13 +73,13 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up Power BI embed
+
     if (this.embeddedReport) {
       try {
         this.embeddedReport.off('loaded');
         this.embeddedReport.off('error');
       } catch (e) {
-        // Ignore cleanup errors
+
       }
     }
   }
@@ -90,13 +87,11 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   private loadPowerBILibrary(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    // Check if already loaded
     if (typeof powerbi !== 'undefined') {
       this.powerbiService = powerbi;
       return;
     }
 
-    // Dynamically load the Power BI JavaScript library
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/powerbi-client@2.22.3/dist/powerbi.min.js';
     script.onload = () => {
@@ -112,7 +107,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
     this.usePowerBIEmbed = false;
     this.reportUrl = null;
 
-    // Fetch the report from the API
     this.contentService.getReportById(this.reportId).subscribe({
       next: (report) => {
         if (!report) {
@@ -126,7 +120,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         this.reportDescription = report.description;
         this.reportType = report.type;
 
-        // Determine embed method based on report type and configuration
         this.handleReportEmbed(report);
       },
       error: () => {
@@ -142,26 +135,26 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
     switch (report.type) {
       case 'PowerBI':
       case 'Paginated':
-        // Check if we have workspace and report IDs for SDK embedding
+
         if (config?.workspaceId && config?.reportId) {
           this.usePowerBIEmbed = true;
           this.embedPowerBIReport(config.workspaceId, config.reportId);
           return;
         }
-        // Fallback to iframe if we have a direct embed URL
+
         if (config?.embedUrl) {
           this.reportUrl = this.sanitizer.bypassSecurityTrustResourceUrl(config.embedUrl);
           this.isLoading = false;
           return;
         }
-        // For Paginated on SSRS
+
         if (config?.serverUrl && config?.reportPath) {
           const url = this.buildSSRSUrl(config.serverUrl, config.reportPath);
           this.reportUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
           this.isLoading = false;
           return;
         }
-        // No valid configuration
+
         this.needsConfiguration = true;
         this.configMessage = 'This Power BI report requires configuration. Please configure the workspace ID and report ID in admin settings.';
         this.isLoading = false;
@@ -192,7 +185,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   private embedPowerBIReport(workspaceId: string, pbiReportId: string): void {
-    // Get embed token from our API
+
     this.http.get<PowerBIEmbedInfo>(
       `${this.API_BASE_URL}/reports/${this.reportId}/powerbi-embed`
     ).subscribe({
@@ -201,7 +194,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to get Power BI embed token:', err);
-        // Fallback: try to use direct embed URL if available
+
         if (this.currentReport?.embedConfig?.embedUrl) {
           this.reportUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
             this.currentReport.embedConfig.embedUrl
@@ -221,7 +214,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Wait for container and Power BI library to be ready
     const checkReady = setInterval(() => {
       if (this.powerbiContainer?.nativeElement && this.powerbiService) {
         clearInterval(checkReady);
@@ -229,7 +221,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       }
     }, 100);
 
-    // Timeout after 10 seconds
     setTimeout(() => {
       clearInterval(checkReady);
       if (this.isLoading) {
@@ -242,7 +233,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   private doEmbed(embedInfo: PowerBIEmbedInfo): void {
     const config = {
       type: 'report',
-      tokenType: 1, // Embed token
+      tokenType: 1,
       accessToken: embedInfo.embedToken,
       embedUrl: embedInfo.embedUrl,
       id: embedInfo.reportId,
@@ -255,19 +246,18 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
             visible: true
           }
         },
-        background: 1, // Transparent
-        layoutType: 0, // Custom
+        background: 1,
+        layoutType: 0,
       }
     };
 
     try {
-      // Embed the report
+
       this.embeddedReport = this.powerbiService.embed(
         this.powerbiContainer.nativeElement,
         config
       );
 
-      // Handle events
       this.embeddedReport.on('loaded', () => {
         this.isLoading = false;
       });
@@ -278,7 +268,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       });
 
-      // Set loading to false after a short delay in case 'loaded' doesn't fire
       setTimeout(() => {
         if (this.isLoading) {
           this.isLoading = false;

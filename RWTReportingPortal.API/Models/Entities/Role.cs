@@ -8,6 +8,5 @@ public class Role
     public bool IsSystemRole { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

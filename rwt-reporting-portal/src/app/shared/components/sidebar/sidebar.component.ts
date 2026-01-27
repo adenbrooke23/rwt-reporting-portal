@@ -37,9 +37,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   @Output() sidebarToggled = new EventEmitter<boolean>();
 
-  isExpanded = true; // Start expanded (Carbon pattern)
+  isExpanded = true;
   isAdmin = false;
-  currentUser: User | null = null; // Initialize as null, set via subscription
+  currentUser: User | null = null;
   unreadCount = 0;
 
   quickAccessItems: { label: string; route: string }[] = [];
@@ -47,15 +47,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   quickAccessExpanded = false;
   adminExpanded = false;
 
-  // Store previous expansion states to restore when sidenav re-expands
   private savedQuickAccessExpanded = false;
   private savedAdminExpanded = false;
 
   ngOnInit(): void {
-    // Emit initial sidebar state
+
     this.sidebarToggled.emit(this.isExpanded);
 
-    // Register Carbon icons (16px for sidenav)
     this.iconService.registerAll([
       Home,
       Star,
@@ -69,19 +67,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
       Document
     ]);
 
-    // Subscribe to pinned reports and build Quick Access menu
     this.quickAccessService.pinnedReports$.subscribe(() => {
       this.buildQuickAccessMenu();
     });
 
-    // Subscribe to auth state for user info and admin check
     const authSub = this.authService.authState$.subscribe(state => {
       this.currentUser = state.user;
       this.isAdmin = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       ) || false;
 
-      // Load unread count when user is available
       if (state.user?.id) {
         this.loadUnreadCount(state.user.id);
       }
@@ -110,13 +105,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     if (this.isExpanded) {
-      // Collapsing: save current menu states and collapse all menus
+
       this.savedQuickAccessExpanded = this.quickAccessExpanded;
       this.savedAdminExpanded = this.adminExpanded;
       this.quickAccessExpanded = false;
       this.adminExpanded = false;
     } else {
-      // Expanding: restore previous menu states
+
       this.quickAccessExpanded = this.savedQuickAccessExpanded;
       this.adminExpanded = this.savedAdminExpanded;
     }
@@ -125,17 +120,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.sidebarToggled.emit(this.isExpanded);
   }
 
-  // Check if route is active (exact match)
   isActive(route: string): boolean {
     return this.router.url === route;
   }
 
-  // Check if route starts with prefix (for nested routes)
   isActiveStartsWith(prefix: string): boolean {
     return this.router.url.startsWith(prefix);
   }
 
-  // Check if any child route in a menu is active
   hasActiveChild(routes: string[]): boolean {
     return routes.some(route => this.router.url === route || this.router.url.startsWith(route + '/'));
   }

@@ -28,20 +28,14 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Initiate SSO login - redirects to Microsoft Entra
-    /// </summary>
     [HttpGet("login")]
     public IActionResult InitiateSSOLogin([FromQuery] string? returnUrl = null)
     {
-        // Generate a state parameter (for security - prevents CSRF)
+
         var state = Guid.NewGuid().ToString();
 
-        // Build the redirect URI (where Microsoft sends the user after login)
-        // Force HTTPS since we're behind a load balancer/proxy that terminates SSL
         var redirectUri = $"https://{Request.Host}/api/auth/callback";
 
-        // Get the Entra authorization URL
         var entraLoginUrl = _entraAuthService.GetAuthorizationUrl(state, redirectUri);
 
         _logger.LogInformation("Redirecting to Entra login: {Url}", entraLoginUrl);
@@ -49,28 +43,20 @@ public class AuthController : ControllerBase
         return Redirect(entraLoginUrl);
     }
 
-    /// <summary>
-    /// Handle SSO callback from Microsoft Entra
-    /// </summary>
     [HttpGet("callback")]
     public async Task<IActionResult> HandleSSOCallback([FromQuery] string code, [FromQuery] string? state = null)
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers.UserAgent.ToString();
 
-        // Build the redirect URI (must match what was sent to Entra)
         var redirectUri = $"https://{Request.Host}/api/auth/callback";
 
         var result = await _authService.HandleSSOCallbackAsync(code, redirectUri, ipAddress, userAgent);
 
-        // Redirect to Angular app with token
         var frontendUrl = _configuration["Cors:AllowedOrigins:0"] ?? "https://erpqa.redwoodtrust.com";
         return Redirect($"{frontendUrl}/auth/callback?token={result.AccessToken}&refresh={result.RefreshToken}");
     }
 
-    /// <summary>
-    /// Password fallback login (ROPC flow)
-    /// </summary>
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
@@ -81,9 +67,6 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get current authenticated user info
-    /// </summary>
     [HttpGet("me")]
     [Authorize]
     public async Task<ActionResult<CurrentUserResponse>> GetCurrentUser()
@@ -93,9 +76,6 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Refresh access token
-    /// </summary>
     [HttpPost("refresh")]
     public async Task<ActionResult<RefreshTokenResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
     {
@@ -103,9 +83,6 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Logout and revoke session
-    /// </summary>
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()

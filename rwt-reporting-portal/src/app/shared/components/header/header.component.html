@@ -5,17 +5,17 @@
     </div>
 
     <div class="header-right">
-      <!-- Search Icon -->
+      
       <button class="icon-button" (click)="handleSearch()" title="Search">
         <svg ibmIcon="search" size="20"></svg>
       </button>
 
-      <!-- Notification Bell -->
+      
       <button class="icon-button" (click)="handleNotifications()" title="Notifications">
         <svg ibmIcon="notification" size="20"></svg>
       </button>
 
-      <!-- User Profile Dropdown -->
+      
       <div class="user-profile-wrapper">
         <button class="user-profile-button" (click)="toggleProfileDropdown()">
           <div class="profile-picture">
@@ -25,7 +25,7 @@
           <svg ibmIcon="chevron--down" size="20" class="chevron-icon" [class.rotated]="isProfileDropdownOpen"></svg>
         </button>
 
-        <!-- Profile Dropdown Menu -->
+        
         <div class="profile-dropdown" [class.open]="isProfileDropdownOpen" (click)="$event.stopPropagation()">
           <div class="dropdown-header">
             <div class="dropdown-user-info">
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <!-- Overlay to close dropdown -->
+      
       <div class="dropdown-overlay" [class.visible]="isProfileDropdownOpen" (click)="closeProfileDropdown()"></div>
     </div>
   </div>

@@ -13,7 +13,6 @@ import { ConfirmationNotificationService } from '../../../../core/services/confi
 import { UserProfile, SubReport } from '../../../auth/models/user-management.models';
 import { Department } from '../../models/content-management.models';
 
-// Local interface for hub-based categories (matching existing template structure)
 interface HubCategory {
   id: string;
   name: string;
@@ -70,27 +69,26 @@ export class AdminComponent implements OnInit, OnDestroy {
   private iconService = inject(IconService);
   private platformId = inject(PLATFORM_ID);
 
-  // Search debounce
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  currentUser = this.authService.getCurrentUser(); // Will be updated via subscription on init
+  currentUser = this.authService.getCurrentUser();
   users: UserProfile[] = [];
   filteredUsers: UserProfile[] = [];
   reportCategories: HubCategory[] = [];
   departments: Department[] = [];
   selectedUser: UserProfile | null = null;
-  userPermissions: Set<string> = new Set(); // Legacy - still used for mock data
+  userPermissions: Set<string> = new Set();
   userDepartments: Set<string> = new Set();
-  originalUserDepartments: Set<string> = new Set(); // Track original for diff
-  // Hub permissions (ad-hoc hub access)
+  originalUserDepartments: Set<string> = new Set();
+
   userHubPermissions: Set<string> = new Set();
   originalUserHubPermissions: Set<string> = new Set();
-  // Report permissions (ad-hoc report access)
+
   userReportPermissions: Set<string> = new Set();
   originalUserReportPermissions: Set<string> = new Set();
-  originalIsAdmin = false; // Track original admin status
-  pendingIsAdmin = false; // Track pending admin status change
+  originalIsAdmin = false;
+  pendingIsAdmin = false;
   isSaving = false;
   isLoadingDepartments = false;
   isLoadingPermissions = false;
@@ -116,10 +114,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   isRestoring = false;
 
   ngOnInit(): void {
-    // Register Carbon icons first (safe for SSR)
+
     this.iconService.registerAll([Search, Close, ChevronDown, Locked, Unlocked, Time, Renew, ArrowLeft, User]);
 
-    // Set up search debounce
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -130,13 +127,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       this.applyFilters();
     });
 
-    // Skip API calls during SSR - they will run on client after hydration
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Wait for auth state to be ready before loading data
-    // This ensures the JWT token is available for API calls
     this.authService.authState$.pipe(
       filter(state => state.isAuthenticated),
       take(1),
@@ -144,7 +138,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     ).subscribe(state => {
       this.currentUser = state.user;
 
-      // Case-insensitive check for admin role
       const hasAdminRole = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       );
@@ -153,7 +146,6 @@ export class AdminComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Now load data - auth token is guaranteed to be available
       this.loadUsers();
       this.loadReportCategories();
       this.loadDepartments();
@@ -163,7 +155,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   loadDepartments(): void {
     this.adminUserService.getAllDepartments(false).subscribe({
       next: (apiDepartments) => {
-        // Filter out "Admin" department since we now have a dedicated Administrator Access section
+
         this.departments = apiDepartments
           .filter(d => d.departmentName.toLowerCase() !== 'admin')
           .map(d => ({
@@ -223,7 +215,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = [...this.users];
 
-    // Apply search filter
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter(user =>
@@ -236,7 +227,6 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     this.totalUsers = filtered.length;
 
-    // Apply pagination
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     this.filteredUsers = filtered.slice(startIndex, endIndex);
@@ -289,7 +279,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   onPaginationChange(event: any): void {
-    // Carbon pagination emits just the page number directly
+
     if (typeof event === 'number' && !isNaN(event)) {
       this.currentPage = event;
     }
@@ -299,11 +289,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   selectUser(user: UserProfile): void {
     this.selectedUser = user;
 
-    // Track admin status
     this.originalIsAdmin = this.isUserAdmin(user);
     this.pendingIsAdmin = this.originalIsAdmin;
 
-    // Reset permissions state
     this.userDepartments = new Set();
     this.originalUserDepartments = new Set();
     this.userHubPermissions = new Set();
@@ -316,7 +304,6 @@ export class AdminComponent implements OnInit, OnDestroy {
 
     const userId = parseInt(user.id, 10);
 
-    // Fetch departments
     this.adminUserService.getUserDepartments(userId).subscribe({
       next: (departmentIds) => {
         this.userDepartments = new Set(departmentIds);
@@ -329,7 +316,6 @@ export class AdminComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Fetch hub and report permissions
     this.adminUserService.getUserPermissions(userId).subscribe({
       next: (response) => {
         const hubIds = response.permissions.hubs.map(h => h.hubId.toString());
@@ -347,34 +333,30 @@ export class AdminComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Collapse all categories by default
     this.collapsedCategories = new Set(this.reportCategories.map(cat => cat.id));
   }
 
-  /**
-   * Update the user's department count in the users array for display
-   */
+  
   private updateUserDepartmentCount(userId: string, count: number): void {
-    // Find the user in the main users array
+
     const userIndex = this.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
-      // Create a groups array of the right length for display purposes
-      // We just need the length to be correct for {{ user.groups.length }}
+
       this.users[userIndex] = {
         ...this.users[userIndex],
-        groups: Array(count).fill('dept') // Array with correct length
+        groups: Array(count).fill('dept')
       };
-      // Also update selectedUser if it's the same user
+
       if (this.selectedUser?.id === userId) {
         this.selectedUser = this.users[userIndex];
       }
-      // Refresh the filtered view
+
       this.applyFilters();
     }
   }
 
   togglePermission(reportId: string): void {
-    // Toggle individual report permission
+
     if (this.userReportPermissions.has(reportId)) {
       this.userReportPermissions.delete(reportId);
     } else {
@@ -383,7 +365,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   toggleHubPermission(hubId: string): void {
-    // Toggle hub-level permission
+
     if (this.userHubPermissions.has(hubId)) {
       this.userHubPermissions.delete(hubId);
     } else {
@@ -402,7 +384,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   async toggleAdminRole(): Promise<void> {
     if (!this.selectedUser) return;
 
-    // Don't allow modifying own admin status
     if (this.selectedUser.id === this.currentUser?.id) {
       this.notificationService.warning(
         'Action Not Allowed',
@@ -435,15 +416,14 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSavingAdminRole = false;
 
-        // Update the local user's roles
         if (this.selectedUser) {
           if (newAdminStatus) {
-            // Add Admin role if not present
+
             if (!this.selectedUser.roles.some(r => r.toLowerCase() === 'admin')) {
               this.selectedUser.roles = [...this.selectedUser.roles, 'Admin'];
             }
           } else {
-            // Remove Admin role
+
             this.selectedUser.roles = this.selectedUser.roles.filter(
               r => r.toLowerCase() !== 'admin'
             );
@@ -457,7 +437,6 @@ export class AdminComponent implements OnInit, OnDestroy {
           `${userName} has been ${newAdminStatus ? 'granted' : 'revoked'} administrator access.`
         );
 
-        // Refresh user list to reflect changes
         this.loadUsers();
       },
       error: () => {
@@ -471,12 +450,12 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   hasPermission(reportId: string): boolean {
-    // Check if user has direct report permission
+
     return this.userReportPermissions.has(reportId);
   }
 
   hasHubPermission(hubId: string): boolean {
-    // Check if user has direct hub permission
+
     return this.userHubPermissions.has(hubId);
   }
 
@@ -485,15 +464,12 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   toggleCategoryPermissions(category: HubCategory): void {
-    // Toggle hub-level permission
-    // If hub is already granted, revoke it
-    // If hub is not granted, grant it (gives access to all reports in hub)
+
     if (this.userHubPermissions.has(category.id)) {
       this.userHubPermissions.delete(category.id);
     } else {
       this.userHubPermissions.add(category.id);
-      // When granting hub access, remove individual report permissions
-      // since hub access supersedes them
+
       category.reports.forEach(report => {
         this.userReportPermissions.delete(report.id);
       });
@@ -501,15 +477,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   isCategoryFullySelected(category: HubCategory): boolean {
-    // Hub is "fully selected" if user has direct hub access
+
     return this.userHubPermissions.has(category.id);
   }
 
   isCategoryPartiallySelected(category: HubCategory): boolean {
-    // Hub is "partially selected" if user has some report permissions
-    // but not hub-level access
+
     if (this.userHubPermissions.has(category.id)) {
-      return false; // Has full hub access, not partial
+      return false;
     }
     const selectedCount = category.reports.filter(report =>
       this.userReportPermissions.has(report.id)
@@ -535,28 +510,23 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.isSaving = true;
     const userId = parseInt(this.selectedUser.id, 10);
 
-    // Build array of all operations (departments, hubs, reports)
     const operations: Observable<{ success: boolean }>[] = [];
 
-    // Compute department changes
     const currentDepts = Array.from(this.userDepartments);
     const originalDepts = Array.from(this.originalUserDepartments);
     const deptsToAdd = currentDepts.filter(id => !this.originalUserDepartments.has(id));
     const deptsToRemove = originalDepts.filter(id => !this.userDepartments.has(id));
 
-    // Compute hub permission changes
     const currentHubs = Array.from(this.userHubPermissions);
     const originalHubs = Array.from(this.originalUserHubPermissions);
     const hubsToAdd = currentHubs.filter(id => !this.originalUserHubPermissions.has(id));
     const hubsToRemove = originalHubs.filter(id => !this.userHubPermissions.has(id));
 
-    // Compute report permission changes
     const currentReports = Array.from(this.userReportPermissions);
     const originalReports = Array.from(this.originalUserReportPermissions);
     const reportsToAdd = currentReports.filter(id => !this.originalUserReportPermissions.has(id));
     const reportsToRemove = originalReports.filter(id => !this.userReportPermissions.has(id));
 
-    // If no changes, we're done
     if (deptsToAdd.length === 0 && deptsToRemove.length === 0 &&
         hubsToAdd.length === 0 && hubsToRemove.length === 0 &&
         reportsToAdd.length === 0 && reportsToRemove.length === 0) {
@@ -565,7 +535,6 @@ export class AdminComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Add department operations
     deptsToAdd.forEach(deptId => {
       operations.push(this.adminUserService.assignUserToDepartment(userId, parseInt(deptId, 10)));
     });
@@ -573,7 +542,6 @@ export class AdminComponent implements OnInit, OnDestroy {
       operations.push(this.adminUserService.removeUserFromDepartment(userId, parseInt(deptId, 10)));
     });
 
-    // Add hub operations
     hubsToAdd.forEach(hubId => {
       operations.push(this.adminUserService.grantHubAccess(userId, parseInt(hubId, 10)));
     });
@@ -581,7 +549,6 @@ export class AdminComponent implements OnInit, OnDestroy {
       operations.push(this.adminUserService.revokeHubAccess(userId, parseInt(hubId, 10)));
     });
 
-    // Add report operations
     reportsToAdd.forEach(reportId => {
       operations.push(this.adminUserService.grantReportAccess(userId, parseInt(reportId, 10)));
     });
@@ -593,12 +560,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSaving = false;
 
-        // Update original values to match current (so subsequent saves work correctly)
         this.originalUserDepartments = new Set(this.userDepartments);
         this.originalUserHubPermissions = new Set(this.userHubPermissions);
         this.originalUserReportPermissions = new Set(this.userReportPermissions);
 
-        // Update the user's counts in the list
         if (this.selectedUser) {
           this.updateUserDepartmentCount(this.selectedUser.id, this.userDepartments.size);
           this.updateUserReportCount(this.selectedUser.id, this.userHubPermissions.size, this.userReportPermissions.size);
@@ -619,13 +584,11 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Update the user's report count in the users array for display
-   */
+  
   private updateUserReportCount(userId: string, hubCount: number, reportCount: number): void {
     const userIndex = this.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
-      // Create a permissions array of the right length for display
+
       const totalPermissions = hubCount + reportCount;
       this.users[userIndex] = {
         ...this.users[userIndex],
@@ -715,7 +678,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     const user = this.users.find(u => u.id === userId);
     if (!user) return;
 
-    // Case-insensitive check for admin role
     const userIsAdmin = user.roles.some(role => role.toLowerCase() === 'admin');
     if (userIsAdmin && user.id === this.currentUser?.id) {
       this.notificationService.warning(
@@ -743,7 +705,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   get isExpireFormValid(): boolean {
-    // Just require that a ticket number is entered (not empty)
+
     return this.expireFormData.ticketNumber.trim().length > 0;
   }
 
@@ -754,7 +716,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     const userName = `${this.userToExpire.firstName} ${this.userToExpire.lastName}`;
     const userId = this.userToExpire.id;
 
-    // Build the expiration reason with ticket number
     const expirationReason = `Ticket: ${this.expireFormData.ticketNumber.trim().toUpperCase()}${this.expireFormData.reason.trim() ? ' - ' + this.expireFormData.reason.trim() : ''}`;
 
     this.adminUserService.expireUser(parseInt(userId, 10), expirationReason).subscribe({
@@ -817,9 +778,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Helper method for template - case-insensitive admin role check
-   */
+  
   isUserAdmin(user: { roles: string[] }): boolean {
     return user.roles?.some(role => role.toLowerCase() === 'admin') || false;
   }

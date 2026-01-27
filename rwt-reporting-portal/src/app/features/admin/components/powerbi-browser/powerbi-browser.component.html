@@ -9,7 +9,7 @@
   </cds-modal-header>
 
   <section cdsModalContent class="browser-content" (open)="onModalOpen()">
-    <!-- Toolbar -->
+    
     <div class="browser-toolbar">
       <div class="toolbar-left">
         <button
@@ -34,7 +34,7 @@
       </button>
     </div>
 
-    <!-- Loading state with skeleton -->
+    
     <div *ngIf="isLoading" class="skeleton-container">
       <div class="skeleton-item" *ngFor="let i of [1,2,3,4,5,6]">
         <div class="skeleton skeleton-icon"></div>
@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <!-- Error state -->
+    
     <div *ngIf="errorMessage && !isLoading" class="error-container" role="alert">
       <div class="error-content">
         <svg cdsIcon="warning--filled" size="20" class="error-icon"></svg>
@@ -56,7 +56,7 @@
       </div>
     </div>
 
-    <!-- Workspaces list -->
+    
     <div *ngIf="!isLoading && !errorMessage && currentView === 'workspaces'" class="workspace-list">
       <div
         *ngFor="let workspace of workspaces"
@@ -92,7 +92,7 @@
       </div>
     </div>
 
-    <!-- Reports list -->
+    
     <div *ngIf="!isLoading && !errorMessage && currentView === 'reports'" class="report-list-container">
       <ul class="report-list" role="listbox" aria-label="Available reports">
         <li
@@ -142,7 +142,7 @@
       </div>
     </div>
 
-    <!-- Selection preview -->
+    
     <div *ngIf="selectedReport" class="selection-preview">
       <div class="selection-icon">
         <svg *ngIf="selectedReport.reportType === 'PowerBIReport'" cdsIcon="analytics" size="16"></svg>

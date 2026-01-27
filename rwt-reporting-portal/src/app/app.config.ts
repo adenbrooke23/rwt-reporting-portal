@@ -12,9 +12,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
-      withFetch(), // Enable fetch API for better SSR performance
-      withInterceptorsFromDi() // Support for HTTP interceptors
+      withFetch(),
+      withInterceptorsFromDi()
     ),
-    authInterceptorProvider // Add JWT token to API requests
+    authInterceptorProvider
   ]
 };

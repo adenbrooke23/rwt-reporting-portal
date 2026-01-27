@@ -10,13 +10,13 @@
   </header>
 
   <main class="report-content">
-    <!-- Loading State -->
+    
     <div *ngIf="isLoading" class="state-message">
       <div class="state-icon loading-spinner"></div>
       <p>Loading report...</p>
     </div>
 
-    <!-- Error State -->
+    
     <div *ngIf="error && !isLoading" class="state-message error">
       <div class="state-icon">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -28,7 +28,7 @@
       <button cdsButton="secondary" size="sm" (click)="backToHub()">Return to Hub</button>
     </div>
 
-    <!-- Configuration Required State -->
+    
     <div *ngIf="needsConfiguration && !isLoading && !error" class="state-message config">
       <div class="state-icon">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,14 +54,14 @@
       <button cdsButton="secondary" size="sm" (click)="backToHub()">Return to Hub</button>
     </div>
 
-    <!-- Power BI Embedded Report -->
+    
     <div
       class="powerbi-container"
       *ngIf="usePowerBIEmbed && !error && !needsConfiguration"
       #powerbiContainer>
     </div>
 
-    <!-- Report Iframe (SSRS or fallback) -->
+    
     <div class="report-iframe-container" *ngIf="reportUrl && !usePowerBIEmbed && !isLoading && !error && !needsConfiguration">
       <iframe
         [src]="reportUrl"

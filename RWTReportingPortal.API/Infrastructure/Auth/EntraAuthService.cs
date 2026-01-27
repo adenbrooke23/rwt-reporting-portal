@@ -67,7 +67,6 @@ public class EntraAuthService : IEntraAuthService
             var clientId = azureAdSettings["ClientId"]!;
             var clientSecret = azureAdSettings["ClientSecret"]!;
 
-            // Build a new confidential client with the specific redirect URI
             var confidentialClient = ConfidentialClientApplicationBuilder
                 .Create(clientId)
                 .WithClientSecret(clientSecret)
@@ -109,7 +108,6 @@ public class EntraAuthService : IEntraAuthService
             var tenantId = azureAdSettings["TenantId"]!;
             var clientId = azureAdSettings["ClientId"]!;
 
-            // Use public client for ROPC flow
             var publicClient = PublicClientApplicationBuilder
                 .Create(clientId)
                 .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
@@ -148,7 +146,7 @@ public class EntraAuthService : IEntraAuthService
 
         try
         {
-            // Get user profile
+
             var userResponse = await httpClient.GetAsync("me?$select=id,mail,userPrincipalName,givenName,surname,displayName,companyName");
             userResponse.EnsureSuccessStatusCode();
 
@@ -177,7 +175,6 @@ public class EntraAuthService : IEntraAuthService
                 Groups = new List<string>()
             };
 
-            // Get user's group memberships
             var groupsResponse = await httpClient.GetAsync("me/memberOf?$select=id,displayName");
             if (groupsResponse.IsSuccessStatusCode)
             {
@@ -188,7 +185,7 @@ public class EntraAuthService : IEntraAuthService
                 {
                     foreach (var group in groupsArray.EnumerateArray())
                     {
-                        // Only include groups (not directory roles, etc.)
+
                         if (group.TryGetProperty("@odata.type", out var odataType) &&
                             odataType.GetString() == "#microsoft.graph.group")
                         {

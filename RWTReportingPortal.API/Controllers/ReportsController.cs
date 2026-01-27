@@ -28,15 +28,11 @@ public class ReportsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get report details
-    /// </summary>
     [HttpGet("{reportId}")]
     public async Task<ActionResult<ReportDto>> GetReport(int reportId)
     {
         var userId = GetUserId();
 
-        // Check access
         if (!await _permissionService.CanAccessReportAsync(userId, reportId))
         {
             return Forbid();
@@ -48,22 +44,17 @@ public class ReportsController : ControllerBase
             return NotFound();
         }
 
-        // Log report access
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         _ = _reportService.LogReportAccessAsync(reportId, userId, "View", ipAddress);
 
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get embed token/URL for viewing a report
-    /// </summary>
     [HttpGet("{reportId}/embed")]
     public async Task<ActionResult<ReportEmbedResponse>> GetReportEmbed(int reportId)
     {
         var userId = GetUserId();
 
-        // Check access
         if (!await _permissionService.CanAccessReportAsync(userId, reportId))
         {
             return Forbid();
@@ -71,17 +62,12 @@ public class ReportsController : ControllerBase
 
         var result = await _reportService.GetReportEmbedAsync(reportId, userId);
 
-        // Log report access
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         _ = _reportService.LogReportAccessAsync(reportId, userId, "Embed", ipAddress);
 
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get Power BI embed token for a report.
-    /// This endpoint handles the Power BI specific embedding with token generation.
-    /// </summary>
     [HttpGet("{reportId}/powerbi-embed")]
     public async Task<IActionResult> GetPowerBIEmbed(int reportId)
     {
@@ -89,32 +75,27 @@ public class ReportsController : ControllerBase
         {
             var userId = GetUserId();
 
-            // Get report details
             var report = await _reportService.GetReportByIdAsync(reportId);
             if (report == null)
             {
                 return NotFound(new { error = "Report not found" });
             }
 
-            // Check if it's a Power BI report
             if (report.ReportType != "PowerBI" && report.ReportType != "Paginated")
             {
                 return BadRequest(new { error = "This endpoint is only for Power BI reports" });
             }
 
-            // Check if Power BI configuration is present
             if (string.IsNullOrEmpty(report.PowerBIWorkspaceId) || string.IsNullOrEmpty(report.PowerBIReportId))
             {
                 return BadRequest(new { error = "Report is missing Power BI workspace or report ID configuration" });
             }
 
-            // Get embed info from Power BI service
             var embedInfo = await _powerBIService.GetEmbedInfoAsync(
                 report.PowerBIWorkspaceId,
                 report.PowerBIReportId
             );
 
-            // Log report access
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             _ = _reportService.LogReportAccessAsync(reportId, userId, "PowerBI_Embed", ipAddress);
 
@@ -134,9 +115,6 @@ public class ReportsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Log report access
-    /// </summary>
     [HttpPost("{reportId}/access")]
     public async Task<IActionResult> LogReportAccess(int reportId)
     {

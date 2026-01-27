@@ -20,9 +20,6 @@ public class AdminHubsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all hubs (admin view)
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<HubDto>>> GetHubs([FromQuery] bool includeInactive = false)
     {
@@ -30,9 +27,6 @@ public class AdminHubsController : ControllerBase
         return Ok(new { hubs = result });
     }
 
-    /// <summary>
-    /// Get all hubs with their reports (for permission management UI)
-    /// </summary>
     [HttpGet("with-reports")]
     public async Task<ActionResult<List<HubWithReportsDto>>> GetHubsWithReports([FromQuery] bool includeInactive = false)
     {
@@ -40,9 +34,6 @@ public class AdminHubsController : ControllerBase
         return Ok(new { hubs = result });
     }
 
-    /// <summary>
-    /// Create a new hub
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<HubDto>> CreateHub([FromBody] HubDto hub)
     {
@@ -51,9 +42,6 @@ public class AdminHubsController : ControllerBase
         return CreatedAtAction(nameof(GetHub), new { hubId = result.HubId }, result);
     }
 
-    /// <summary>
-    /// Get hub by ID
-    /// </summary>
     [HttpGet("{hubId}")]
     public async Task<ActionResult<HubDto>> GetHub(int hubId)
     {
@@ -65,9 +53,6 @@ public class AdminHubsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Update a hub
-    /// </summary>
     [HttpPut("{hubId}")]
     public async Task<ActionResult<HubDto>> UpdateHub(int hubId, [FromBody] HubDto hub)
     {
@@ -76,9 +61,6 @@ public class AdminHubsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Delete a hub
-    /// </summary>
     [HttpDelete("{hubId}")]
     public async Task<IActionResult> DeleteHub(int hubId, [FromQuery] bool hardDelete = false)
     {
@@ -86,9 +68,6 @@ public class AdminHubsController : ControllerBase
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Reorder hubs
-    /// </summary>
     [HttpPut("reorder")]
     public async Task<IActionResult> ReorderHubs([FromBody] List<int> hubIds)
     {

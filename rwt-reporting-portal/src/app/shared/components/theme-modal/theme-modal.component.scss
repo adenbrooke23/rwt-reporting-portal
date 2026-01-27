@@ -1,6 +1,5 @@
 @use '@carbon/styles/scss/spacing';
 
-// Theme Section
 .theme-section {
   margin-bottom: spacing.$spacing-05;
 
@@ -17,14 +16,12 @@
   letter-spacing: 0.32px;
 }
 
-// Theme Options Grid
 .theme-options {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: spacing.$spacing-04;
 }
 
-// Individual Theme Option
 .theme-option {
   display: flex;
   flex-direction: column;
@@ -58,7 +55,6 @@
   }
 }
 
-// Theme Preview Mini UI
 .theme-preview {
   width: 56px;
   height: 40px;
@@ -69,7 +65,6 @@
   grid-template-rows: 8px 1fr;
   border: 1px solid rgba(0, 0, 0, 0.1);
 
-  // Light theme previews
   &--white {
     background: #ffffff;
     .preview-header { background: #161616; }
@@ -86,7 +81,6 @@
     .preview-line { background: #c6c6c6; }
   }
 
-  // Dark theme previews
   &--g90 {
     background: #262626;
     .preview-header { background: #161616; }
@@ -103,7 +97,6 @@
     .preview-line { background: #393939; }
   }
 
-  // Business theme previews
   &--sequoia {
     background: #f4f4f4;
     .preview-header { background: #2d5a27; }
@@ -157,7 +150,6 @@
   }
 }
 
-// Theme Label
 .theme-label {
   font-size: 0.6875rem;
   font-weight: 400;
@@ -166,7 +158,6 @@
   text-align: center;
 }
 
-// Checkmark Icon
 .checkmark-icon {
   position: absolute;
   top: spacing.$spacing-02;
@@ -174,7 +165,6 @@
   fill: var(--cds-icon-primary, #161616);
 }
 
-// Dark Theme Overrides
 :host-context(html.dark-theme),
 :host-context(html[class*="theme-g9"]),
 :host-context(html[class*="theme-g10"]) {

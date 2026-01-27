@@ -19,9 +19,6 @@ public class AdminSSRSController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get SSRS server configuration
-    /// </summary>
     [HttpGet("config")]
     public async Task<ActionResult<SSRSConfigResponse>> GetConfig()
     {
@@ -29,9 +26,6 @@ public class AdminSSRSController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Browse SSRS folders and reports
-    /// </summary>
     [HttpGet("browse")]
     public async Task<ActionResult<SSRSFolderListResponse>> Browse([FromQuery] string path = "/")
     {
@@ -40,9 +34,6 @@ public class AdminSSRSController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Test SSRS connection
-    /// </summary>
     [HttpGet("test")]
     public async Task<ActionResult<object>> TestConnection()
     {

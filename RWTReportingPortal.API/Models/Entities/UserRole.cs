@@ -8,7 +8,6 @@ public class UserRole
     public int? GrantedBy { get; set; }
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
     public User User { get; set; } = null!;
     public Role Role { get; set; } = null!;
 }

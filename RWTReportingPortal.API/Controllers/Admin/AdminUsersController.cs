@@ -28,9 +28,6 @@ public class AdminUsersController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all users (paginated)
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<AdminUserListResponse>> GetUsers(
         [FromQuery] int page = 1,
@@ -78,9 +75,6 @@ public class AdminUsersController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Get user details
-    /// </summary>
     [HttpGet("{userId}")]
     public async Task<ActionResult<AdminUserDto>> GetUser(int userId)
     {
@@ -89,13 +83,10 @@ public class AdminUsersController : ControllerBase
         {
             return NotFound();
         }
-        // TODO: Map to AdminUserDto
+
         return Ok(new AdminUserDto());
     }
 
-    /// <summary>
-    /// Get user permissions
-    /// </summary>
     [HttpGet("{userId}/permissions")]
     public async Task<ActionResult<UserPermissionsResponse>> GetUserPermissions(int userId)
     {
@@ -103,9 +94,6 @@ public class AdminUsersController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Lock user account
-    /// </summary>
     [HttpPut("{userId}/lock")]
     public async Task<IActionResult> LockUser(int userId, [FromBody] LockUserRequest? request = null)
     {
@@ -127,13 +115,10 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, userId, isLockedOut = true, isActive = false, message = "User account has been locked" });
     }
 
-    /// <summary>
-    /// Unlock user account
-    /// </summary>
     [HttpPut("{userId}/unlock")]
     public async Task<IActionResult> UnlockUser(int userId)
     {
-        // Use GetByIdIncludeExpiredAsync since locked users might also be inactive
+
         var user = await _userService.GetByIdIncludeExpiredAsync(userId);
         if (user == null)
         {
@@ -156,9 +141,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, userId, isLockedOut = false, isActive = true, message = "User account has been unlocked" });
     }
 
-    /// <summary>
-    /// Expire user account
-    /// </summary>
     [HttpPut("{userId}/expire")]
     public async Task<IActionResult> ExpireUser(int userId, [FromBody] ExpireUserRequest request)
     {
@@ -178,13 +160,10 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, userId, isExpired = true, expiredAt = user.ExpiredAt, message = "User account has been expired" });
     }
 
-    /// <summary>
-    /// Restore expired user account
-    /// </summary>
     [HttpPut("{userId}/restore")]
     public async Task<IActionResult> RestoreUser(int userId)
     {
-        // Use GetByIdIncludeExpiredAsync since we need to find expired users
+
         var user = await _userService.GetByIdIncludeExpiredAsync(userId);
         if (user == null)
         {
@@ -205,9 +184,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, userId, isExpired = false, isActive = true, message = "User account has been restored" });
     }
 
-    /// <summary>
-    /// Get user's department memberships
-    /// </summary>
     [HttpGet("{userId}/departments")]
     public async Task<IActionResult> GetUserDepartments(int userId)
     {
@@ -215,9 +191,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { userId, email = result.Email, departments = result.Departments });
     }
 
-    /// <summary>
-    /// Assign user to department
-    /// </summary>
     [HttpPost("{userId}/departments")]
     public async Task<IActionResult> AssignUserToDepartment(int userId, [FromBody] GrantDepartmentRequest request)
     {
@@ -226,9 +199,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "User assigned to department successfully" });
     }
 
-    /// <summary>
-    /// Remove user from department
-    /// </summary>
     [HttpDelete("{userId}/departments/{departmentId}")]
     public async Task<IActionResult> RemoveUserFromDepartment(int userId, int departmentId)
     {
@@ -236,9 +206,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "User removed from department successfully" });
     }
 
-    /// <summary>
-    /// Grant hub access to user
-    /// </summary>
     [HttpPost("{userId}/permissions/hub")]
     public async Task<IActionResult> GrantHubAccess(int userId, [FromBody] GrantHubAccessRequest request)
     {
@@ -247,9 +214,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "Hub access granted successfully" });
     }
 
-    /// <summary>
-    /// Revoke hub access from user
-    /// </summary>
     [HttpDelete("{userId}/permissions/hub/{hubId}")]
     public async Task<IActionResult> RevokeHubAccess(int userId, int hubId)
     {
@@ -257,9 +221,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "Hub access revoked successfully" });
     }
 
-    /// <summary>
-    /// Grant report access to user
-    /// </summary>
     [HttpPost("{userId}/permissions/report")]
     public async Task<IActionResult> GrantReportAccess(int userId, [FromBody] GrantReportAccessRequest request)
     {
@@ -268,9 +229,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "Report access granted successfully" });
     }
 
-    /// <summary>
-    /// Revoke report access from user
-    /// </summary>
     [HttpDelete("{userId}/permissions/report/{reportId}")]
     public async Task<IActionResult> RevokeReportAccess(int userId, int reportId)
     {
@@ -278,9 +236,6 @@ public class AdminUsersController : ControllerBase
         return Ok(new { success = true, message = "Report access revoked successfully" });
     }
 
-    /// <summary>
-    /// Update user admin role (grant or revoke)
-    /// </summary>
     [HttpPut("{userId}/roles/admin")]
     public async Task<IActionResult> UpdateUserAdminRole(int userId, [FromBody] UpdateAdminRoleRequest request)
     {

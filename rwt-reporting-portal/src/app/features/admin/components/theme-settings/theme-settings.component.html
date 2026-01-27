@@ -1,5 +1,5 @@
 <div class="theme-settings-container">
-  <!-- Page Header matching standard navigation pattern -->
+  
   <header class="page-header">
     <div class="header-content">
       <div class="header-left">
@@ -18,7 +18,7 @@
   <main class="page-main">
     <div class="page-content">
 
-  <!-- Carbon Design System Themes Section -->
+  
   <div class="theme-section">
     <h2 class="section-title">Carbon Design System Themes</h2>
     <p class="section-description">
@@ -32,7 +32,7 @@
         [class.active]="isCurrentTheme(theme.id)"
         (click)="selectTheme(theme.id)">
 
-        <!-- Theme Preview -->
+        
         <div class="theme-preview" [ngClass]="getThemePreviewClass(theme.id)">
           <div class="preview-header"></div>
           <div class="preview-content">
@@ -44,7 +44,7 @@
           </div>
         </div>
 
-        <!-- Theme Info -->
+        
         <div class="theme-info">
           <div class="theme-name-row">
             <h3 class="theme-name">{{ theme.name }}</h3>
@@ -56,7 +56,7 @@
           </span>
         </div>
 
-        <!-- Active Indicator -->
+        
         <div *ngIf="isCurrentTheme(theme.id)" class="active-indicator">
           Current Theme
         </div>
@@ -64,7 +64,7 @@
     </div>
   </div>
 
-  <!-- Business Themes Section -->
+  
   <div class="theme-section">
     <h2 class="section-title">Business Themes</h2>
     <p class="section-description">
@@ -78,7 +78,7 @@
         [class.active]="isCurrentTheme(theme.id)"
         (click)="selectTheme(theme.id)">
 
-        <!-- Theme Preview -->
+        
         <div class="theme-preview" [ngClass]="getThemePreviewClass(theme.id)">
           <div class="preview-header"></div>
           <div class="preview-content">
@@ -90,7 +90,7 @@
           </div>
         </div>
 
-        <!-- Theme Info -->
+        
         <div class="theme-info">
           <div class="theme-name-row">
             <h3 class="theme-name">{{ theme.name }}</h3>
@@ -102,7 +102,7 @@
           </span>
         </div>
 
-        <!-- Active Indicator -->
+        
         <div *ngIf="isCurrentTheme(theme.id)" class="active-indicator">
           Current Theme
         </div>
@@ -110,7 +110,7 @@
     </div>
   </div>
 
-  <!-- Info Section -->
+  
   <div class="info-section">
     <h3 class="info-title">About Themes</h3>
     <p class="info-text">

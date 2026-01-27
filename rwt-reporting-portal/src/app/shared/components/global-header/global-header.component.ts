@@ -38,7 +38,7 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
   @Input() sidebarOpen = false;
   @Output() menuToggled = new EventEmitter<void>();
 
-  currentUser: User | null = null; // Initialize as null, set via subscription
+  currentUser: User | null = null;
   showUserMenu = false;
   profileModalOpen = false;
   themeModalOpen = false;
@@ -52,7 +52,6 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
       Notification
     ]);
 
-    // Subscribe to auth state changes to update user info
     const authSub = this.authService.authState$.subscribe(state => {
       this.currentUser = state.user;
       if (state.user?.id) {
@@ -61,7 +60,6 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
     });
     this.subscriptions.push(authSub);
 
-    // Initial load of unread count
     if (this.currentUser?.id) {
       this.loadUnreadCount(this.currentUser.id);
     }
@@ -94,7 +92,6 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
     this.showUserMenu = false;
   }
 
-  // Handle escape key to close panel
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     if (this.showUserMenu) {
@@ -109,7 +106,7 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
 
   closeProfileModal(): void {
     this.profileModalOpen = false;
-    // User data will be refreshed via authState$ subscription when avatar changes
+
   }
 
   openThemeModal(): void {
@@ -164,7 +161,6 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
   getFullName(): string {
     if (!this.currentUser) return 'Guest';
 
-    // Use displayName if available (from JWT 'name' claim or constructed)
     if (this.currentUser.displayName) {
       return this.currentUser.displayName;
     }
@@ -177,7 +173,7 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
     } else if (firstName) {
       return firstName;
     } else if (this.currentUser.email) {
-      // Fall back to email prefix if no name available
+
       return this.currentUser.email.split('@')[0];
     } else {
       return this.currentUser.username || 'User';
@@ -197,12 +193,12 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
 
   getAvatarColor(): string {
     const avatar = this.getCurrentAvatar();
-    return avatar?.color || '#4589ff'; // Default to Carbon blue-60
+    return avatar?.color || '#4589ff';
   }
 
   isAdmin(): boolean {
     if (!this.currentUser) return false;
-    // Case-insensitive check for admin role
+
     return this.currentUser.roles?.some(
       role => role.toLowerCase() === 'admin'
     ) || false;
@@ -213,7 +209,6 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    // Capitalize and format the primary role
     const primaryRole = this.currentUser.roles[0];
     return primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1);
   }

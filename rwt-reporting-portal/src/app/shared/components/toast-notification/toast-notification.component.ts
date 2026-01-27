@@ -21,14 +21,13 @@ export class ToastNotificationComponent implements OnInit {
   }
 
   closeNotification(id: string): void {
-    // Add removing class for exit animation
+
     this.removingIds.add(id);
 
-    // Wait for animation to complete before removing
     setTimeout(() => {
       this.notificationService.remove(id);
       this.removingIds.delete(id);
-    }, 200); // Match slideOut animation duration
+    }, 200);
   }
 
   isRemoving(id: string): boolean {

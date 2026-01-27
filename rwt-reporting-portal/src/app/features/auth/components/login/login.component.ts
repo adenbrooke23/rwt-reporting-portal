@@ -34,7 +34,6 @@ export class LoginComponent implements OnInit {
   isAdminLogin = false;
   sessionExpired = false;
 
-  // Authorized admin email
   private readonly ADMIN_EMAIL = 'zachary.schmidt@redwoodtrust.com';
 
   constructor() {
@@ -46,7 +45,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Register Carbon icons
+
     this.iconService.registerAll([
       ArrowRight,
       View,
@@ -57,14 +56,12 @@ export class LoginComponent implements OnInit {
       WarningFilled
     ]);
 
-    // Check query params for admin login mode and session expiration
     this.route.queryParams.subscribe(params => {
       this.isAdminLogin = params['admin'] === 'true';
       this.sessionExpired = params['sessionExpired'] === 'true';
     });
   }
 
-  // Notification for session expired
   get sessionExpiredNotification() {
     return {
       type: 'warning' as const,
@@ -77,11 +74,10 @@ export class LoginComponent implements OnInit {
 
   onCloseSessionExpired(): void {
     this.sessionExpired = false;
-    // Remove the query param from URL
+
     this.router.navigate(['/login'], { queryParams: {} });
   }
 
-  // Notification object for Carbon inline notification
   get errorNotification() {
     return {
       type: 'error' as const,
@@ -109,16 +105,15 @@ export class LoginComponent implements OnInit {
       this.mockUserService.login(username, password).subscribe({
         next: (response) => {
           if (response.success && response.token && response.user) {
-            // Check admin authorization AFTER successful login
+
             if (this.isAdminLogin && response.user.email.toLowerCase() !== this.ADMIN_EMAIL.toLowerCase()) {
               this.isLoading = false;
               this.errorMessage = 'Unauthorized: Admin access is restricted to authorized personnel only.';
               return;
             }
 
-            // Add admin role if logging in via admin mode
             if (this.isAdminLogin && response.user.email.toLowerCase() === this.ADMIN_EMAIL.toLowerCase()) {
-              // Ensure user has admin role (case-insensitive check)
+
               const hasAdminRole = response.user.roles.some(
                 role => role.toLowerCase() === 'admin'
               );
@@ -126,7 +121,7 @@ export class LoginComponent implements OnInit {
                 response.user.roles = [...response.user.roles, 'admin'];
               }
             } else {
-              // Remove admin role if not logging in via admin mode (case-insensitive filter)
+
               response.user.roles = response.user.roles.filter(
                 role => role.toLowerCase() !== 'admin'
               );

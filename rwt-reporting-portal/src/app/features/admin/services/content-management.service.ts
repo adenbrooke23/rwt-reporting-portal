@@ -20,7 +20,6 @@ import {
   BulkImportResult
 } from '../models/content-management.models';
 
-// API DTOs - match backend response format
 export interface HubApiDto {
   hubId: number;
   hubCode: string;
@@ -36,7 +35,6 @@ export interface HubApiDto {
   createdByEmail?: string;
 }
 
-// Request DTO for creating/updating hubs
 export interface HubRequestDto {
   hubCode: string;
   hubName: string;
@@ -60,21 +58,18 @@ export interface DepartmentApiDto {
   createdByEmail?: string;
 }
 
-// Request DTO for creating departments
 export interface CreateDepartmentRequestDto {
   departmentCode: string;
   departmentName: string;
   description?: string;
 }
 
-// Request DTO for updating departments
 export interface UpdateDepartmentRequestDto {
   departmentName?: string;
   description?: string;
   isActive?: boolean;
 }
 
-// Report API DTOs
 export interface ReportApiDto {
   reportId: number;
   reportGroupId: number;
@@ -98,7 +93,6 @@ export interface ReportApiDto {
   departmentIds: number[];
 }
 
-// Request DTO for creating reports
 export interface CreateReportRequestDto {
   reportGroupId: number;
   reportName: string;
@@ -113,7 +107,6 @@ export interface CreateReportRequestDto {
   departmentIds?: number[];
 }
 
-// Request DTO for updating reports
 export interface UpdateReportRequestDto {
   reportGroupId?: number;
   reportName?: string;
@@ -129,7 +122,6 @@ export interface UpdateReportRequestDto {
   departmentIds?: number[];
 }
 
-// Report Group API DTOs
 export interface ReportGroupApiDto {
   reportGroupId: number;
   hubId: number;
@@ -144,14 +136,12 @@ export interface ReportGroupApiDto {
   createdByEmail?: string;
 }
 
-// Request DTO for creating report groups
 export interface CreateReportGroupRequestDto {
   hubId: number;
   groupName: string;
   description?: string;
 }
 
-// Request DTO for updating report groups
 export interface UpdateReportGroupRequestDto {
   hubId?: number;
   groupName?: string;
@@ -185,11 +175,8 @@ export class ContentManagementService {
   }
 
   private initializeMockData(): void {
-    // NOTE: All entities (Hubs, Departments, Reports, Report Groups) now come from the API
-    // No more mock data initialization needed
-  }
 
-  // ============== HUB OPERATIONS ==============
+  }
 
   getHubs(includeInactive = false): Observable<Hub[]> {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
@@ -204,30 +191,26 @@ export class ContentManagementService {
     );
   }
 
-  /**
-   * Map API DTO to frontend Hub model
-   */
+  
   private mapHubDtoToHub(dto: HubApiDto): Hub {
     return {
       id: dto.hubId.toString(),
       name: dto.hubName,
       description: dto.description || '',
       iconName: dto.iconName || 'folder',
-      // Use colorClass from API if available, otherwise derive from hubCode for backwards compatibility
+
       colorClass: dto.colorClass || this.getColorClassFromCode(dto.hubCode),
       sortOrder: dto.sortOrder,
       isActive: dto.isActive,
       createdAt: new Date(dto.createdAt),
-      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      updatedAt: new Date(dto.createdAt),
       createdBy: dto.createdByEmail || 'admin@redwoodtrust.com',
       reportGroupCount: dto.reportGroupCount || 0,
       reportCount: dto.reportCount || 0
     };
   }
 
-  /**
-   * Get color class from hub code
-   */
+  
   private getColorClassFromCode(hubCode: string): string {
     const colorMap: Record<string, string> = {
       'SEQUOIA': 'sequoia',
@@ -239,13 +222,12 @@ export class ContentManagementService {
   }
 
   getHubById(id: string): Observable<Hub | undefined> {
-    // First check local cache
+
     const cached = this.hubs.value.find(h => h.id === id);
     if (cached) {
       return of(cached);
     }
 
-    // If not in cache, fetch from API
     const hubId = parseInt(id, 10);
     return this.http.get<HubApiDto>(`${this.API_BASE_URL}/admin/hubs/${hubId}`).pipe(
       map(dto => this.mapHubDtoToHub(dto)),
@@ -254,7 +236,7 @@ export class ContentManagementService {
   }
 
   createHub(dto: CreateHubDto): Observable<Hub> {
-    // Generate hub code from name (uppercase, no spaces)
+
     const hubCode = dto.name.toUpperCase().replace(/\s+/g, '_');
 
     const requestDto: HubRequestDto = {
@@ -286,7 +268,6 @@ export class ContentManagementService {
       return throwError(() => new Error('Hub not found'));
     }
 
-    // Generate hub code from name if name changed
     const hubCode = dto.name
       ? dto.name.toUpperCase().replace(/\s+/g, '_')
       : existingHub.name.toUpperCase().replace(/\s+/g, '_');
@@ -320,13 +301,12 @@ export class ContentManagementService {
   deleteHub(id: string): Observable<void> {
     const hubId = parseInt(id, 10);
 
-    // Soft delete by default (hardDelete=false)
     return this.http.delete<void>(`${this.API_BASE_URL}/admin/hubs/${hubId}`).pipe(
       tap(() => {
         const currentHubs = this.hubs.value;
         const index = currentHubs.findIndex(h => h.id === id);
         if (index !== -1) {
-          // Mark as inactive in local state (soft delete)
+
           currentHubs[index] = {
             ...currentHubs[index],
             isActive: false,
@@ -356,14 +336,11 @@ export class ContentManagementService {
     return of(void 0).pipe(delay(this.mockDelay));
   }
 
-  // ============== REPORT GROUP OPERATIONS ==============
-
   private reportGroupsLoaded = false;
 
   getReportGroups(hubId?: string, includeInactive = false): Observable<ReportGroup[]> {
     let params = new HttpParams().set('includeInactive', includeInactive.toString());
 
-    // Use the by-hub endpoint if hubId is provided, otherwise get all
     const url = hubId
       ? `${this.API_BASE_URL}/admin/report-groups/by-hub/${hubId}`
       : `${this.API_BASE_URL}/admin/report-groups`;
@@ -371,7 +348,7 @@ export class ContentManagementService {
     return this.http.get<{ reportGroups: ReportGroupApiDto[] }>(url, { params }).pipe(
       map(response => response.reportGroups.map(dto => this.mapReportGroupDtoToReportGroup(dto))),
       tap(groups => {
-        // Merge with existing groups or replace
+
         if (!hubId) {
           this.reportGroups.next(groups);
         }
@@ -382,13 +359,12 @@ export class ContentManagementService {
   }
 
   getReportGroupById(id: string): Observable<ReportGroup | undefined> {
-    // First check local cache
+
     const cached = this.reportGroups.value.find(g => g.id === id);
     if (cached) {
       return of(cached);
     }
 
-    // If not in cache, fetch from API
     const groupId = parseInt(id, 10);
     return this.http.get<ReportGroupApiDto>(`${this.API_BASE_URL}/admin/report-groups/${groupId}`).pipe(
       map(dto => this.mapReportGroupDtoToReportGroup(dto)),
@@ -443,7 +419,6 @@ export class ContentManagementService {
           this.reportGroups.next([...currentGroups]);
         }
 
-        // Update hub counts if hub changed
         if (dto.hubId && dto.hubId !== oldHubId) {
           this.updateHubCounts(oldHubId);
           this.updateHubCounts(dto.hubId);
@@ -465,7 +440,7 @@ export class ContentManagementService {
         const currentGroups = this.reportGroups.value;
         const index = currentGroups.findIndex(g => g.id === id);
         if (index !== -1) {
-          // Mark as inactive in local state (soft delete)
+
           currentGroups[index] = {
             ...currentGroups[index],
             isActive: false,
@@ -484,9 +459,7 @@ export class ContentManagementService {
     );
   }
 
-  /**
-   * Map API DTO to frontend ReportGroup model
-   */
+  
   private mapReportGroupDtoToReportGroup(dto: ReportGroupApiDto): ReportGroup {
     return {
       id: dto.reportGroupId.toString(),
@@ -496,14 +469,14 @@ export class ContentManagementService {
       sortOrder: dto.sortOrder,
       isActive: dto.isActive,
       createdAt: new Date(dto.createdAt),
-      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      updatedAt: new Date(dto.createdAt),
       createdBy: dto.createdByEmail || 'admin@redwoodtrust.com',
       reportCount: dto.reportCount || 0
     };
   }
 
   reorderReportGroups(hubId: string, groupIds: string[]): Observable<void> {
-    // TODO: Implement reorder API endpoint
+
     const currentGroups = this.reportGroups.value;
 
     groupIds.forEach((id, index) => {
@@ -517,8 +490,6 @@ export class ContentManagementService {
     this.reportGroups.next([...currentGroups]);
     return of(void 0).pipe(delay(this.mockDelay));
   }
-
-  // ============== REPORT OPERATIONS ==============
 
   private reportsLoaded = false;
 
@@ -540,13 +511,12 @@ export class ContentManagementService {
   }
 
   getReportById(id: string): Observable<Report | undefined> {
-    // First check local cache
+
     const cached = this.reports.value.find(r => r.id === id);
     if (cached) {
       return of(cached);
     }
 
-    // If not in cache, fetch from API
     const reportId = parseInt(id, 10);
     return this.http.get<ReportApiDto>(`${this.API_BASE_URL}/admin/reports/${reportId}`).pipe(
       map(dto => this.mapReportDtoToReport(dto)),
@@ -621,7 +591,7 @@ export class ContentManagementService {
         const currentReports = this.reports.value;
         const index = currentReports.findIndex(r => r.id === id);
         if (index !== -1) {
-          // Mark as inactive in local state (soft delete)
+
           currentReports[index] = {
             ...currentReports[index],
             isActive: false,
@@ -636,9 +606,7 @@ export class ContentManagementService {
     );
   }
 
-  /**
-   * Map API DTO to frontend Report model
-   */
+  
   private mapReportDtoToReport(dto: ReportApiDto): Report {
     return {
       id: dto.reportId.toString(),
@@ -678,10 +646,8 @@ export class ContentManagementService {
     return of(void 0).pipe(delay(this.mockDelay));
   }
 
-  // ============== POWER BI DISCOVERY ==============
-
   getWorkspaces(): Observable<PowerBIWorkspace[]> {
-    // Mock workspaces
+
     const mockWorkspaces: PowerBIWorkspace[] = [
       { id: 'ws-001', name: 'Finance Reports', type: 'Workspace', isReadOnly: false },
       { id: 'ws-002', name: 'Operations Analytics', type: 'Workspace', isReadOnly: false },
@@ -691,7 +657,7 @@ export class ContentManagementService {
   }
 
   getWorkspaceReports(workspaceId: string): Observable<PowerBIReport[]> {
-    // Mock reports for workspaces
+
     const mockReports: Record<string, PowerBIReport[]> = {
       'ws-001': [
         { id: 'pbi-001', name: 'Financial Overview', webUrl: '', embedUrl: 'https://app.powerbi.com/embed', reportType: 'PowerBIReport' },
@@ -761,8 +727,6 @@ export class ContentManagementService {
     return of(result).pipe(delay(this.mockDelay * 2));
   }
 
-  // ============== DEPARTMENT OPERATIONS ==============
-
   getDepartments(includeInactive = false): Observable<Department[]> {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
 
@@ -776,9 +740,7 @@ export class ContentManagementService {
     );
   }
 
-  /**
-   * Map API DTO to frontend Department model
-   */
+  
   private mapDepartmentDtoToDepartment(dto: DepartmentApiDto): Department {
     return {
       id: dto.departmentId.toString(),
@@ -787,19 +749,18 @@ export class ContentManagementService {
       sortOrder: dto.sortOrder,
       isActive: dto.isActive,
       createdAt: new Date(dto.createdAt),
-      updatedAt: new Date(dto.createdAt), // API doesn't return updatedAt yet
+      updatedAt: new Date(dto.createdAt),
       createdBy: dto.createdByEmail || 'admin@redwoodtrust.com'
     };
   }
 
   getDepartmentById(id: string): Observable<Department | undefined> {
-    // First check local cache
+
     const cached = this.departments.value.find(d => d.id === id);
     if (cached) {
       return of(cached);
     }
 
-    // If not in cache, fetch from API
     const deptId = parseInt(id, 10);
     return this.http.get<DepartmentApiDto>(`${this.API_BASE_URL}/admin/departments/${deptId}`).pipe(
       map(dto => this.mapDepartmentDtoToDepartment(dto)),
@@ -808,7 +769,7 @@ export class ContentManagementService {
   }
 
   createDepartment(dto: CreateDepartmentDto): Observable<Department> {
-    // Generate department code from name (uppercase, no spaces)
+
     const deptCode = dto.name.toUpperCase().replace(/\s+/g, '_');
 
     const requestDto: CreateDepartmentRequestDto = {
@@ -862,13 +823,12 @@ export class ContentManagementService {
   deleteDepartment(id: string): Observable<void> {
     const deptId = parseInt(id, 10);
 
-    // Soft delete by default (hardDelete=false)
     return this.http.delete<void>(`${this.API_BASE_URL}/admin/departments/${deptId}`).pipe(
       tap(() => {
         const currentDepartments = this.departments.value;
         const index = currentDepartments.findIndex(d => d.id === id);
         if (index !== -1) {
-          // Mark as inactive in local state (soft delete)
+
           currentDepartments[index] = {
             ...currentDepartments[index],
             isActive: false,
@@ -882,8 +842,6 @@ export class ContentManagementService {
       })
     );
   }
-
-  // ============== HELPER METHODS ==============
 
   private generateId(prefix: string): string {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

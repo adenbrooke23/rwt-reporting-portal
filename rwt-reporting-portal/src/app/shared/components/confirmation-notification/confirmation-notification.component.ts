@@ -20,7 +20,7 @@ export class ConfirmationNotificationComponent implements OnInit {
   }
 
   getNotificationType(type: string): 'error' | 'info' | 'warning' {
-    // Map to Carbon types
+
     if (type === 'danger') return 'error';
     if (type === 'info') return 'info';
     return 'warning';

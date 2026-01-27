@@ -29,7 +29,7 @@ export class HeaderComponent {
   isProfileDropdownOpen = false;
 
   constructor() {
-    // Register Carbon icons
+
     this.iconService.registerAll([Search, Notification, Settings, Logout, ChevronDown]);
   }
 
@@ -60,7 +60,6 @@ export class HeaderComponent {
 
     const userProfile = this.currentUser as UserProfile;
 
-    // Use displayName if available
     if (userProfile.displayName) {
       return userProfile.displayName;
     }
@@ -103,11 +102,11 @@ export class HeaderComponent {
   }
 
   handleSearch(): void {
-    // TODO: Implement global search functionality
+
   }
 
   handleNotifications(): void {
-    // Show example notifications
+
     const examples = [
       { type: 'info', title: 'New Report Available', message: 'The Q4 Financial Report is now ready to view' },
       { type: 'success', title: 'Export Complete', message: 'Your data export has been successfully generated' },

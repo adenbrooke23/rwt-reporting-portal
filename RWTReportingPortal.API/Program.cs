@@ -6,7 +6,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -16,10 +15,8 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add services to the container
 builder.Services.AddControllers();
 
-// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -30,7 +27,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API for RWT Reporting Portal - Power BI and SSRS Report Management"
     });
 
-    // Add JWT Bearer auth to Swagger
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
@@ -56,15 +52,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Custom Services (Authentication, Repositories, etc.)
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp", policy =>
@@ -81,7 +74,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -91,10 +83,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Global error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Activity tracking (for idle timeout)
 app.UseMiddleware<ActivityTrackingMiddleware>();
 
 app.UseHttpsRedirection();
@@ -104,12 +94,10 @@ app.UseCors("AllowAngularApp");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Audit logging for sensitive operations
 app.UseMiddleware<AuditLoggingMiddleware>();
 
 app.MapControllers();
 
-// Log startup
 Log.Information("RWT Reporting Portal API started at {Time}", DateTime.UtcNow);
 
 app.Run();

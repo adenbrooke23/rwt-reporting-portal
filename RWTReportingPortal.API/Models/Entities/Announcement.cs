@@ -19,7 +19,6 @@ public class Announcement
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
-    // Navigation properties
     public User? Author { get; set; }
     public User? DeletedByUser { get; set; }
 }

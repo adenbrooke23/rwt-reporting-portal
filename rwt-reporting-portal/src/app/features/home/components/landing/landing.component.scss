@@ -5,15 +5,14 @@
   background: var(--color-bg-secondary);
 }
 
-// Hero Section - Sleek and centered
 .hero {
   background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-tertiary) 100%);
   border-bottom: 1px solid var(--color-border-light);
-  padding: spacing.$spacing-08 spacing.$spacing-06; // Reduced from spacing-10 (64px) to spacing-08 (40px)
+  padding: spacing.$spacing-08 spacing.$spacing-06;
   text-align: center;
 
   @media (max-width: 768px) {
-    padding: spacing.$spacing-07 spacing.$spacing-05; // Reduced from spacing-09 (48px) to spacing-07 (32px)
+    padding: spacing.$spacing-07 spacing.$spacing-05;
   }
 }
 
@@ -27,7 +26,7 @@
 }
 
 .hero-title {
-  font-size: 2.5rem; // 40px
+  font-size: 2.5rem;
   font-weight: 300;
   color: var(--color-text-primary);
   margin: 0;
@@ -35,16 +34,16 @@
   line-height: 1.2;
 
   @media (max-width: 768px) {
-    font-size: 2rem; // 32px
+    font-size: 2rem;
   }
 
   @media (max-width: 480px) {
-    font-size: 1.75rem; // 28px
+    font-size: 1.75rem;
   }
 }
 
 .hero-subtitle {
-  font-size: 1.125rem; // 18px
+  font-size: 1.125rem;
   font-weight: 400;
   color: var(--color-text-primary);
   margin: 0;
@@ -56,7 +55,7 @@
 }
 
 .hero-description {
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   color: var(--color-text-secondary);
   margin: 0;
   line-height: 1.6;
@@ -107,13 +106,12 @@
   transform: translateX(3px);
 }
 
-// Latest Updates Section - ArticleCard Pattern
 .updates-section {
-  padding: spacing.$spacing-07 spacing.$spacing-06; // Reduced from spacing-09 (48px) to spacing-07 (32px)
+  padding: spacing.$spacing-07 spacing.$spacing-06;
   background: var(--color-bg-secondary);
 
   @media (max-width: 768px) {
-    padding: spacing.$spacing-06 spacing.$spacing-05; // Reduced from spacing-08 (40px) to spacing-06 (24px)
+    padding: spacing.$spacing-06 spacing.$spacing-05;
   }
 }
 
@@ -122,13 +120,12 @@
   margin: 0 auto;
 }
 
-// Section Header with "View All Updates" link
 .section-header {
   display: flex;
-  justify-content: flex-start; // Keep items close together, not spread apart
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: spacing.$spacing-05;
-  gap: spacing.$spacing-06; // 24px gap between title and link
+  gap: spacing.$spacing-06;
 
   @media (max-width: 640px) {
     flex-direction: column;
@@ -138,24 +135,23 @@
 }
 
 .section-title {
-  font-size: 1.75rem; // 28px
+  font-size: 1.75rem;
   font-weight: 400;
   line-height: 1.29;
   margin: 0;
   color: var(--color-text-primary);
 
   @media (max-width: 768px) {
-    font-size: 1.5rem; // 24px
+    font-size: 1.5rem;
   }
 }
 
-// View All Updates Link with Carbon arrow
 .view-all-link {
   display: inline-flex;
   align-items: center;
   gap: spacing.$spacing-03;
   padding: spacing.$spacing-03 spacing.$spacing-04;
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   font-weight: 400;
   color: var(--color-primary);
   text-decoration: none;
@@ -184,19 +180,17 @@
   }
 }
 
-// Card Grid Layout - Compact layout
 .updates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); // Reduced from 256px to 200px
-  gap: spacing.$spacing-04; // Reduced from spacing-05 (16px) to spacing-04 (12px)
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: spacing.$spacing-04;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: spacing.$spacing-04; // 12px - tighter on mobile
+    gap: spacing.$spacing-04;
   }
 }
 
-// Article Cards - Gatsby Carbon Design Pattern
 .article-card {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
@@ -213,7 +207,7 @@
 
 .card-image {
   width: 100%;
-  height: 140px; // Reduced from 200px to 140px
+  height: 140px;
   overflow: hidden;
   background: var(--color-bg-tertiary);
 
@@ -235,7 +229,7 @@
 
 .card-subtitle {
   margin: 0;
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   font-weight: 400;
   line-height: 1.33;
@@ -243,7 +237,7 @@
 
 .card-title {
   margin: 0;
-  font-size: 1.25rem; // 20px
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.4;
@@ -268,7 +262,7 @@
 
 .card-author {
   margin: 0;
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   color: var(--color-text-primary);
   font-weight: 400;
   line-height: 1.43;
@@ -276,7 +270,7 @@
 
 .card-meta {
   margin: 0;
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   font-weight: 400;
   line-height: 1.33;
@@ -289,7 +283,6 @@
   color: var(--color-text-secondary);
 }
 
-// Responsive adjustments
 @media (max-width: 480px) {
   .hero-content {
     gap: spacing.$spacing-04;

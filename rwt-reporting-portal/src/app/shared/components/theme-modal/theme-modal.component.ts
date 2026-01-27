@@ -33,14 +33,13 @@ export class ThemeModalComponent implements OnInit {
     this.selectedTheme = this.themeService.getCurrentTheme();
     this.originalTheme = this.selectedTheme;
 
-    // Split themes into categories
     this.carbonThemes = AVAILABLE_THEMES.filter(t => !t.isBusiness);
     this.businessThemes = AVAILABLE_THEMES.filter(t => t.isBusiness);
   }
 
   selectTheme(themeId: Theme): void {
     this.selectedTheme = themeId;
-    // Apply theme immediately for preview
+
     this.themeService.setTheme(themeId);
   }
 
@@ -53,7 +52,7 @@ export class ThemeModalComponent implements OnInit {
   }
 
   onCancel(): void {
-    // Revert to original theme if changed
+
     if (this.hasChanges()) {
       this.themeService.setTheme(this.originalTheme);
       this.selectedTheme = this.originalTheme;
@@ -62,7 +61,7 @@ export class ThemeModalComponent implements OnInit {
   }
 
   onSave(): void {
-    // Theme is already applied, just update original and close
+
     this.originalTheme = this.selectedTheme;
     this.closeModal.emit();
   }

@@ -48,7 +48,6 @@
   padding: 0 spacing.$spacing-06;
 }
 
-// Toolbar
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -93,7 +92,6 @@
   gap: spacing.$spacing-03;
 }
 
-// Table
 .table-container {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
@@ -195,7 +193,6 @@
   }
 }
 
-// Modal Form
 .modal-form {
   display: flex;
   flex-direction: column;

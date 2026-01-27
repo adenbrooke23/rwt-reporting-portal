@@ -1,17 +1,16 @@
-<!-- Loading state - prevents flash -->
+
 <div *ngIf="isLoading" class="app-loading"></div>
 
-<!-- Authenticated Layout (with header and sidebar) -->
 <ng-container *ngIf="!isLoading && showHeader">
-  <!-- Global Header -->
+  
   <app-global-header
     [sidebarOpen]="sidebarOpen"
     (menuToggled)="onMenuToggle()"></app-global-header>
 
-  <!-- Sidebar -->
+  
   <app-sidebar (sidebarToggled)="onSidebarToggle($event)"></app-sidebar>
 
-  <!-- Main Content -->
+  
   <div class="app-container" [class.with-sidebar]="sidebarOpen">
     <main class="main-content">
       <router-outlet></router-outlet>
@@ -19,20 +18,16 @@
   </div>
 </ng-container>
 
-<!-- Unauthenticated Layout (login page - no sidebar) -->
 <ng-container *ngIf="!isLoading && !showHeader">
   <router-outlet></router-outlet>
 </ng-container>
 
-<!-- Idle Warning Modal -->
 <app-idle-warning-modal
   *ngIf="showIdleWarning"
   [remainingSeconds]="remainingSeconds"
   (stayActive)="onStayActive()"
 ></app-idle-warning-modal>
 
-<!-- Toast Notifications -->
 <app-toast-notification></app-toast-notification>
 
-<!-- Confirmation Notifications -->
 <app-confirmation-notification></app-confirmation-notification>

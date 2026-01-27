@@ -20,9 +20,9 @@ export interface AdminUserDto {
   lastLoginAt?: string;
   loginCount: number;
   createdAt: string;
-  departmentCount?: number; // Number of departments user belongs to
-  hubCount?: number; // Number of hubs user has access to (ad-hoc)
-  reportCount?: number; // Number of reports user has access to (ad-hoc)
+  departmentCount?: number;
+  hubCount?: number;
+  reportCount?: number;
 }
 
 export interface PaginationInfo {
@@ -127,9 +127,7 @@ export class AdminUserService {
   private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
   private readonly ADMIN_USERS_URL = `${this.API_BASE_URL}/admin/users`;
 
-  /**
-   * Get all users with pagination and search
-   */
+  
   getAllUsers(
     page = 1,
     pageSize = 50,
@@ -159,9 +157,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Get user permissions (departments, hubs, reports)
-   */
+  
   getUserPermissions(userId: number): Observable<UserPermissionsResponse> {
     return this.http.get<UserPermissionsResponse>(`${this.ADMIN_USERS_URL}/${userId}/permissions`).pipe(
       catchError(error => {
@@ -171,9 +167,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Get user's department memberships
-   */
+  
   getUserDepartments(userId: number): Observable<string[]> {
     return this.http.get<{ userId: number; email: string; departments: UserDepartmentPermissionDto[] }>(
       `${this.ADMIN_USERS_URL}/${userId}/departments`
@@ -186,9 +180,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Assign user to department
-   */
+  
   assignUserToDepartment(userId: number, departmentId: number): Observable<{ success: boolean }> {
     return this.http.post<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/departments`,
@@ -201,9 +193,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Remove user from department
-   */
+  
   removeUserFromDepartment(userId: number, departmentId: number): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/departments/${departmentId}`
@@ -215,9 +205,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Lock user account
-   */
+  
   lockUser(userId: number, reason?: string): Observable<{ success: boolean }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/lock`,
@@ -230,9 +218,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Unlock user account
-   */
+  
   unlockUser(userId: number): Observable<{ success: boolean }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/unlock`,
@@ -245,9 +231,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Expire user account
-   */
+  
   expireUser(userId: number, reason?: string): Observable<{ success: boolean }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/expire`,
@@ -260,9 +244,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Restore expired user account
-   */
+  
   restoreUser(userId: number): Observable<{ success: boolean }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/restore`,
@@ -275,9 +257,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Grant hub access to user
-   */
+  
   grantHubAccess(userId: number, hubId: number, expiresAt?: Date): Observable<{ success: boolean }> {
     return this.http.post<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/permissions/hub`,
@@ -290,9 +270,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Revoke hub access from user
-   */
+  
   revokeHubAccess(userId: number, hubId: number): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/permissions/hub/${hubId}`
@@ -304,9 +282,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Grant report access to user
-   */
+  
   grantReportAccess(userId: number, reportId: number, expiresAt?: Date): Observable<{ success: boolean }> {
     return this.http.post<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/permissions/report`,
@@ -319,9 +295,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Revoke report access from user
-   */
+  
   revokeReportAccess(userId: number, reportId: number): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/permissions/report/${reportId}`
@@ -333,9 +307,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Get all departments
-   */
+  
   getAllDepartments(includeInactive = false): Observable<DepartmentDto[]> {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
     return this.http.get<{ departments: DepartmentDto[] }>(
@@ -350,9 +322,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Get all hubs with their reports (for permission management UI)
-   */
+  
   getHubsWithReports(includeInactive = false): Observable<HubWithReportsDto[]> {
     const params = new HttpParams().set('includeInactive', includeInactive.toString());
     return this.http.get<{ hubs: HubWithReportsDto[] }>(
@@ -367,9 +337,7 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Update user admin role (grant or revoke)
-   */
+  
   updateUserAdminRole(userId: number, isAdmin: boolean): Observable<{ success: boolean }> {
     return this.http.put<{ success: boolean; message: string }>(
       `${this.ADMIN_USERS_URL}/${userId}/roles/admin`,
@@ -382,11 +350,9 @@ export class AdminUserService {
     );
   }
 
-  /**
-   * Map API DTO to frontend UserProfile model
-   */
+  
   private mapToUserProfile(dto: AdminUserDto): UserProfile {
-    // Determine account status
+
     let accountStatus: 'active' | 'locked' | 'expired' = 'active';
     if (dto.isExpired) {
       accountStatus = 'expired';
@@ -396,14 +362,10 @@ export class AdminUserService {
       accountStatus = 'locked';
     }
 
-    // Create placeholder array for groups based on departmentCount
-    // This allows the UI to show the count without having the full list
     const groups = dto.departmentCount
       ? Array(dto.departmentCount).fill('dept')
       : [];
 
-    // Create placeholder array for permissions based on reportCount
-    // Combined hub + report ad-hoc permissions
     const totalPermissions = (dto.hubCount || 0) + (dto.reportCount || 0);
     const permissions = totalPermissions > 0
       ? Array(totalPermissions).fill('permission')

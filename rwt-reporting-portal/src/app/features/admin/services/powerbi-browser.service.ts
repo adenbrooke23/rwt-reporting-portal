@@ -55,9 +55,7 @@ export class PowerBIBrowserService {
   private selectedWorkspace = new BehaviorSubject<PowerBIWorkspace | null>(null);
   selectedWorkspace$ = this.selectedWorkspace.asObservable();
 
-  /**
-   * Get Power BI configuration status
-   */
+  
   getConfig(): Observable<PowerBIConfigResponse> {
     return this.http.get<PowerBIConfigResponse>(`${this.API_BASE_URL}/admin/powerbi/config`).pipe(
       catchError(() => of({
@@ -68,9 +66,7 @@ export class PowerBIBrowserService {
     );
   }
 
-  /**
-   * Test Power BI connection
-   */
+  
   testConnection(): Observable<{ isConnected: boolean; error?: string }> {
     return this.http.get<{ isConnected: boolean; error?: string }>(
       `${this.API_BASE_URL}/admin/powerbi/test`
@@ -79,9 +75,7 @@ export class PowerBIBrowserService {
     );
   }
 
-  /**
-   * Get all workspaces the service principal has access to
-   */
+  
   getWorkspaces(): Observable<PowerBIWorkspace[]> {
     this.isLoading.next(true);
 
@@ -98,9 +92,7 @@ export class PowerBIBrowserService {
     );
   }
 
-  /**
-   * Get all reports in a specific workspace
-   */
+  
   getWorkspaceReports(workspaceId: string): Observable<PowerBIReport[]> {
     this.isLoading.next(true);
 
@@ -117,16 +109,12 @@ export class PowerBIBrowserService {
     );
   }
 
-  /**
-   * Set the currently selected workspace
-   */
+  
   setSelectedWorkspace(workspace: PowerBIWorkspace | null): void {
     this.selectedWorkspace.next(workspace);
   }
 
-  /**
-   * Get embed info for a report
-   */
+  
   getEmbedInfo(workspaceId: string, reportId: string): Observable<{
     embedUrl: string;
     embedToken: string;
@@ -141,9 +129,7 @@ export class PowerBIBrowserService {
     }>(`${this.API_BASE_URL}/admin/powerbi/workspaces/${workspaceId}/reports/${reportId}/embed`);
   }
 
-  /**
-   * Get report type display name
-   */
+  
   getReportTypeLabel(reportType: string): string {
     switch (reportType) {
       case 'PowerBIReport':

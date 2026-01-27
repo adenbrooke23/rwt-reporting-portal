@@ -1,28 +1,17 @@
 import { User } from './auth.models';
 
-/**
- * Report Types:
- * - 'PowerBI' - Power BI interactive reports (embedded via Power BI service)
- * - 'SSRS' - On-premises SSRS/PBIRS reports (requires SSRS server)
- * - 'Paginated' - Paginated/RDL reports (can be on Power BI service or SSRS)
- */
 export type ReportType = 'SSRS' | 'PowerBI' | 'Paginated';
 
-/**
- * Report embedding configuration
- */
 export interface ReportEmbedConfig {
-  // For Power BI reports
-  embedUrl?: string;           // Full embed URL for Power BI
-  workspaceId?: string;        // Power BI workspace ID
-  reportId?: string;           // Power BI report ID
 
-  // For SSRS/PBIRS reports
-  serverUrl?: string;          // SSRS server base URL (e.g., http://server/ReportServer)
-  reportPath?: string;         // Report path on server (e.g., /Folder/ReportName)
+  embedUrl?: string;
+  workspaceId?: string;
+  reportId?: string;
 
-  // For Paginated reports on Power BI
-  paginatedReportId?: string;  // Power BI paginated report ID
+  serverUrl?: string;
+  reportPath?: string;
+
+  paginatedReportId?: string;
 }
 
 export interface SubReport {
@@ -31,7 +20,7 @@ export interface SubReport {
   description: string;
   route: string;
   type: ReportType;
-  embedConfig?: ReportEmbedConfig;  // Optional embed configuration
+  embedConfig?: ReportEmbedConfig;
 }
 
 export interface ReportCategory {
@@ -49,9 +38,9 @@ export interface UserPermissions {
 export interface UserProfile extends User {
   createdAt: Date;
   groups: string[];
-  businessBranch?: 'corevest' | 'sequoia' | 'enterprise'; // Business branch for theme customization
-  avatarId?: string; // Selected avatar ID
-  displayName?: string; // Formatted display name (e.g., "Zachary Schmidt")
+  businessBranch?: 'corevest' | 'sequoia' | 'enterprise';
+  avatarId?: string;
+  displayName?: string;
 }
 
 export interface Group {
@@ -112,7 +101,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
         description: 'On-premises SSRS paginated report demo',
         route: '/hub/sequoia/report/sample-ssrs-report',
         type: 'SSRS'
-        // No embedConfig - will show configuration required message
+
       },
       {
         id: 'sample-paginated-report',
@@ -120,7 +109,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
         description: 'Paginated/RDL report on Power BI service',
         route: '/hub/sequoia/report/sample-paginated-report',
         type: 'Paginated'
-        // No embedConfig - will show configuration required message
+
       }
     ]
   },

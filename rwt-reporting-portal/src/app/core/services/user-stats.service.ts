@@ -14,12 +14,9 @@ export class UserStatsService {
   private authService = inject(AuthService);
   private mockUserService = inject(MockUserService);
 
-  // Mock recent views data (would come from ReportAccessLog in real API)
   private recentViewsCount = 24;
 
-  /**
-   * Get dashboard statistics for the current user
-   */
+  
   getUserStats(): Observable<UserStats> {
     const currentUser = this.authService.getCurrentUser();
 
@@ -31,7 +28,6 @@ export class UserStatsService {
       }).pipe(delay(200));
     }
 
-    // Get user's available reports based on permissions
     const userReports = this.mockUserService.getUserReports(currentUser.id);
     const pinnedReports = this.quickAccessService.getPinnedReports();
 
@@ -42,9 +38,7 @@ export class UserStatsService {
     }).pipe(delay(300));
   }
 
-  /**
-   * Get quick stats formatted for dashboard display
-   */
+  
   getQuickStats(): Observable<QuickStat[]> {
     return this.getUserStats().pipe(
       map(stats => [
@@ -55,9 +49,7 @@ export class UserStatsService {
     );
   }
 
-  /**
-   * Get quick stats with live updates for pinned favorites
-   */
+  
   getQuickStatsLive(): Observable<QuickStat[]> {
     const currentUser = this.authService.getCurrentUser();
 
@@ -80,17 +72,12 @@ export class UserStatsService {
     );
   }
 
-  /**
-   * Increment recent views count (called when user views a report)
-   * In real implementation, this would be handled by the API
-   */
+  
   incrementRecentViews(): void {
     this.recentViewsCount++;
   }
 
-  /**
-   * Reset recent views count (for testing)
-   */
+  
   resetRecentViews(): void {
     this.recentViewsCount = 0;
   }

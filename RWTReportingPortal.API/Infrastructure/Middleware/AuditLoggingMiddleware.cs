@@ -11,7 +11,6 @@ public class AuditLoggingMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<AuditLoggingMiddleware> _logger;
 
-    // Paths that require audit logging
     private static readonly string[] AuditablePaths = new[]
     {
         "/api/admin/",
@@ -30,7 +29,6 @@ public class AuditLoggingMiddleware
         var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
         var method = context.Request.Method;
 
-        // Only audit modifying operations on auditable paths
         var shouldAudit = AuditablePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase))
             && (method == "POST" || method == "PUT" || method == "DELETE" || method == "PATCH");
 
@@ -41,7 +39,6 @@ public class AuditLoggingMiddleware
             var ipAddress = context.Connection.RemoteIpAddress?.ToString();
             var userAgent = context.Request.Headers.UserAgent.ToString();
 
-            // Read request body for POST/PUT/PATCH
             string? requestBody = null;
             if (method != "DELETE" && context.Request.ContentLength > 0)
             {
@@ -52,10 +49,9 @@ public class AuditLoggingMiddleware
                     detectEncodingFromByteOrderMarks: false,
                     leaveOpen: true);
                 requestBody = await reader.ReadToEndAsync();
-                context.Request.Body.Position = 0; // Reset for controller
+                context.Request.Body.Position = 0;
             }
 
-            // Parse the path and body to extract entity info and build description
             var (entityType, entityId, description, newValues) = ParsePathForAudit(method, path, requestBody, userEmail);
 
             try
@@ -74,7 +70,7 @@ public class AuditLoggingMiddleware
             }
             catch (Exception ex)
             {
-                // Don't fail the request if audit logging fails
+
                 _logger.LogWarning(ex, "Failed to write audit log for {Method} {Path}", method, path);
             }
         }
@@ -88,13 +84,10 @@ public class AuditLoggingMiddleware
         return int.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
-    /// <summary>
-    /// Parse the API path and request body to extract entity information and build a meaningful description.
-    /// </summary>
     private static (string? entityType, int? entityId, string description, object? newValues) ParsePathForAudit(
         string method, string path, string? requestBody, string? performedByEmail)
     {
-        // Try to parse request body as JSON for newValues
+
         JsonElement? bodyJson = null;
         if (!string.IsNullOrEmpty(requestBody))
         {
@@ -104,11 +97,10 @@ public class AuditLoggingMiddleware
             }
             catch
             {
-                // Body isn't valid JSON, that's ok
+
             }
         }
 
-        // Build a structured audit record
         object? BuildNewValues(object additionalData) => new
         {
             PerformedBy = performedByEmail,
@@ -117,7 +109,6 @@ public class AuditLoggingMiddleware
             Details = additionalData
         };
 
-        // Pattern: /api/admin/users/{userId}/departments/{deptId}
         var userDeptMatch = Regex.Match(path, @"/api/admin/users/(\d+)/departments/(\d+)", RegexOptions.IgnoreCase);
         if (userDeptMatch.Success)
         {
@@ -128,7 +119,6 @@ public class AuditLoggingMiddleware
             return ("UserDepartment", targetUserId, $"{action} - TargetUserId: {targetUserId}, DepartmentId: {deptId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/hubs/{hubId}
         var userHubMatch = Regex.Match(path, @"/api/admin/users/(\d+)/hubs/(\d+)", RegexOptions.IgnoreCase);
         if (userHubMatch.Success)
         {
@@ -139,7 +129,6 @@ public class AuditLoggingMiddleware
             return ("UserHubAccess", targetUserId, $"{action} - TargetUserId: {targetUserId}, HubId: {hubId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/reports/{reportId}
         var userReportMatch = Regex.Match(path, @"/api/admin/users/(\d+)/reports/(\d+)", RegexOptions.IgnoreCase);
         if (userReportMatch.Success)
         {
@@ -150,7 +139,6 @@ public class AuditLoggingMiddleware
             return ("UserReportAccess", targetUserId, $"{action} - TargetUserId: {targetUserId}, ReportId: {reportId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/admin
         var userAdminMatch = Regex.Match(path, @"/api/admin/users/(\d+)/admin", RegexOptions.IgnoreCase);
         if (userAdminMatch.Success)
         {
@@ -161,7 +149,6 @@ public class AuditLoggingMiddleware
             return ("User", targetUserId, $"{action} - TargetUserId: {targetUserId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/lock
         var userLockMatch = Regex.Match(path, @"/api/admin/users/(\d+)/lock", RegexOptions.IgnoreCase);
         if (userLockMatch.Success)
         {
@@ -171,7 +158,6 @@ public class AuditLoggingMiddleware
             return ("User", targetUserId, $"Locked user account - TargetUserId: {targetUserId}, Reason: {reason ?? "Not specified"}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/unlock
         var userUnlockMatch = Regex.Match(path, @"/api/admin/users/(\d+)/unlock", RegexOptions.IgnoreCase);
         if (userUnlockMatch.Success)
         {
@@ -180,7 +166,6 @@ public class AuditLoggingMiddleware
             return ("User", targetUserId, $"Unlocked user account - TargetUserId: {targetUserId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/expire
         var userExpireMatch = Regex.Match(path, @"/api/admin/users/(\d+)/expire", RegexOptions.IgnoreCase);
         if (userExpireMatch.Success)
         {
@@ -191,7 +176,6 @@ public class AuditLoggingMiddleware
             return ("User", targetUserId, $"Expired user account - TargetUserId: {targetUserId}, Reason: {reason ?? "Not specified"}, Ticket: {ticketNumber ?? "None"}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/users/{userId}/restore
         var userRestoreMatch = Regex.Match(path, @"/api/admin/users/(\d+)/restore", RegexOptions.IgnoreCase);
         if (userRestoreMatch.Success)
         {
@@ -200,7 +184,6 @@ public class AuditLoggingMiddleware
             return ("User", targetUserId, $"Restored user account - TargetUserId: {targetUserId}", BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/hubs/{id}
         var hubMatch = Regex.Match(path, @"/api/admin/hubs/?(\d+)?", RegexOptions.IgnoreCase);
         if (hubMatch.Success && path.Contains("/hubs"))
         {
@@ -219,7 +202,6 @@ public class AuditLoggingMiddleware
             return ("Hub", hubId, desc, BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/departments/{id}
         var deptMatch = Regex.Match(path, @"/api/admin/departments/?(\d+)?", RegexOptions.IgnoreCase);
         if (deptMatch.Success && path.Contains("/departments"))
         {
@@ -238,7 +220,6 @@ public class AuditLoggingMiddleware
             return ("Department", deptId, desc, BuildNewValues(details));
         }
 
-        // Pattern: /api/admin/reports/{id}
         var reportMatch = Regex.Match(path, @"/api/admin/reports/?(\d+)?", RegexOptions.IgnoreCase);
         if (reportMatch.Success && path.Contains("/reports"))
         {
@@ -258,7 +239,6 @@ public class AuditLoggingMiddleware
             return ("Report", reportId, desc, BuildNewValues(details));
         }
 
-        // Pattern: /api/auth/login or /api/auth/logout
         if (path.Contains("/api/auth/login"))
         {
             var email = bodyJson?.TryGetProperty("email", out var emailProp) == true ? emailProp.GetString() : null;
@@ -271,7 +251,6 @@ public class AuditLoggingMiddleware
             return ("Auth", null, "User logout", BuildNewValues(details));
         }
 
-        // Default fallback - still capture the request body
         var defaultDetails = new { Path = path, Method = method };
         return (null, null, $"{method} operation on {path}", BuildNewValues(defaultDetails));
     }

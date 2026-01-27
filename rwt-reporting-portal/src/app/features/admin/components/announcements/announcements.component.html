@@ -55,7 +55,7 @@
           <p *ngIf="!searchQuery && showDeleted">No deleted announcements found.</p>
         </div>
 
-        <!-- Pagination -->
+        
         <div *ngIf="totalItems > 0" class="pagination-wrapper">
           <ibm-pagination
             [model]="{ currentPage: currentPage, pageLength: pageSize, totalDataLength: totalItems }"
@@ -67,14 +67,12 @@
   </main>
 </div>
 
-<!-- Status Template -->
 <ng-template #statusTemplate let-data="data">
   <ibm-tag [type]="getStatusType(data)">
     {{ getStatusLabel(data) }}
   </ibm-tag>
 </ng-template>
 
-<!-- Featured Template -->
 <ng-template #featuredTemplate let-data="data">
   <button
     class="featured-btn"
@@ -87,7 +85,6 @@
   </button>
 </ng-template>
 
-<!-- Actions Template -->
 <ng-template #actionsTemplate let-data="data">
   <div class="action-buttons">
     <ng-container *ngIf="!data.isDeleted">
@@ -134,7 +131,6 @@
   </div>
 </ng-template>
 
-<!-- Create/Edit Modal -->
 <cds-modal
   [open]="showModal"
   (close)="closeModal()"
@@ -145,7 +141,7 @@
 
   <section cdsModalContent>
     <div class="form-grid">
-      <!-- Title -->
+      
       <div class="form-field full-width">
         <label class="form-label">Title *</label>
         <input
@@ -155,7 +151,7 @@
           [size]="'md'">
       </div>
 
-      <!-- Category / Subtitle -->
+      
       <div class="form-field">
         <label class="form-label">Category</label>
         <select class="form-select" [(ngModel)]="formData.subtitle">
@@ -164,7 +160,7 @@
         </select>
       </div>
 
-      <!-- Author Name -->
+      
       <div class="form-field">
         <label class="form-label">Author Name</label>
         <input
@@ -174,7 +170,7 @@
           [size]="'md'">
       </div>
 
-      <!-- Image Path -->
+      
       <div class="form-field">
         <label class="form-label">Image</label>
         <select class="form-select" [(ngModel)]="formData.imagePath">
@@ -182,7 +178,7 @@
         </select>
       </div>
 
-      <!-- Read Time -->
+      
       <div class="form-field">
         <label class="form-label">Read Time (minutes)</label>
         <input
@@ -194,7 +190,7 @@
           [size]="'md'">
       </div>
 
-      <!-- Content -->
+      
       <div class="form-field full-width">
         <label class="form-label">Content</label>
         <textarea
@@ -205,7 +201,7 @@
         </textarea>
       </div>
 
-      <!-- Toggles -->
+      
       <div class="form-field toggle-group">
         <label class="toggle-label">
           <input type="checkbox" [(ngModel)]="formData.isFeatured">

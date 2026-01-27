@@ -9,7 +9,6 @@ public class UserHubAccess
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ExpiresAt { get; set; }
 
-    // Navigation properties
     public User User { get; set; } = null!;
     public ReportingHub Hub { get; set; } = null!;
 }

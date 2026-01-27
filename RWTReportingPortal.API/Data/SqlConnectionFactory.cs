@@ -3,10 +3,6 @@ using System.Data;
 
 namespace RWTReportingPortal.API.Data;
 
-/// <summary>
-/// Factory for creating SQL Server database connections.
-/// Used by services to call stored procedures via ADO.NET.
-/// </summary>
 public interface ISqlConnectionFactory
 {
     IDbConnection CreateConnection();

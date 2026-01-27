@@ -24,10 +24,7 @@ export class HubService {
   private http = inject(HttpClient);
   private readonly API_BASE_URL = 'https://erpqaapi.redwoodtrust.com/api';
 
-  /**
-   * Get all hubs accessible to the current user
-   * Based on: admin role, department access, or ad-hoc hub/report permissions
-   */
+  
   getAccessibleHubs(): Observable<HubDto[]> {
     return this.http.get<HubListResponse>(`${this.API_BASE_URL}/hubs`).pipe(
       map(response => response.hubs),

@@ -1,6 +1,4 @@
-/**
- * Authentication models for .NET integration
- */
+
 
 export interface LoginCredentials {
   username: string;

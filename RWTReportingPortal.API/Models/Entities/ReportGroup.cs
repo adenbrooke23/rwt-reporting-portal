@@ -13,7 +13,6 @@ public class ReportGroup
     public DateTime? UpdatedAt { get; set; }
     public int? CreatedBy { get; set; }
 
-    // Navigation properties
     public ReportingHub Hub { get; set; } = null!;
     public ICollection<Report> Reports { get; set; } = new List<Report>();
 }

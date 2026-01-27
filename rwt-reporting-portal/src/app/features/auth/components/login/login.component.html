@@ -1,16 +1,16 @@
 <div class="login-container">
   <div class="login-card">
-    <!-- Left Side: Login Form -->
+    
     <div class="login-form-section">
-      <!-- Logo/Header Section -->
+      
       <div class="login-header">
         <h1 class="login-title">{{ isAdminLogin ? 'Admin Portal' : 'RWT Reporting Portal' }}</h1>
         <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'Sign in to continue' }}</p>
       </div>
 
-      <!-- Login Form -->
+      
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-        <!-- Username Field -->
+        
         <div class="form-group">
           <label for="username" class="form-label">Username</label>
           <input
@@ -27,7 +27,7 @@
           </div>
         </div>
 
-        <!-- Password Field -->
+        
         <div class="form-group">
           <label for="password" class="form-label">Password</label>
           <div class="password-input-wrapper">
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <!-- Remember Me Checkbox -->
+        
         <div class="form-group remember-me">
           <label class="checkbox-label">
             <input
@@ -68,21 +68,21 @@
           <a href="#" class="forgot-password">Forgot password?</a>
         </div>
 
-        <!-- Session Expired Notification -->
+        
         <cds-inline-notification
           *ngIf="sessionExpired"
           [notificationObj]="sessionExpiredNotification"
           (close)="onCloseSessionExpired()">
         </cds-inline-notification>
 
-        <!-- Error Notification - Carbon inline notification -->
+        
         <cds-inline-notification
           *ngIf="errorMessage"
           [notificationObj]="errorNotification"
           (close)="onCloseNotification()">
         </cds-inline-notification>
 
-        <!-- Submit Button -->
+        
         <button
           type="submit"
           class="submit-button"
@@ -100,7 +100,7 @@
           </span>
         </button>
 
-        <!-- SSO Options Placeholder -->
+        
         <div class="sso-divider">
           <span>Or continue with</span>
         </div>
@@ -112,7 +112,7 @@
           </a>
         </div>
 
-        <!-- Admin/Regular Login Link -->
+        
         <div class="admin-login-section" *ngIf="!isAdminLogin">
           <a href="#" (click)="navigateToAdminLogin(); $event.preventDefault()" class="admin-login-link">
             <svg ibmIcon="user--admin" size="16"></svg>
@@ -128,13 +128,13 @@
       </form>
     </div>
 
-    <!-- Vertical Divider -->
+    
     <div class="divider"></div>
 
-    <!-- Right Side: Logo/Branding -->
+    
     <div class="branding-section">
       <div class="logo-placeholder">
-        <!-- Logo will be added here -->
+        
         <div class="placeholder-text">Logo Placeholder</div>
       </div>
     </div>

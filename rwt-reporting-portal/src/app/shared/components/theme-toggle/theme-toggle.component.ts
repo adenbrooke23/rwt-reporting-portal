@@ -19,10 +19,9 @@ export class ThemeToggleComponent implements OnInit {
   isDarkMode = false;
 
   ngOnInit() {
-    // Register Carbon icons
+
     this.iconService.registerAll([Asleep, Light]);
 
-    // Subscribe to theme changes
     this.themeService.theme$.subscribe(() => {
       this.isDarkMode = this.themeService.isDarkTheme();
     });

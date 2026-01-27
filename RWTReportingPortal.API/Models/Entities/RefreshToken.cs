@@ -11,6 +11,5 @@ public class RefreshToken
     public DateTime? RevokedAt { get; set; }
     public int? ReplacedByTokenId { get; set; }
 
-    // Navigation properties
     public User User { get; set; } = null!;
 }

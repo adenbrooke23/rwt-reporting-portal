@@ -4,9 +4,6 @@ using RWTReportingPortal.API.Services.Interfaces;
 
 namespace RWTReportingPortal.API.Controllers.Admin;
 
-/// <summary>
-/// Admin endpoints for Power BI integration - browse workspaces and reports.
-/// </summary>
 [ApiController]
 [Route("api/admin/powerbi")]
 [Authorize(Policy = "AdminOnly")]
@@ -23,9 +20,6 @@ public class AdminPowerBIController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get Power BI configuration status.
-    /// </summary>
     [HttpGet("config")]
     public async Task<IActionResult> GetConfig()
     {
@@ -41,9 +35,6 @@ public class AdminPowerBIController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Test the Power BI connection.
-    /// </summary>
     [HttpGet("test")]
     public async Task<IActionResult> TestConnection()
     {
@@ -59,9 +50,6 @@ public class AdminPowerBIController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get all workspaces the service principal has access to.
-    /// </summary>
     [HttpGet("workspaces")]
     public async Task<IActionResult> GetWorkspaces()
     {
@@ -82,9 +70,6 @@ public class AdminPowerBIController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get all reports in a specific workspace.
-    /// </summary>
     [HttpGet("workspaces/{workspaceId}/reports")]
     public async Task<IActionResult> GetWorkspaceReports(string workspaceId)
     {
@@ -110,10 +95,6 @@ public class AdminPowerBIController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get embed information for a specific report.
-    /// This is used when viewing a report, not during report setup.
-    /// </summary>
     [HttpGet("workspaces/{workspaceId}/reports/{reportId}/embed")]
     public async Task<IActionResult> GetEmbedInfo(string workspaceId, string reportId)
     {

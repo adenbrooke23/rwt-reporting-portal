@@ -20,9 +20,6 @@ public class AdminAnnouncementsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all announcements (admin view)
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<AdminAnnouncementDto>>> GetAnnouncements(
         [FromQuery] bool includeUnpublished = true,
@@ -32,9 +29,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(new { announcements = result });
     }
 
-    /// <summary>
-    /// Get announcement by ID
-    /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<AdminAnnouncementDto>> GetAnnouncement(int id)
     {
@@ -46,9 +40,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Create a new announcement
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<AdminAnnouncementDto>> CreateAnnouncement([FromBody] CreateAnnouncementRequest request)
     {
@@ -57,9 +48,6 @@ public class AdminAnnouncementsController : ControllerBase
         return CreatedAtAction(nameof(GetAnnouncement), new { id = result.AnnouncementId }, result);
     }
 
-    /// <summary>
-    /// Update an announcement
-    /// </summary>
     [HttpPut("{id}")]
     public async Task<ActionResult<AdminAnnouncementDto>> UpdateAnnouncement(int id, [FromBody] UpdateAnnouncementRequest request)
     {
@@ -67,9 +55,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Publish an announcement
-    /// </summary>
     [HttpPut("{id}/publish")]
     public async Task<IActionResult> PublishAnnouncement(int id)
     {
@@ -77,9 +62,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(new { success = true, announcementId = id, isPublished = true, publishedAt = DateTime.UtcNow });
     }
 
-    /// <summary>
-    /// Unpublish an announcement
-    /// </summary>
     [HttpPut("{id}/unpublish")]
     public async Task<IActionResult> UnpublishAnnouncement(int id)
     {
@@ -87,9 +69,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(new { success = true, announcementId = id, isPublished = false });
     }
 
-    /// <summary>
-    /// Delete an announcement (soft delete)
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnnouncement(int id)
     {
@@ -98,9 +77,6 @@ public class AdminAnnouncementsController : ControllerBase
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Restore a deleted announcement
-    /// </summary>
     [HttpPut("{id}/restore")]
     public async Task<IActionResult> RestoreAnnouncement(int id)
     {

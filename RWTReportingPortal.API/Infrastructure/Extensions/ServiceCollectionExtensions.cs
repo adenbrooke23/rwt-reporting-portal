@@ -14,14 +14,13 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Repositories
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IHubRepository, HubRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 
-        // Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IHubService, HubService>();
@@ -35,32 +34,27 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISSRSService, SSRSService>();
         services.AddScoped<IAuditService, AuditService>();
 
-        // Infrastructure
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEntraAuthService, EntraAuthService>();
 
-        // Memory cache for SSRS folder caching
         services.AddMemoryCache();
 
-        // HttpClient for Microsoft Graph API calls
         services.AddHttpClient("MicrosoftGraph", client =>
         {
             client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
         });
 
-        // HttpClient for SSRS with Windows authentication
         services.AddHttpClient("SSRSClient", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
-            UseDefaultCredentials = true,  // Uses App Pool identity for Windows auth
+            UseDefaultCredentials = true,
             PreAuthenticate = true,
             Credentials = CredentialCache.DefaultNetworkCredentials
         });
 
-        // SQL connection factory for stored procedures (ADO.NET)
         services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
 
         return services;

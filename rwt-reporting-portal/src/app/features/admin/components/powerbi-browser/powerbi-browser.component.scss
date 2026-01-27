@@ -1,12 +1,10 @@
 @use '@carbon/styles/scss/spacing';
 @use '@carbon/styles/scss/type';
 
-// Browser content container
 .browser-content {
   min-height: 400px;
 }
 
-// Toolbar
 .browser-toolbar {
   display: flex;
   justify-content: space-between;
@@ -27,7 +25,6 @@
   color: var(--cds-text-primary);
 }
 
-// Skeleton loading state
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200px 0;
@@ -86,7 +83,6 @@
   width: 30%;
 }
 
-// Error state
 .error-container {
   padding: spacing.$spacing-05;
   background: var(--cds-support-error);
@@ -120,7 +116,6 @@
   }
 }
 
-// Workspace list
 .workspace-list {
   display: flex;
   flex-direction: column;
@@ -197,7 +192,6 @@
   }
 }
 
-// Report list
 .report-list-container {
   max-height: 360px;
   overflow-y: auto;
@@ -294,7 +288,6 @@
   }
 }
 
-// Empty state
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -321,7 +314,6 @@
   }
 }
 
-// Selection preview
 .selection-preview {
   display: flex;
   align-items: center;

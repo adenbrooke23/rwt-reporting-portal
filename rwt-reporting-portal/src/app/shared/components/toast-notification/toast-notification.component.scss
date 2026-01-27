@@ -26,11 +26,9 @@
     animation: slideOut 0.2s cubic-bezier(0.2, 0, 1, 0.9);
   }
 
-  // Force consistent dark background and light text for all toast types
-  // This ensures visibility in both light and dark themes
   ::ng-deep {
     .cds--toast-notification {
-      // Force dark background for all notification types
+
       &.cds--toast-notification--success {
         background-color: #24a148 !important;
       }
@@ -40,7 +38,6 @@
       &.cds--toast-notification--warning {
         background-color: #f1c21b !important;
 
-        // Warning uses dark text
         .cds--toast-notification__title {
           color: #161616 !important;
         }
@@ -56,7 +53,6 @@
       }
     }
 
-    // Light text for non-warning toasts
     .cds--toast-notification:not(.cds--toast-notification--warning) {
       .cds--toast-notification__title {
         color: #ffffff !important;

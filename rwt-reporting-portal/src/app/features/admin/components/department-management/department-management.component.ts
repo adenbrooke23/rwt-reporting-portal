@@ -96,7 +96,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
-    // Register icons (safe for SSR)
+
     this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Group]);
 
     this.paginationModel.currentPage = 1;
@@ -112,12 +112,10 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       this.applyFilters();
     });
 
-    // Skip API calls during SSR
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Wait for auth state to be ready before loading data
     this.authService.authState$.pipe(
       filter(state => state.isAuthenticated),
       take(1),
@@ -125,7 +123,6 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
     ).subscribe(state => {
       this.currentUser = state.user;
 
-      // Case-insensitive check for admin role
       const hasAdminRole = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       );

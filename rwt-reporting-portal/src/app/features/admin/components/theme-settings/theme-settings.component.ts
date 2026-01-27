@@ -24,20 +24,18 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
   currentTheme: Theme = 'white';
 
   ngOnInit(): void {
-    // Register Carbon icons
+
     this.iconService.registerAll([Checkmark, ArrowLeft]);
 
-    // Get current theme initially
     this.currentTheme = this.themeService.getCurrentTheme();
 
-    // Subscribe to theme changes
     this.themeSubscription = this.themeService.theme$.subscribe(theme => {
       this.currentTheme = theme;
     });
   }
 
   ngOnDestroy(): void {
-    // Cleanup subscription
+
     this.themeSubscription?.unsubscribe();
   }
 

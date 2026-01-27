@@ -50,7 +50,7 @@ public class HubRepository : IHubRepository
 
     public async Task<ReportingHub> CreateAsync(ReportingHub hub)
     {
-        // Get max sort order for new hub
+
         var maxSortOrder = await _context.ReportingHubs.MaxAsync(h => (int?)h.SortOrder) ?? 0;
         hub.SortOrder = maxSortOrder + 1;
         hub.CreatedAt = DateTime.UtcNow;

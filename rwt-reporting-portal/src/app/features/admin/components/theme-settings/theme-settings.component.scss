@@ -6,7 +6,6 @@
   overflow-x: hidden;
 }
 
-// Page Header - matches standard navigation pattern
 .page-header {
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
@@ -47,7 +46,6 @@
   align-items: center;
 }
 
-// Main Content
 .page-main {
   padding: spacing.$spacing-05 0;
 }
@@ -148,7 +146,6 @@
   }
 }
 
-// Theme-specific preview colors
 .theme-preview-white {
   background: #ffffff !important;
 
@@ -221,42 +218,41 @@
   }
 }
 
-// Business Theme Previews
 .theme-preview-sequoia {
-  background: #FAFAF8 !important;  // Warm cream
+  background: #FAFAF8 !important;
 
   .preview-sidebar {
-    background: #F5F5F0;           // Light warm beige
+    background: #F5F5F0;
     border-right: 1px solid #D8D8CC;
   }
 
   .preview-main {
-    background: #FAFAF8;           // Warm cream
+    background: #FAFAF8;
   }
 
   .preview-card {
-    background: #F5F5F0;           // Light warm beige
+    background: #F5F5F0;
     border: 1px solid #D8D8CC;
-    border-left: 3px solid #2F5233; // Sequoia green accent
+    border-left: 3px solid #2F5233;
   }
 }
 
 .theme-preview-corevest {
-  background: #F8FAFB !important;  // Cool blue-gray
+  background: #F8FAFB !important;
 
   .preview-sidebar {
-    background: #F3F6F8;           // Light cool blue-gray
+    background: #F3F6F8;
     border-right: 1px solid #D5E0E8;
   }
 
   .preview-main {
-    background: #F8FAFB;           // Cool blue-gray
+    background: #F8FAFB;
   }
 
   .preview-card {
-    background: #F3F6F8;           // Light cool blue-gray
+    background: #F3F6F8;
     border: 1px solid #D5E0E8;
-    border-left: 3px solid #0077C5; // CoreVest blue accent
+    border-left: 3px solid #0077C5;
   }
 }
 
@@ -275,7 +271,7 @@
   .preview-card {
     background: #f4f4f4;
     border: 1px solid #e0e0e0;
-    border-left: 3px solid #0f62fe; // Carbon blue accent
+    border-left: 3px solid #0f62fe;
   }
 }
 

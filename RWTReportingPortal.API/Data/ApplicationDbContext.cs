@@ -10,59 +10,46 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    // Organization
     public DbSet<Company> Companies => Set<Company>();
 
-    // Users
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
 
-    // Authentication
     public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<LoginHistory> LoginHistory => Set<LoginHistory>();
 
-    // Authorization
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
 
-    // Departments
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<UserDepartment> UserDepartments => Set<UserDepartment>();
     public DbSet<ReportDepartment> ReportDepartments => Set<ReportDepartment>();
 
-    // Reporting
     public DbSet<ReportingHub> ReportingHubs => Set<ReportingHub>();
     public DbSet<ReportGroup> ReportGroups => Set<ReportGroup>();
     public DbSet<Report> Reports => Set<Report>();
 
-    // Access Control
     public DbSet<UserHubAccess> UserHubAccess => Set<UserHubAccess>();
     public DbSet<UserReportGroupAccess> UserReportGroupAccess => Set<UserReportGroupAccess>();
     public DbSet<UserReportAccess> UserReportAccess => Set<UserReportAccess>();
 
-    // Favorites
     public DbSet<UserFavorite> UserFavorites => Set<UserFavorite>();
 
-    // Audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ReportAccessLog> ReportAccessLogs => Set<ReportAccessLog>();
 
-    // Configuration
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
-    // Content
     public DbSet<Announcement> Announcements => Set<Announcement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Set default schema for all tables
         modelBuilder.HasDefaultSchema("portal");
 
-        // Configure table names to match database schema (singular names)
         modelBuilder.Entity<Company>().ToTable("Company", "portal");
         modelBuilder.Entity<User>().ToTable("User", "portal");
         modelBuilder.Entity<UserProfile>().ToTable("UserProfile", "portal");
@@ -87,7 +74,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AppSetting>().ToTable("AppSetting", "portal");
         modelBuilder.Entity<Announcement>().ToTable("Announcement", "portal");
 
-        // Configure primary keys
         modelBuilder.Entity<Company>().HasKey(e => e.CompanyId);
         modelBuilder.Entity<User>().HasKey(e => e.UserId);
         modelBuilder.Entity<UserProfile>().HasKey(e => e.UserProfileId);
@@ -112,7 +98,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AppSetting>().HasKey(e => e.SettingId);
         modelBuilder.Entity<Announcement>().HasKey(e => e.AnnouncementId);
 
-        // User relationships
         modelBuilder.Entity<User>()
             .HasOne(u => u.Company)
             .WithMany(c => c.Users)
@@ -131,7 +116,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey<UserPreferences>(p => p.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserRole relationships
         modelBuilder.Entity<UserRole>()
             .HasOne(ur => ur.User)
             .WithMany(u => u.UserRoles)
@@ -144,7 +128,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(ur => ur.RoleId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // UserDepartment relationships
         modelBuilder.Entity<UserDepartment>()
             .HasOne(ud => ud.User)
             .WithMany(u => u.UserDepartments)
@@ -157,12 +140,10 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(ud => ud.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint for UserDepartment
         modelBuilder.Entity<UserDepartment>()
             .HasIndex(ud => new { ud.UserId, ud.DepartmentId })
             .IsUnique();
 
-        // ReportDepartment relationships
         modelBuilder.Entity<ReportDepartment>()
             .HasOne(rd => rd.Report)
             .WithMany(r => r.ReportDepartments)
@@ -175,26 +156,22 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(rd => rd.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint for ReportDepartment
         modelBuilder.Entity<ReportDepartment>()
             .HasIndex(rd => new { rd.ReportId, rd.DepartmentId })
             .IsUnique();
 
-        // ReportGroup -> Hub relationship
         modelBuilder.Entity<ReportGroup>()
             .HasOne(g => g.Hub)
             .WithMany(h => h.ReportGroups)
             .HasForeignKey(g => g.HubId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Report -> ReportGroup relationship
         modelBuilder.Entity<Report>()
             .HasOne(r => r.ReportGroup)
             .WithMany(g => g.Reports)
             .HasForeignKey(r => r.ReportGroupId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // UserFavorite relationships
         modelBuilder.Entity<UserFavorite>()
             .HasOne(f => f.User)
             .WithMany(u => u.Favorites)
@@ -207,19 +184,16 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(f => f.ReportId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique constraint for UserFavorite
         modelBuilder.Entity<UserFavorite>()
             .HasIndex(f => new { f.UserId, f.ReportId })
             .IsUnique();
 
-        // Session relationships
         modelBuilder.Entity<UserSession>()
             .HasOne(s => s.User)
             .WithMany(u => u.Sessions)
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserHubAccess relationships
         modelBuilder.Entity<UserHubAccess>()
             .HasOne(a => a.User)
             .WithMany(u => u.HubAccess)
@@ -232,7 +206,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(a => a.HubId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserReportAccess relationships
         modelBuilder.Entity<UserReportAccess>()
             .HasOne(a => a.User)
             .WithMany(u => u.ReportAccess)
@@ -245,7 +218,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(a => a.ReportId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserReportGroupAccess relationships
         modelBuilder.Entity<UserReportGroupAccess>()
             .HasOne(a => a.User)
             .WithMany(u => u.ReportGroupAccess)
@@ -258,7 +230,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(a => a.ReportGroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique indexes
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();

@@ -30,7 +30,6 @@ public class User
     public DateTime? UnlockedAt { get; set; }
     public int? UnlockedBy { get; set; }
 
-    // Navigation properties
     public Company? Company { get; set; }
     public UserProfile? Profile { get; set; }
     public UserPreferences? Preferences { get; set; }

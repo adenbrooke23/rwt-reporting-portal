@@ -1,8 +1,5 @@
 import { ReportType, ReportEmbedConfig } from '../../auth/models/user-management.models';
 
-/**
- * Hub - Top level container for report groups
- */
 export interface Hub {
   id: string;
   name: string;
@@ -33,9 +30,6 @@ export interface UpdateHubDto {
   isActive?: boolean;
 }
 
-/**
- * Report Group - Container for reports within a hub
- */
 export interface ReportGroup {
   id: string;
   hubId: string;
@@ -62,9 +56,6 @@ export interface UpdateReportGroupDto {
   isActive?: boolean;
 }
 
-/**
- * Report - Individual report with embed configuration
- */
 export interface Report {
   id: string;
   reportGroupId: string;
@@ -73,7 +64,7 @@ export interface Report {
   description: string;
   type: ReportType;
   embedConfig?: ReportEmbedConfig;
-  departmentIds?: string[];  // Departments that can access this report
+  departmentIds?: string[];
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
@@ -100,9 +91,6 @@ export interface UpdateReportDto {
   isActive?: boolean;
 }
 
-/**
- * Power BI Discovery - for importing reports from Power BI
- */
 export interface PowerBIWorkspace {
   id: string;
   name: string;
@@ -119,9 +107,6 @@ export interface PowerBIReport {
   reportType: 'PowerBIReport' | 'PaginatedReport';
 }
 
-/**
- * Bulk import result
- */
 export interface BulkImportResult {
   totalProcessed: number;
   successCount: number;
@@ -129,9 +114,6 @@ export interface BulkImportResult {
   errors: string[];
 }
 
-/**
- * Hub icon options
- */
 export const HUB_ICONS = [
   { id: 'folder', name: 'Folder', icon: 'folder' },
   { id: 'analytics', name: 'Analytics', icon: 'analytics' },
@@ -143,9 +125,6 @@ export const HUB_ICONS = [
   { id: 'building', name: 'Building', icon: 'building' }
 ];
 
-/**
- * Hub color options
- */
 export const HUB_COLORS = [
   { id: 'sequoia', name: 'Sequoia Green', class: 'sequoia' },
   { id: 'corevest', name: 'CoreVest Blue', class: 'corevest' },
@@ -154,9 +133,6 @@ export const HUB_COLORS = [
   { id: 'default', name: 'Default', class: 'default' }
 ];
 
-/**
- * Department - Organizational group for access control
- */
 export interface Department {
   id: string;
   name: string;

@@ -12,7 +12,6 @@ public class Department
     public DateTime? UpdatedAt { get; set; }
     public int? CreatedBy { get; set; }
 
-    // Navigation properties
     public ICollection<UserDepartment> UserDepartments { get; set; } = new List<UserDepartment>();
     public ICollection<ReportDepartment> ReportDepartments { get; set; } = new List<ReportDepartment>();
 }

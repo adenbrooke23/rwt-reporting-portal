@@ -9,7 +9,7 @@
   </cds-modal-header>
 
   <section cdsModalContent *ngIf="currentUser">
-    <!-- User Info Section -->
+    
     <div class="profile-info">
       <div class="profile-avatar-large" [style.background-color]="getCurrentAvatar()?.color">
         <svg *ngIf="getCurrentAvatar() && !getCurrentAvatar()?.isInitials"
@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <!-- Avatar Selection -->
+    
     <div class="avatar-section">
       <p class="section-label">Choose avatar</p>
       <div class="avatar-options">

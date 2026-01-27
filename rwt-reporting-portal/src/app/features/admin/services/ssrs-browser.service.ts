@@ -45,9 +45,7 @@ export class SSRSBrowserService {
   private isLoading = new BehaviorSubject<boolean>(false);
   isLoading$ = this.isLoading.asObservable();
 
-  /**
-   * Get SSRS server configuration
-   */
+  
   getConfig(): Observable<SSRSConfigResponse> {
     return this.http.get<SSRSConfigResponse>(`${this.API_BASE_URL}/admin/ssrs/config`).pipe(
       catchError(() => of({
@@ -58,9 +56,7 @@ export class SSRSBrowserService {
     );
   }
 
-  /**
-   * Browse SSRS folder
-   */
+  
   browse(path: string = '/'): Observable<SSRSFolderListResponse> {
     this.isLoading.next(true);
     this.currentPath.next(path);
@@ -83,9 +79,7 @@ export class SSRSBrowserService {
     );
   }
 
-  /**
-   * Navigate to parent folder
-   */
+  
   getParentPath(currentPath: string): string {
     if (currentPath === '/' || !currentPath) return '/';
     const parts = currentPath.split('/').filter(p => p);
@@ -93,9 +87,7 @@ export class SSRSBrowserService {
     return parts.length ? '/' + parts.join('/') : '/';
   }
 
-  /**
-   * Build breadcrumb from path
-   */
+  
   getBreadcrumbs(path: string): { name: string; path: string }[] {
     const breadcrumbs = [{ name: 'Root', path: '/' }];
 

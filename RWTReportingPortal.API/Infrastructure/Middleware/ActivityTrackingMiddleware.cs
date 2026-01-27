@@ -18,7 +18,6 @@ public class ActivityTrackingMiddleware
     {
         await _next(context);
 
-        // Update user's last activity timestamp for authenticated requests
         if (context.User.Identity?.IsAuthenticated == true)
         {
             try
@@ -31,7 +30,7 @@ public class ActivityTrackingMiddleware
             }
             catch (Exception ex)
             {
-                // Don't fail the request if activity tracking fails
+
                 _logger.LogWarning(ex, "Failed to update user activity");
             }
         }

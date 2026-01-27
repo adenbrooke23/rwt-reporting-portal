@@ -50,7 +50,7 @@ public class DepartmentRepository : IDepartmentRepository
 
     public async Task<Department> CreateAsync(Department department)
     {
-        // Get max sort order for new department
+
         var maxSortOrder = await _context.Departments.MaxAsync(d => (int?)d.SortOrder) ?? 0;
         department.SortOrder = maxSortOrder + 1;
         department.CreatedAt = DateTime.UtcNow;

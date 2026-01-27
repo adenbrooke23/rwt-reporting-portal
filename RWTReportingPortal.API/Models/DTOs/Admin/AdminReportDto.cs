@@ -1,8 +1,5 @@
 namespace RWTReportingPortal.API.Models.DTOs.Admin;
 
-/// <summary>
-/// Report DTO for admin management
-/// </summary>
 public class AdminReportDto
 {
     public int ReportId { get; set; }
@@ -27,9 +24,6 @@ public class AdminReportDto
     public List<int> DepartmentIds { get; set; } = new();
 }
 
-/// <summary>
-/// Request DTO for creating a new report
-/// </summary>
 public class CreateReportRequest
 {
     public int ReportGroupId { get; set; }
@@ -45,9 +39,6 @@ public class CreateReportRequest
     public List<int>? DepartmentIds { get; set; }
 }
 
-/// <summary>
-/// Request DTO for updating a report
-/// </summary>
 public class UpdateReportRequest
 {
     public int? ReportGroupId { get; set; }
@@ -64,9 +55,6 @@ public class UpdateReportRequest
     public List<int>? DepartmentIds { get; set; }
 }
 
-/// <summary>
-/// Response for report list
-/// </summary>
 public class AdminReportListResponse
 {
     public List<AdminReportDto> Reports { get; set; } = new();

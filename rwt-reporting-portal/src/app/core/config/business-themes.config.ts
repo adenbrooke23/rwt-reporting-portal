@@ -19,9 +19,9 @@ export const BUSINESS_THEMES: Record<string, BusinessTheme> = {
     description: 'Professional blue theme with orange accents',
     defaultTheme: 'white',
     customColors: {
-      primary: '#0077C5',        // CoreVest primary blue
-      primaryHover: '#005994',   // CoreVest dark blue (hover)
-      accent: '#FF671B'          // CoreVest orange accent
+      primary: '#0077C5',
+      primaryHover: '#005994',
+      accent: '#FF671B'
     }
   },
   'sequoia': {
@@ -30,9 +30,9 @@ export const BUSINESS_THEMES: Record<string, BusinessTheme> = {
     description: 'Nature-inspired forest green theme',
     defaultTheme: 'white',
     customColors: {
-      primary: '#2F5233',        // Forest green (sequoia trees)
-      primaryHover: '#1F3723',   // Darker forest green
-      accent: '#6B8E23'          // Olive green accent
+      primary: '#2F5233',
+      primaryHover: '#1F3723',
+      accent: '#6B8E23'
     }
   },
   'enterprise': {
@@ -40,7 +40,7 @@ export const BUSINESS_THEMES: Record<string, BusinessTheme> = {
     name: 'Enterprise',
     description: 'Default Carbon Design System theme',
     defaultTheme: 'white'
-    // No custom colors - uses Carbon defaults
+
   }
 };
 

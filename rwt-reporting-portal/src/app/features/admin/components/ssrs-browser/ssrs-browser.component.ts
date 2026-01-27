@@ -121,9 +121,7 @@ export class SSRSBrowserComponent implements OnInit, OnDestroy {
     this.openChange.emit(false);
   }
 
-  /**
-   * Get the current folder name for display
-   */
+  
   getCurrentFolderName(): string {
     if (this.currentPath === '/') return 'Root';
     const parts = this.currentPath.split('/').filter(p => p);

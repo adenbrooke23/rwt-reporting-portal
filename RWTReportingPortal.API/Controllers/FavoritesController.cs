@@ -20,9 +20,6 @@ public class FavoritesController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get user's pinned reports
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<FavoriteDto>>> GetFavorites()
     {
@@ -31,9 +28,6 @@ public class FavoritesController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Pin a report
-    /// </summary>
     [HttpPost("{reportId}")]
     public async Task<IActionResult> AddFavorite(int reportId)
     {
@@ -42,9 +36,6 @@ public class FavoritesController : ControllerBase
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Unpin a report
-    /// </summary>
     [HttpDelete("{reportId}")]
     public async Task<IActionResult> RemoveFavorite(int reportId)
     {
@@ -53,9 +44,6 @@ public class FavoritesController : ControllerBase
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Reorder favorites
-    /// </summary>
     [HttpPut("reorder")]
     public async Task<IActionResult> ReorderFavorites([FromBody] List<int> reportIds)
     {

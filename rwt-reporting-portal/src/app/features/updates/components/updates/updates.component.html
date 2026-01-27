@@ -1,5 +1,5 @@
 <div class="updates-page-container">
-  <!-- Page Header matching standard navigation pattern -->
+  
   <header class="page-header">
     <div class="header-content">
       <div class="header-left">
@@ -17,7 +17,7 @@
 
   <main class="page-main">
     <div class="page-content">
-      <!-- Filter Toolbar -->
+      
       <div class="filter-toolbar">
         <div class="filter-toolbar__left">
           <ibm-search
@@ -66,7 +66,7 @@
         </div>
       </div>
 
-      <!-- Results count -->
+      
       <div class="results-info" *ngIf="!isLoading">
         <span *ngIf="hasActiveFilters">
           Showing {{ filteredAnnouncements.length }} of {{ announcements.length }} updates
@@ -76,7 +76,7 @@
         </span>
       </div>
 
-      <!-- Loading State -->
+      
       <div class="updates-grid" *ngIf="isLoading">
         <article class="article-card article-card--skeleton" *ngFor="let i of [1,2,3,4,5,6]">
           <div class="card-image">
@@ -95,7 +95,7 @@
         </article>
       </div>
 
-      <!-- Updates Grid -->
+      
       <div class="updates-grid" *ngIf="!isLoading && filteredAnnouncements.length > 0">
         <article class="article-card" *ngFor="let announcement of filteredAnnouncements" (click)="openAnnouncement(announcement.id)">
           <div class="card-image">
@@ -117,7 +117,7 @@
         </article>
       </div>
 
-      <!-- Empty State -->
+      
       <div class="no-announcements" *ngIf="!isLoading && filteredAnnouncements.length === 0">
         <p *ngIf="announcements.length === 0">No announcements available at this time.</p>
         <p *ngIf="announcements.length > 0 && hasActiveFilters">No updates match your current filters.</p>
@@ -127,7 +127,6 @@
   </main>
 </div>
 
-<!-- Announcement Detail Modal -->
 <cds-modal
   [open]="showAnnouncementModal"
   (overlaySelected)="closeAnnouncementModal()"

@@ -1,6 +1,5 @@
 @use '@carbon/styles/scss/spacing';
 
-// Profile Info Section
 .profile-info {
   display: flex;
   align-items: center;
@@ -61,7 +60,6 @@
   line-height: 1.34;
 }
 
-// Avatar Selection Section
 .avatar-section {
   padding-top: spacing.$spacing-03;
 }
@@ -148,7 +146,6 @@
   fill: var(--cds-icon-primary, #161616);
 }
 
-// Modal overrides for dark theme consistency
 :host-context(html.dark-theme) {
   .profile-info {
     border-bottom-color: #393939;

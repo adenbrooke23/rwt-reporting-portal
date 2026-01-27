@@ -53,22 +53,19 @@ export class ContentManagementComponent implements OnInit {
   recentReports: Report[] = [];
 
   ngOnInit(): void {
-    // Register icons (safe for SSR)
+
     this.iconService.registerAll([ArrowLeft, ArrowRight, Folder, Category, Document, Group, Add]);
 
-    // Skip API calls during SSR
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Wait for auth state to be ready before loading data
     this.authService.authState$.pipe(
       filter(state => state.isAuthenticated),
       take(1)
     ).subscribe(state => {
       this.currentUser = state.user;
 
-      // Case-insensitive check for admin role
       const hasAdminRole = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       );
@@ -84,7 +81,6 @@ export class ContentManagementComponent implements OnInit {
   loadStats(): void {
     this.isLoading = true;
 
-    // Load hubs
     this.contentService.getHubs(true).subscribe(hubs => {
       this.hubCount = hubs.length;
       this.activeHubCount = hubs.filter(h => h.isActive).length;
@@ -93,12 +89,10 @@ export class ContentManagementComponent implements OnInit {
         .slice(0, 4);
     });
 
-    // Load groups
     this.contentService.getReportGroups(undefined, true).subscribe(groups => {
       this.groupCount = groups.filter(g => g.isActive).length;
     });
 
-    // Load reports
     this.contentService.getReports(undefined, undefined, true).subscribe(reports => {
       this.reportCount = reports.filter(r => r.isActive).length;
       this.recentReports = reports
@@ -107,7 +101,6 @@ export class ContentManagementComponent implements OnInit {
       this.isLoading = false;
     });
 
-    // Load departments
     this.contentService.getDepartments().subscribe(departments => {
       this.departmentCount = departments.filter(d => d.isActive).length;
     });

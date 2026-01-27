@@ -19,7 +19,6 @@ public class Report
     public DateTime? UpdatedAt { get; set; }
     public int? CreatedBy { get; set; }
 
-    // Navigation properties
     public ReportGroup ReportGroup { get; set; } = null!;
     public ICollection<ReportDepartment> ReportDepartments { get; set; } = new List<ReportDepartment>();
     public ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();

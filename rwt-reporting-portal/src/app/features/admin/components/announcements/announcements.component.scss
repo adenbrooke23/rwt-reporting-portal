@@ -56,14 +56,12 @@
   padding: 0 spacing.$spacing-06;
 }
 
-// Carbon Table Wrapper
 .carbon-table-wrapper {
   background: var(--color-bg-primary);
   border-radius: 8px;
   border: 1px solid var(--color-border-light);
   overflow: hidden;
 
-  // Table Toolbar Styling
   ::ng-deep ibm-table-toolbar,
   ::ng-deep .cds--toolbar,
   ::ng-deep .cds--table-toolbar {
@@ -78,7 +76,6 @@
       padding: spacing.$spacing-04 spacing.$spacing-05;
     }
 
-    // Expandable search styling
     ibm-table-toolbar-search,
     .cds--toolbar-search-container {
       flex: 1;
@@ -115,7 +112,6 @@
       }
     }
 
-    // Tag in toolbar
     ibm-tag {
       .cds--tag {
         background: var(--color-bg-tertiary);
@@ -126,7 +122,6 @@
   }
 }
 
-// Show deleted toggle in toolbar
 .show-deleted-toggle {
   display: flex;
   align-items: center;
@@ -147,12 +142,10 @@
   }
 }
 
-// Pagination wrapper
 .pagination-wrapper {
   border-top: 1px solid var(--color-border-light);
 }
 
-// Table Container Styling
 ::ng-deep {
   ibm-table-container {
     background: var(--color-bg-primary);
@@ -197,7 +190,6 @@
     }
   }
 
-  // Pagination
   ibm-pagination,
   cds-pagination {
     .cds--pagination,
@@ -248,7 +240,6 @@
     }
   }
 
-  // Modal styling
   .cds--modal-container {
     background: var(--color-bg-primary);
 
@@ -272,7 +263,6 @@
     }
   }
 
-  // Form inputs
   .bx--text-input,
   .bx--text-area {
     background: var(--color-bg-secondary);
@@ -293,7 +283,6 @@
   }
 }
 
-// Action Buttons
 .action-buttons {
   display: flex;
   gap: spacing.$spacing-02;
@@ -309,7 +298,6 @@
   }
 }
 
-// Featured Button
 .featured-btn {
   background: transparent;
   border: none;
@@ -322,7 +310,7 @@
   justify-content: center;
 
   &:hover:not(:disabled) {
-    color: #f1c21b; // Gold color for star
+    color: #f1c21b;
   }
 
   &.is-featured {
@@ -339,7 +327,6 @@
   }
 }
 
-// No Results
 .no-results {
   text-align: center;
   padding: spacing.$spacing-09;
@@ -351,7 +338,6 @@
   }
 }
 
-// Form Grid
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -374,7 +360,6 @@
   color: var(--color-text-primary);
 }
 
-// Native select styling
 .form-select {
   width: 100%;
   height: 40px;
@@ -416,7 +401,6 @@
   color: var(--color-text-secondary);
 }
 
-// Content textarea styling
 .content-textarea {
   width: 100%;
   padding: spacing.$spacing-04;
@@ -461,7 +445,6 @@
   }
 }
 
-// Responsive
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;

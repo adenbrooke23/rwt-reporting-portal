@@ -8,7 +8,6 @@ public class ReportDepartment
     public int? GrantedBy { get; set; }
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
     public Report Report { get; set; } = null!;
     public Department Department { get; set; } = null!;
 }

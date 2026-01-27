@@ -8,7 +8,6 @@ public class UserDepartment
     public int? GrantedBy { get; set; }
     public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
     public User User { get; set; } = null!;
     public Department Department { get; set; } = null!;
 }

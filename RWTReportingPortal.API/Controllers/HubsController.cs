@@ -20,9 +20,6 @@ public class HubsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all accessible hubs for the current user
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<HubListResponse>> GetHubs()
     {
@@ -31,9 +28,6 @@ public class HubsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get hub details with reports
-    /// </summary>
     [HttpGet("{hubId}")]
     public async Task<ActionResult<HubDetailResponse>> GetHubDetail(int hubId)
     {
@@ -42,9 +36,6 @@ public class HubsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get reports in a hub
-    /// </summary>
     [HttpGet("{hubId}/reports")]
     public async Task<ActionResult<HubDetailResponse>> GetHubReports(int hubId)
     {

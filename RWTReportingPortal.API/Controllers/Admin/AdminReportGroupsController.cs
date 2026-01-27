@@ -20,9 +20,6 @@ public class AdminReportGroupsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all report groups (admin view)
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<AdminReportGroupListResponse>> GetReportGroups([FromQuery] bool includeInactive = false)
     {
@@ -34,9 +31,6 @@ public class AdminReportGroupsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Get report groups by hub ID
-    /// </summary>
     [HttpGet("by-hub/{hubId}")]
     public async Task<ActionResult<AdminReportGroupListResponse>> GetReportGroupsByHub(int hubId, [FromQuery] bool includeInactive = false)
     {
@@ -48,9 +42,6 @@ public class AdminReportGroupsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Get report group by ID
-    /// </summary>
     [HttpGet("{reportGroupId}")]
     public async Task<ActionResult<AdminReportGroupDto>> GetReportGroup(int reportGroupId)
     {
@@ -62,9 +53,6 @@ public class AdminReportGroupsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Create a new report group
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<AdminReportGroupDto>> CreateReportGroup([FromBody] CreateReportGroupRequest request)
     {
@@ -73,9 +61,6 @@ public class AdminReportGroupsController : ControllerBase
         return CreatedAtAction(nameof(GetReportGroup), new { reportGroupId = result.ReportGroupId }, result);
     }
 
-    /// <summary>
-    /// Update a report group
-    /// </summary>
     [HttpPut("{reportGroupId}")]
     public async Task<ActionResult<AdminReportGroupDto>> UpdateReportGroup(int reportGroupId, [FromBody] UpdateReportGroupRequest request)
     {
@@ -91,9 +76,6 @@ public class AdminReportGroupsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a report group (soft delete by default)
-    /// </summary>
     [HttpDelete("{reportGroupId}")]
     public async Task<IActionResult> DeleteReportGroup(int reportGroupId, [FromQuery] bool hardDelete = false)
     {

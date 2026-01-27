@@ -118,11 +118,9 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   editingReport: Report | null = null;
   isSaving = false;
 
-  // SSRS Browser
   showSSRSBrowser = false;
   ssrsServerUrl = '';
 
-  // Power BI Browser
   showPowerBIBrowser = false;
 
   formData = {
@@ -218,7 +216,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Register icons (safe for SSR)
+
     this.iconService.registerAll([ArrowLeft, Add, Edit, TrashCan, Renew, Document, Folder, Category]);
 
     this.paginationModel.currentPage = 1;
@@ -234,12 +232,10 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
       this.applyFilters();
     });
 
-    // Skip API calls during SSR
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Wait for auth state to be ready before loading data
     this.authService.authState$.pipe(
       filter(state => state.isAuthenticated),
       take(1),
@@ -247,7 +243,6 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
     ).subscribe(state => {
       this.currentUser = state.user;
 
-      // Case-insensitive check for admin role
       const hasAdminRole = state.user?.roles?.some(
         role => role.toLowerCase() === 'admin'
       );
@@ -584,7 +579,6 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  // SSRS Browser methods
   openSSRSBrowser(): void {
     this.ssrsBrowserService.getConfig().subscribe(config => {
       this.ssrsServerUrl = config.serverUrl;
@@ -595,7 +589,7 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
   onSSRSReportSelected(selection: SSRSReportSelection): void {
     this.formData.serverUrl = selection.serverUrl;
     this.formData.reportPath = selection.reportPath;
-    // Auto-fill name and description if not already set
+
     if (!this.formData.name) {
       this.formData.name = selection.reportName;
     }
@@ -609,7 +603,6 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
     this.showSSRSBrowser = false;
   }
 
-  // Power BI Browser methods
   openPowerBIBrowser(): void {
     this.showPowerBIBrowser = true;
   }
@@ -619,14 +612,12 @@ export class ReportManagementComponent implements OnInit, OnDestroy {
     this.formData.reportId = selection.reportId;
     this.formData.embedUrl = selection.embedUrl;
 
-    // Set report type based on selection
     if (selection.reportType === 'PaginatedReport') {
       this.formData.type = 'Paginated';
     } else {
       this.formData.type = 'PowerBI';
     }
 
-    // Auto-fill name and description if not already set
     if (!this.formData.name) {
       this.formData.name = selection.reportName;
     }

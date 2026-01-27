@@ -48,7 +48,6 @@ export class PowerBIBrowserComponent implements OnInit, OnDestroy {
   @Output() openChange = new EventEmitter<boolean>();
   @Output() select = new EventEmitter<PowerBIReportSelection>();
 
-  // View state: 'workspaces' or 'reports'
   currentView: 'workspaces' | 'reports' = 'workspaces';
 
   workspaces: PowerBIWorkspace[] = [];

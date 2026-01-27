@@ -1,11 +1,11 @@
-<!-- Carbon Side Navigation with Rail -->
+
 <cds-sidenav
   [rail]="true"
   [expanded]="isExpanded"
   [allowExpansion]="true"
   [useRouter]="true">
 
-  <!-- Hubs (Dashboard) -->
+  
   <cds-sidenav-item
     [route]="['/dashboard']"
     [active]="isActive('/dashboard')"
@@ -14,7 +14,7 @@
     Hubs
   </cds-sidenav-item>
 
-  <!-- My Dashboard -->
+  
   <cds-sidenav-item
     [route]="['/my-dashboard']"
     [active]="isActive('/my-dashboard')"
@@ -23,7 +23,7 @@
     My Dashboard
   </cds-sidenav-item>
 
-  <!-- Quick Access Menu (only show if there are pinned items) -->
+  
   <cds-sidenav-menu
     *ngIf="quickAccessItems.length > 0"
     title="Quick Access"
@@ -42,7 +42,7 @@
     </ng-container>
   </cds-sidenav-menu>
 
-  <!-- Admin Menu (only show for admins) -->
+  
   <cds-sidenav-menu
     *ngIf="isAdmin"
     title="Admin"
@@ -82,7 +82,7 @@
     </ng-container>
   </cds-sidenav-menu>
 
-  <!-- What's New -->
+  
   <cds-sidenav-item
     [route]="['/updates']"
     [active]="isActive('/updates')"

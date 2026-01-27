@@ -15,7 +15,6 @@ public class ReportingHub
     public DateTime? UpdatedAt { get; set; }
     public int? CreatedBy { get; set; }
 
-    // Navigation properties
     public ICollection<ReportGroup> ReportGroups { get; set; } = new List<ReportGroup>();
     public ICollection<UserHubAccess> UserHubAccess { get; set; } = new List<UserHubAccess>();
 }

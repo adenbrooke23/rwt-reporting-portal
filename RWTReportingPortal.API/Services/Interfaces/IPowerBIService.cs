@@ -2,29 +2,15 @@ namespace RWTReportingPortal.API.Services.Interfaces;
 
 public interface IPowerBIService
 {
-    /// <summary>
-    /// Get embed information (URL and token) for a specific report.
-    /// </summary>
+
     Task<PowerBIEmbedInfo> GetEmbedInfoAsync(string workspaceId, string reportId);
 
-    /// <summary>
-    /// Get all workspaces the service principal has access to.
-    /// </summary>
     Task<List<PowerBIWorkspace>> GetWorkspacesAsync();
 
-    /// <summary>
-    /// Get all reports in a specific workspace.
-    /// </summary>
     Task<List<PowerBIReport>> GetWorkspaceReportsAsync(string workspaceId);
 
-    /// <summary>
-    /// Get configuration status for Power BI integration.
-    /// </summary>
     Task<PowerBIConfigResponse> GetConfigAsync();
 
-    /// <summary>
-    /// Test the connection to Power BI service.
-    /// </summary>
     Task<bool> TestConnectionAsync();
 }
 
@@ -53,7 +39,7 @@ public class PowerBIReport
     public string? Description { get; set; }
     public string DatasetId { get; set; } = string.Empty;
     public string EmbedUrl { get; set; } = string.Empty;
-    public string ReportType { get; set; } = "PowerBIReport"; // "PowerBIReport" or "PaginatedReport"
+    public string ReportType { get; set; } = "PowerBIReport";
     public DateTime? ModifiedDateTime { get; set; }
     public bool AlreadyImported { get; set; }
     public int? ExistingReportId { get; set; }

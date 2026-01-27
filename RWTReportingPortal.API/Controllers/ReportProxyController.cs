@@ -6,10 +6,6 @@ using RWTReportingPortal.API.Services.Interfaces;
 
 namespace RWTReportingPortal.API.Controllers;
 
-/// <summary>
-/// Proxies report requests to SSRS/Power BI servers using server-side authentication.
-/// This allows users to view reports without needing direct access to the report servers.
-/// </summary>
 [ApiController]
 [Route("api/reports")]
 public class ReportProxyController : ControllerBase
@@ -31,17 +27,12 @@ public class ReportProxyController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Render an SSRS report by report ID.
-    /// The report content is fetched server-side using Windows authentication and streamed to the client.
-    /// Accepts JWT token via query string for iframe requests (which can't set Authorization header).
-    /// </summary>
     [HttpGet("{reportId}/render")]
     public async Task<IActionResult> RenderReport(int reportId, [FromQuery] string? access_token = null)
     {
         try
         {
-            // Validate authentication - check header first, then query string token
+
             if (!(User.Identity?.IsAuthenticated ?? false))
             {
                 if (string.IsNullOrEmpty(access_token))
@@ -60,14 +51,12 @@ public class ReportProxyController : ControllerBase
                 _logger.LogDebug("Report render authenticated via query string token");
             }
 
-            // Get report details from database
             var report = await _reportService.GetReportByIdAsync(reportId);
             if (report == null)
             {
                 return NotFound(new { error = "Report not found" });
             }
 
-            // Currently only SSRS reports support proxy rendering
             if (report.ReportType != "SSRS")
             {
                 return BadRequest(new { error = $"Proxy rendering not supported for report type: {report.ReportType}" });
@@ -80,21 +69,17 @@ public class ReportProxyController : ControllerBase
 
             _logger.LogInformation("Proxying SSRS report {ReportId} for user", reportId);
 
-            // Generate session key for SSRS cookie management (based on report path hash)
             var sessionKey = report.SSRSReportPath.GetHashCode().ToString();
 
-            // Set cookies for subsequent resource requests
             SetProxySessionCookie(access_token);
             SetSSRSSessionCookie(sessionKey);
 
-            // Build proxy base URL for URL rewriting
             var proxyBaseUrl = $"{Request.Scheme}://{Request.Host}/api/reports/ssrs-resource";
 
-            // Render the report via SSRS service with URL rewriting
             var result = await _ssrsService.RenderReportAsync(
                 report.SSRSReportPath,
                 report.SSRSReportServer,
-                null,  // parameters
+                null,
                 proxyBaseUrl
             );
 
@@ -104,7 +89,6 @@ public class ReportProxyController : ControllerBase
                 return StatusCode(502, new { error = result.ErrorMessage ?? "Failed to render report" });
             }
 
-            // Return the report content
             return File(result.Content!, result.ContentType);
         }
         catch (Exception ex)
@@ -114,9 +98,6 @@ public class ReportProxyController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Render an SSRS report directly by path (for admin/testing purposes).
-    /// </summary>
     [HttpGet("ssrs/render")]
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> RenderSSRSReport([FromQuery] string path, [FromQuery] string? server = null)
@@ -138,22 +119,16 @@ public class ReportProxyController : ControllerBase
         return File(result.Content!, result.ContentType);
     }
 
-    /// <summary>
-    /// Proxy SSRS resources (JavaScript, CSS, images, AJAX requests) for the report viewer.
-    /// This catch-all endpoint handles all resources that the SSRS ReportViewer HTML references.
-    /// Supports both GET and POST (for SSRS postbacks, session keepalive, etc.)
-    /// Authentication is handled via session cookie set during report render, or via query string token.
-    /// </summary>
     [HttpGet("ssrs-resource/{**resourcePath}")]
     [HttpPost("ssrs-resource/{**resourcePath}")]
     public async Task<IActionResult> ProxySSRSResource(string resourcePath, [FromQuery] string? access_token = null)
     {
         try
         {
-            // Validate authentication - check header, cookie, or query string
+
             if (!(User.Identity?.IsAuthenticated ?? false))
             {
-                // Check for session cookie first (set during report render)
+
                 var cookieToken = Request.Cookies["ssrs_proxy_session"];
                 var tokenToValidate = !string.IsNullOrEmpty(cookieToken) ? cookieToken : access_token;
 
@@ -171,13 +146,11 @@ public class ReportProxyController : ControllerBase
                 }
             }
 
-            // Ensure resourcePath starts with /
             if (!resourcePath.StartsWith("/"))
             {
                 resourcePath = "/" + resourcePath;
             }
 
-            // Get query string (excluding access_token for the upstream request)
             var queryParams = Request.Query
                 .Where(q => q.Key != "access_token")
                 .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value.ToString())}");
@@ -185,7 +158,6 @@ public class ReportProxyController : ControllerBase
 
             _logger.LogDebug("Proxying SSRS resource: {Method} {Path}", Request.Method, resourcePath);
 
-            // Read request body for POST requests
             byte[]? requestBody = null;
             string? contentType = null;
             if (Request.Method == "POST" && Request.ContentLength > 0)
@@ -196,7 +168,6 @@ public class ReportProxyController : ControllerBase
                 contentType = Request.ContentType;
             }
 
-            // Get SSRS session key from cookie for cookie forwarding
             var sessionKey = Request.Cookies["ssrs_session_key"];
 
             var result = await _ssrsService.ProxyResourceAsync(resourcePath, queryString, Request.Method, requestBody, contentType, sessionKey);
@@ -207,12 +178,11 @@ public class ReportProxyController : ControllerBase
                 return StatusCode(502, new { error = result.ErrorMessage ?? "Failed to fetch resource" });
             }
 
-            // Set appropriate cache headers for static resources
             if (resourcePath.EndsWith(".js") || resourcePath.EndsWith(".css") ||
                 resourcePath.EndsWith(".png") || resourcePath.EndsWith(".gif") ||
                 resourcePath.EndsWith(".jpg") || resourcePath.EndsWith(".ico"))
             {
-                Response.Headers.CacheControl = "public, max-age=3600";  // Cache for 1 hour
+                Response.Headers.CacheControl = "public, max-age=3600";
             }
 
             return File(result.Content!, result.ContentType);
@@ -224,10 +194,6 @@ public class ReportProxyController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Set a session cookie for SSRS proxy authentication.
-    /// This cookie is automatically sent by the browser with subsequent resource requests.
-    /// </summary>
     private void SetProxySessionCookie(string? accessToken)
     {
         if (string.IsNullOrEmpty(accessToken))
@@ -239,15 +205,12 @@ public class ReportProxyController : ControllerBase
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.None,  // Required for iframe cross-origin
-            MaxAge = TimeSpan.FromHours(1),  // Match typical session duration
-            Path = "/api/reports/ssrs-resource"  // Only send for SSRS resource requests
+            SameSite = SameSiteMode.None,
+            MaxAge = TimeSpan.FromHours(1),
+            Path = "/api/reports/ssrs-resource"
         });
     }
 
-    /// <summary>
-    /// Set a cookie to track the SSRS session for cookie forwarding.
-    /// </summary>
     private void SetSSRSSessionCookie(string sessionKey)
     {
         Response.Cookies.Append("ssrs_session_key", sessionKey, new CookieOptions

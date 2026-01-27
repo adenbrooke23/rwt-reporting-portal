@@ -74,7 +74,6 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private iconService = inject(IconService);
 
-  // Search debounce
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
@@ -114,7 +113,7 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
   showDeleted = false;
 
   ngOnInit(): void {
-    // Case-insensitive check for admin role
+
     const hasAdminRole = this.currentUser?.roles?.some(
       role => role.toLowerCase() === 'admin'
     );
@@ -127,7 +126,6 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
       ArrowLeft, Add, Edit, TrashCan, View, Checkmark, Close, Renew, Star, StarFilled
     ]);
 
-    // Set up search debounce
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -159,7 +157,6 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = [...this.announcements];
 
-    // Apply search
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter(a =>
@@ -171,7 +168,6 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
 
     this.totalItems = filtered.length;
 
-    // Apply pagination
     const startIndex = (this.currentPage - 1) * this.pageSize;
     this.filteredAnnouncements = filtered.slice(startIndex, startIndex + this.pageSize);
 

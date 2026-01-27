@@ -73,7 +73,7 @@ public class ReportRepository : IReportRepository
 
     public async Task<List<Report>> GetAccessibleByUserIdAsync(int userId)
     {
-        // This would include permission filtering - for now return all active reports
+
         return await _context.Reports
             .Include(r => r.ReportGroup)
                 .ThenInclude(g => g.Hub)
@@ -89,7 +89,6 @@ public class ReportRepository : IReportRepository
         _context.Reports.Add(report);
         await _context.SaveChangesAsync();
 
-        // Reload with navigation properties
         return await GetByIdWithDepartmentsAsync(report.ReportId) ?? report;
     }
 

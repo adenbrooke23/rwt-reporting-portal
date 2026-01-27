@@ -20,9 +20,6 @@ public class AdminReportsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all reports (admin view)
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<AdminReportListResponse>> GetReports([FromQuery] bool includeInactive = false)
     {
@@ -34,9 +31,6 @@ public class AdminReportsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Get report by ID
-    /// </summary>
     [HttpGet("{reportId}")]
     public async Task<ActionResult<AdminReportDto>> GetReport(int reportId)
     {
@@ -48,9 +42,6 @@ public class AdminReportsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Create a new report
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<AdminReportDto>> CreateReport([FromBody] CreateReportRequest request)
     {
@@ -59,9 +50,6 @@ public class AdminReportsController : ControllerBase
         return CreatedAtAction(nameof(GetReport), new { reportId = result.ReportId }, result);
     }
 
-    /// <summary>
-    /// Update a report
-    /// </summary>
     [HttpPut("{reportId}")]
     public async Task<ActionResult<AdminReportDto>> UpdateReport(int reportId, [FromBody] UpdateReportRequest request)
     {
@@ -77,9 +65,6 @@ public class AdminReportsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a report (soft delete by default)
-    /// </summary>
     [HttpDelete("{reportId}")]
     public async Task<IActionResult> DeleteReport(int reportId, [FromQuery] bool hardDelete = false)
     {

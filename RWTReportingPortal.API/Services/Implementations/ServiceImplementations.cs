@@ -24,14 +24,11 @@ using Microsoft.Extensions.Caching.Memory;
 using RWTReportingPortal.API.Models.Entities;
 using RWTReportingPortal.API.Services.Interfaces;
 
-// Type aliases to resolve conflicts with Power BI SDK types
 using User = RWTReportingPortal.API.Models.Entities.User;
 using Report = RWTReportingPortal.API.Models.Entities.Report;
 using PbiReport = Microsoft.PowerBI.Api.Models.Report;
 
 namespace RWTReportingPortal.API.Services.Implementations;
-
-// Stub implementations - Replace with full implementations
 
 public class AuthService : IAuthService
 {
@@ -62,20 +59,17 @@ public class AuthService : IAuthService
     {
         _logger.LogInformation("Login attempt for {Email}", request.Email);
 
-        // 1. Authenticate with Entra using ROPC
         var entraResult = await _entraAuthService.AuthenticateWithPasswordAsync(request.Email, request.Password);
 
         if (!entraResult.Success)
         {
             _logger.LogWarning("Entra authentication failed for {Email}: {Error}", request.Email, entraResult.Error);
 
-            // Record failed login attempt if user exists
             var existingUser = await _userRepository.GetByEmailAsync(request.Email);
             if (existingUser != null)
             {
                 await _userRepository.IncrementFailedLoginAttemptsAsync(existingUser.UserId);
 
-                // Check if should lock out
                 var maxAttempts = _configuration.GetValue<int>("Security:MaxFailedLoginAttempts", 5);
                 if (existingUser.FailedLoginAttempts + 1 >= maxAttempts)
                 {
@@ -90,15 +84,13 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException(entraResult.ErrorDescription ?? "Invalid email or password");
         }
 
-        // 2. Get user info from Microsoft Graph
         var entraUserInfo = await _entraAuthService.GetUserInfoAsync(entraResult.AccessToken!);
 
-        // 3. Find or create user in our database (JIT provisioning)
         var user = await _userRepository.GetByEntraObjectIdAsync(entraUserInfo.ObjectId);
 
         if (user == null)
         {
-            // First time login - create user (JIT provisioning)
+
             _logger.LogInformation("Creating new user for {Email}", entraUserInfo.Email);
 
             user = new User
@@ -107,14 +99,13 @@ public class AuthService : IAuthService
                 Email = entraUserInfo.Email,
                 FirstName = entraUserInfo.FirstName,
                 LastName = entraUserInfo.LastName,
-                CompanyId = 1, // Default company - you may want to derive this from Entra
+                CompanyId = 1,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
             user = await _userRepository.CreateAsync(user);
 
-            // Create user profile
             var profile = new UserProfile
             {
                 UserId = user.UserId,
@@ -123,7 +114,6 @@ public class AuthService : IAuthService
             };
             _context.UserProfiles.Add(profile);
 
-            // Create user preferences with defaults
             var preferences = new UserPreferences
             {
                 UserId = user.UserId,
@@ -133,7 +123,6 @@ public class AuthService : IAuthService
             };
             _context.UserPreferences.Add(preferences);
 
-            // Assign default User role
             var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "User");
             if (userRole != null)
             {
@@ -147,11 +136,9 @@ public class AuthService : IAuthService
 
             await _context.SaveChangesAsync();
 
-            // Reload user with all includes
             user = await _userRepository.GetByIdWithDetailsAsync(user.UserId);
         }
 
-        // 4. Check if user is allowed to login
         if (!user!.IsActive)
         {
             throw new UnauthorizedAccessException("Your account has been deactivated. Please contact an administrator.");
@@ -162,17 +149,13 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Your account is locked. Please try again later or contact an administrator.");
         }
 
-        // 5. Update last login
         await _userRepository.UpdateLastLoginAsync(user.UserId);
 
-        // 6. Get user roles
         var roles = await _userRepository.GetUserRolesAsync(user.UserId);
 
-        // 7. Generate our own JWT token
         var accessToken = _jwtTokenService.GenerateAccessToken(user, roles);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
-        // 8. Create user session first (required for refresh token FK)
         var session = new UserSession
         {
             SessionId = Guid.NewGuid(),
@@ -187,7 +170,6 @@ public class AuthService : IAuthService
         _context.UserSessions.Add(session);
         await _context.SaveChangesAsync();
 
-        // 9. Store refresh token (linked to session)
         var refreshTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
@@ -199,7 +181,6 @@ public class AuthService : IAuthService
         _context.RefreshTokens.Add(refreshTokenEntity);
         await _context.SaveChangesAsync();
 
-        // 10. Log successful login
         _context.LoginHistory.Add(new LoginHistory
         {
             UserId = user.UserId,
@@ -225,7 +206,7 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse> HandleSSOCallbackAsync(string code, string redirectUri, string ipAddress, string userAgent)
     {
-        // Exchange authorization code for tokens
+
         var entraResult = await _entraAuthService.ExchangeCodeForTokenAsync(code, redirectUri);
 
         if (!entraResult.Success)
@@ -234,15 +215,13 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException(entraResult.ErrorDescription ?? "SSO authentication failed");
         }
 
-        // Get user info from Graph
         var entraUserInfo = await _entraAuthService.GetUserInfoAsync(entraResult.AccessToken!);
 
-        // Same flow as password login from here...
         var user = await _userRepository.GetByEntraObjectIdAsync(entraUserInfo.ObjectId);
 
         if (user == null)
         {
-            // JIT provisioning (same as in LoginAsync)
+
             user = new User
             {
                 EntraObjectId = entraUserInfo.ObjectId,
@@ -299,7 +278,6 @@ public class AuthService : IAuthService
         var accessToken = _jwtTokenService.GenerateAccessToken(user, roles);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
 
-        // Create user session first (required for refresh token FK)
         var session = new UserSession
         {
             SessionId = Guid.NewGuid(),
@@ -364,14 +342,11 @@ public class AuthService : IAuthService
 
         var roles = await _userRepository.GetUserRolesAsync(user.UserId);
 
-        // Generate new tokens
         var newAccessToken = _jwtTokenService.GenerateAccessToken(user, roles);
         var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
 
-        // Revoke old refresh token
         tokenEntity.RevokedAt = DateTime.UtcNow;
 
-        // Create new refresh token (reuse the existing session)
         var newTokenEntity = new RefreshToken
         {
             UserId = user.UserId,
@@ -393,7 +368,7 @@ public class AuthService : IAuthService
 
     public async Task LogoutAsync(int userId, string sessionToken)
     {
-        // Revoke all refresh tokens for the user (or just current session)
+
         var tokens = await _context.RefreshTokens
             .Where(t => t.UserId == userId && t.RevokedAt == null)
             .ToListAsync();
@@ -502,7 +477,7 @@ public class UserService : IUserService
 
         if (profile == null)
         {
-            // Create profile if it doesn't exist
+
             profile = new UserProfile
             {
                 UserId = userId,
@@ -536,7 +511,7 @@ public class UserService : IUserService
 
         if (preferences == null)
         {
-            // Create preferences if they don't exist
+
             preferences = new UserPreferences
             {
                 UserId = userId,
@@ -588,7 +563,7 @@ public class HubService : IHubService
 
     public async Task<HubListResponse> GetAccessibleHubsAsync(int userId)
     {
-        // Get user with roles to check if admin
+
         var user = await _context.Users
             .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
@@ -604,7 +579,6 @@ public class HubService : IHubService
             return new HubListResponse { Hubs = new List<HubDto>() };
         }
 
-        // Check if user is admin (case-insensitive)
         var isAdmin = user.UserRoles?.Any(ur =>
             ur.Role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)) ?? false;
 
@@ -612,7 +586,7 @@ public class HubService : IHubService
 
         if (isAdmin)
         {
-            // Admins get all active hubs
+
             accessibleHubs = await _context.ReportingHubs
                 .Include(h => h.ReportGroups)
                     .ThenInclude(rg => rg.Reports)
@@ -623,10 +597,9 @@ public class HubService : IHubService
         }
         else
         {
-            // Collect hub IDs the user has access to
+
             var accessibleHubIds = new HashSet<int>();
 
-            // 1. Direct hub access (ad-hoc)
             var directHubIds = user.HubAccess?
                 .Where(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow)
                 .Select(ha => ha.HubId) ?? Enumerable.Empty<int>();
@@ -635,7 +608,6 @@ public class HubService : IHubService
                 accessibleHubIds.Add(hubId);
             }
 
-            // 2. Direct report access (ad-hoc) - get the hub for each report
             var reportHubIds = user.ReportAccess?
                 .Where(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow)
                 .Where(ra => ra.Report?.ReportGroup != null)
@@ -645,7 +617,6 @@ public class HubService : IHubService
                 accessibleHubIds.Add(hubId);
             }
 
-            // 3. Department-based access - get hubs containing reports tagged with user's departments
             if (user.UserDepartments?.Any() == true)
             {
                 var userDepartmentIds = user.UserDepartments.Select(ud => ud.DepartmentId).ToList();
@@ -665,7 +636,6 @@ public class HubService : IHubService
                 }
             }
 
-            // Fetch the actual hubs
             accessibleHubs = await _context.ReportingHubs
                 .Include(h => h.ReportGroups)
                     .ThenInclude(rg => rg.Reports)
@@ -734,7 +704,7 @@ public class HubService : IHubService
             ReportGroupCount = h.ReportGroups?.Count(rg => rg.IsActive) ?? 0,
             ReportCount = h.ReportGroups?.Sum(rg => rg.Reports?.Count(r => r.IsActive) ?? 0) ?? 0,
             CreatedAt = h.CreatedAt,
-            CreatedByEmail = null // Navigation property not loaded yet
+            CreatedByEmail = null
         }).ToList();
     }
 
@@ -866,7 +836,6 @@ public class ReportService : IReportService
         _ssrsService = ssrsService;
     }
 
-    // User-facing methods (to be implemented later)
     public Task<ReportDto?> GetReportAsync(int reportId, int userId) => throw new NotImplementedException();
     public Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId) => throw new NotImplementedException();
 
@@ -881,7 +850,6 @@ public class ReportService : IReportService
             command.CommandText = "portal.usp_ReportAccess_Log";
             command.CommandType = System.Data.CommandType.StoredProcedure;
 
-            // Add parameters
             var userIdParam = command.CreateParameter();
             userIdParam.ParameterName = "@UserId";
             userIdParam.Value = userId;
@@ -904,15 +872,14 @@ public class ReportService : IReportService
 
             var userAgentParam = command.CreateParameter();
             userAgentParam.ParameterName = "@UserAgent";
-            userAgentParam.Value = DBNull.Value; // Not passed from current interface
+            userAgentParam.Value = DBNull.Value;
             command.Parameters.Add(userAgentParam);
 
             await Task.Run(() => command.ExecuteNonQuery());
         }
         catch (Exception)
         {
-            // Don't let logging failures break report access
-            // Could add ILogger here if needed for debugging
+
         }
     }
     public Task<List<FavoriteDto>> GetFavoritesAsync(int userId) => throw new NotImplementedException();
@@ -920,7 +887,6 @@ public class ReportService : IReportService
     public Task RemoveFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
     public Task ReorderFavoritesAsync(int userId, List<int> reportIds) => throw new NotImplementedException();
 
-    // Admin CRUD methods
     public async Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false)
     {
         var reports = await _reportRepository.GetAllAsync(includeInactive);
@@ -938,10 +904,9 @@ public class ReportService : IReportService
 
     public async Task<AdminReportDto> CreateReportAsync(CreateReportRequest request, int createdBy)
     {
-        // Generate report code from name
+
         var reportCode = request.ReportName.ToUpper().Replace(" ", "_");
 
-        // Get next sort order for the report group
         var existingReports = await _context.Reports
             .Where(r => r.ReportGroupId == request.ReportGroupId)
             .ToListAsync();
@@ -967,7 +932,6 @@ public class ReportService : IReportService
 
         var created = await _reportRepository.CreateAsync(report);
 
-        // Add department associations if provided
         if (request.DepartmentIds?.Any() == true)
         {
             foreach (var deptId in request.DepartmentIds)
@@ -981,7 +945,6 @@ public class ReportService : IReportService
             await _context.SaveChangesAsync();
         }
 
-        // Reload with all associations
         var result = await _reportRepository.GetByIdWithDepartmentsAsync(created.ReportId);
         return MapToAdminDto(result!);
     }
@@ -994,7 +957,6 @@ public class ReportService : IReportService
             throw new KeyNotFoundException($"Report with ID {reportId} not found");
         }
 
-        // Update properties
         if (request.ReportGroupId.HasValue)
             report.ReportGroupId = request.ReportGroupId.Value;
         if (request.ReportName != null)
@@ -1011,7 +973,7 @@ public class ReportService : IReportService
         if (request.PowerBIReportId != null)
             report.PowerBIReportId = request.PowerBIReportId;
         if (request.PowerBIEmbedUrl != null)
-            report.PowerBIReportId = request.PowerBIReportId; // Store embed URL in reportId for now
+            report.PowerBIReportId = request.PowerBIReportId;
         if (request.SSRSReportPath != null)
             report.SSRSReportPath = request.SSRSReportPath;
         if (request.SSRSReportServer != null)
@@ -1023,16 +985,14 @@ public class ReportService : IReportService
 
         await _reportRepository.UpdateAsync(report);
 
-        // Update department associations if provided
         if (request.DepartmentIds != null)
         {
-            // Remove existing
+
             var existingDepts = await _context.ReportDepartments
                 .Where(rd => rd.ReportId == reportId)
                 .ToListAsync();
             _context.ReportDepartments.RemoveRange(existingDepts);
 
-            // Add new
             foreach (var deptId in request.DepartmentIds)
             {
                 _context.ReportDepartments.Add(new ReportDepartment
@@ -1044,7 +1004,6 @@ public class ReportService : IReportService
             await _context.SaveChangesAsync();
         }
 
-        // Reload with all associations
         var result = await _reportRepository.GetByIdWithDepartmentsAsync(reportId);
         return MapToAdminDto(result!);
     }
@@ -1234,7 +1193,7 @@ public class DepartmentService : IDepartmentService
                     ? $"{ud.User.FirstName} {ud.User.LastName}".Trim()
                     : null,
                 GrantedAt = ud.GrantedAt,
-                GrantedBy = null // Would need to join to get granter's email
+                GrantedBy = null
             }).ToList()
         };
     }
@@ -1258,8 +1217,8 @@ public class DepartmentService : IDepartmentService
                 ReportId = rd.ReportId,
                 ReportCode = rd.Report?.ReportCode ?? "",
                 ReportName = rd.Report?.ReportName ?? "",
-                HubName = "", // Would need deeper join
-                GroupName = "", // Would need deeper join
+                HubName = "",
+                GroupName = "",
                 GrantedAt = rd.GrantedAt,
                 GrantedBy = null
             }).ToList()
@@ -1267,13 +1226,13 @@ public class DepartmentService : IDepartmentService
     }
     public async Task AssignUserToDepartmentAsync(int userId, int departmentId, int grantedBy)
     {
-        // Check if assignment already exists
+
         var existing = await _context.UserDepartments
             .FirstOrDefaultAsync(ud => ud.UserId == userId && ud.DepartmentId == departmentId);
 
         if (existing != null)
         {
-            // Already assigned, nothing to do
+
             return;
         }
 
@@ -1356,10 +1315,9 @@ public class PermissionService : IPermissionService
             DepartmentCode = ud.Department?.DepartmentCode ?? "",
             DepartmentName = ud.Department?.DepartmentName ?? "",
             GrantedAt = ud.GrantedAt,
-            GrantedBy = null // Could lookup admin name if needed
+            GrantedBy = null
         }).ToList() ?? new List<UserDepartmentPermissionDto>();
 
-        // Get hub permissions (ad-hoc access)
         var hubPermissions = user.HubAccess?
             .Where(ha => ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow)
             .Select(ha => new HubPermissionDto
@@ -1372,7 +1330,6 @@ public class PermissionService : IPermissionService
                 ExpiresAt = ha.ExpiresAt
             }).ToList() ?? new List<HubPermissionDto>();
 
-        // Get report permissions (ad-hoc access)
         var reportPermissions = user.ReportAccess?
             .Where(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow)
             .Select(ra => new ReportPermissionDto
@@ -1397,7 +1354,7 @@ public class PermissionService : IPermissionService
             Permissions = new PermissionsDto
             {
                 Hubs = hubPermissions,
-                ReportGroups = new List<ReportGroupPermissionDto>(), // Not used for now
+                ReportGroups = new List<ReportGroupPermissionDto>(),
                 Reports = reportPermissions
             }
         };
@@ -1405,13 +1362,13 @@ public class PermissionService : IPermissionService
 
     public async Task GrantHubAccessAsync(int userId, int hubId, int grantedBy, DateTime? expiresAt = null)
     {
-        // Check if access already exists
+
         var existingAccess = await _context.UserHubAccess
             .FirstOrDefaultAsync(uha => uha.UserId == userId && uha.HubId == hubId);
 
         if (existingAccess != null)
         {
-            // Update expiration if needed
+
             existingAccess.ExpiresAt = expiresAt;
             existingAccess.GrantedAt = DateTime.UtcNow;
             existingAccess.GrantedBy = grantedBy;
@@ -1436,13 +1393,13 @@ public class PermissionService : IPermissionService
 
     public async Task GrantReportAccessAsync(int userId, int reportId, int grantedBy, DateTime? expiresAt = null)
     {
-        // Check if access already exists
+
         var existingAccess = await _context.UserReportAccess
             .FirstOrDefaultAsync(ura => ura.UserId == userId && ura.ReportId == reportId);
 
         if (existingAccess != null)
         {
-            // Update expiration if needed
+
             existingAccess.ExpiresAt = expiresAt;
             existingAccess.GrantedAt = DateTime.UtcNow;
             existingAccess.GrantedBy = grantedBy;
@@ -1491,20 +1448,19 @@ public class PermissionService : IPermissionService
 
     public async Task UpdateUserAdminRoleAsync(int userId, bool isAdmin, int grantedBy)
     {
-        // Get the Admin role
+
         var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Admin");
         if (adminRole == null)
         {
             throw new InvalidOperationException("Admin role not found in database");
         }
 
-        // Check if user already has admin role
         var existingUserRole = await _context.UserRoles
             .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == adminRole.RoleId);
 
         if (isAdmin)
         {
-            // Grant admin role
+
             if (existingUserRole == null)
             {
                 var userRole = new UserRole
@@ -1517,17 +1473,17 @@ public class PermissionService : IPermissionService
                 _context.UserRoles.Add(userRole);
                 await _context.SaveChangesAsync();
             }
-            // If already has role, nothing to do
+
         }
         else
         {
-            // Revoke admin role
+
             if (existingUserRole != null)
             {
                 _context.UserRoles.Remove(existingUserRole);
                 await _context.SaveChangesAsync();
             }
-            // If doesn't have role, nothing to do
+
         }
     }
 }
@@ -1587,9 +1543,6 @@ public class PowerBIService : IPowerBIService
         _reportRepository = reportRepository;
     }
 
-    /// <summary>
-    /// Get configuration status for Power BI integration.
-    /// </summary>
     public async Task<PowerBIConfigResponse> GetConfigAsync()
     {
         var tenantId = _configuration["PowerBI:TenantId"];
@@ -1626,15 +1579,12 @@ public class PowerBIService : IPowerBIService
         return response;
     }
 
-    /// <summary>
-    /// Test the connection to Power BI service.
-    /// </summary>
     public async Task<bool> TestConnectionAsync()
     {
         try
         {
             var client = await GetPowerBIClientAsync();
-            // Try to get workspaces - this will fail if credentials are invalid
+
             await client.Groups.GetGroupsAsync();
             return true;
         }
@@ -1645,9 +1595,6 @@ public class PowerBIService : IPowerBIService
         }
     }
 
-    /// <summary>
-    /// Get all workspaces the service principal has access to.
-    /// </summary>
     public async Task<List<Interfaces.PowerBIWorkspace>> GetWorkspacesAsync()
     {
         try
@@ -1659,7 +1606,7 @@ public class PowerBIService : IPowerBIService
 
             foreach (var group in groups.Value)
             {
-                // Get report counts for each workspace
+
                 var reports = await client.Reports.GetReportsInGroupAsync(new Guid(group.Id.ToString()));
                 var reportCount = reports.Value.Count(r => r.ReportType == "PowerBIReport");
                 var paginatedCount = reports.Value.Count(r => r.ReportType == "PaginatedReport");
@@ -1669,7 +1616,7 @@ public class PowerBIService : IPowerBIService
                     WorkspaceId = group.Id.ToString(),
                     WorkspaceName = group.Name,
                     Description = "",
-                    Type = "Workspace", // Group SDK type doesn't have a Type property
+                    Type = "Workspace",
                     ReportCount = reportCount,
                     PaginatedReportCount = paginatedCount
                 });
@@ -1685,9 +1632,6 @@ public class PowerBIService : IPowerBIService
         }
     }
 
-    /// <summary>
-    /// Get all reports in a specific workspace.
-    /// </summary>
     public async Task<List<Interfaces.PowerBIReport>> GetWorkspaceReportsAsync(string workspaceId)
     {
         try
@@ -1695,7 +1639,6 @@ public class PowerBIService : IPowerBIService
             var client = await GetPowerBIClientAsync();
             var reports = await client.Reports.GetReportsInGroupAsync(new Guid(workspaceId));
 
-            // Get existing reports from database to mark already imported ones
             var existingReports = await _reportRepository.GetAllAsync(includeInactive: true);
             var existingPowerBIReportIds = existingReports
                 .Where(r => !string.IsNullOrEmpty(r.PowerBIReportId))
@@ -1709,7 +1652,7 @@ public class PowerBIService : IPowerBIService
                 DatasetId = r.DatasetId?.ToString() ?? "",
                 EmbedUrl = r.EmbedUrl,
                 ReportType = r.ReportType ?? "PowerBIReport",
-                ModifiedDateTime = DateTime.UtcNow, // Report SDK type doesn't have ModifiedDateTime
+                ModifiedDateTime = DateTime.UtcNow,
                 AlreadyImported = existingPowerBIReportIds.ContainsKey(r.Id.ToString()),
                 ExistingReportId = existingPowerBIReportIds.TryGetValue(r.Id.ToString(), out var existingId) ? existingId : null
             }).ToList();
@@ -1724,9 +1667,6 @@ public class PowerBIService : IPowerBIService
         }
     }
 
-    /// <summary>
-    /// Get embed information (URL and token) for a specific report.
-    /// </summary>
     public async Task<PowerBIEmbedInfo> GetEmbedInfoAsync(string workspaceId, string reportId)
     {
         try
@@ -1735,10 +1675,8 @@ public class PowerBIService : IPowerBIService
             var workspaceGuid = new Guid(workspaceId);
             var reportGuid = new Guid(reportId);
 
-            // Get report details
             var report = await client.Reports.GetReportInGroupAsync(workspaceGuid, reportGuid);
 
-            // Generate embed token
             var generateTokenRequest = new GenerateTokenRequest(
                 accessLevel: "View",
                 allowSaveAs: false
@@ -1757,7 +1695,7 @@ public class PowerBIService : IPowerBIService
                 EmbedUrl = report.EmbedUrl,
                 EmbedToken = tokenResponse.Token,
                 ReportId = reportId,
-                TokenExpiry = tokenResponse.Expiration // Non-nullable DateTime
+                TokenExpiry = tokenResponse.Expiration
             };
         }
         catch (Exception ex)
@@ -1767,9 +1705,6 @@ public class PowerBIService : IPowerBIService
         }
     }
 
-    /// <summary>
-    /// Get an authenticated Power BI client using client credentials flow.
-    /// </summary>
     private async Task<PowerBIClient> GetPowerBIClientAsync()
     {
         var accessToken = await GetAccessTokenAsync();
@@ -1777,13 +1712,9 @@ public class PowerBIService : IPowerBIService
         return new PowerBIClient(new Uri(PowerBIApiUrl), tokenCredentials);
     }
 
-    /// <summary>
-    /// Get an access token using MSAL client credentials flow.
-    /// Tokens are cached to avoid unnecessary authentication calls.
-    /// </summary>
     private async Task<string> GetAccessTokenAsync()
     {
-        // Check cache first
+
         if (_cache.TryGetValue(TokenCacheKey, out string? cachedToken) && !string.IsNullOrEmpty(cachedToken))
         {
             return cachedToken;
@@ -1808,7 +1739,6 @@ public class PowerBIService : IPowerBIService
 
         var result = await app.AcquireTokenForClient(Scopes).ExecuteAsync();
 
-        // Cache the token with expiration buffer (5 minutes before actual expiry)
         var cacheExpiration = result.ExpiresOn.AddMinutes(-5) - DateTimeOffset.UtcNow;
         if (cacheExpiration > TimeSpan.Zero)
         {
@@ -1870,7 +1800,6 @@ public class SSRSService : ISSRSService
 
             var soapUrl = $"{serverUrl}/ReportService2010.asmx";
 
-            // Build SOAP envelope for ListChildren
             var soapEnvelope = BuildListChildrenSoapRequest(folderPath);
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
@@ -1934,16 +1863,16 @@ public class SSRSService : ISSRSService
 
     public Task<List<SSRSParameter>> GetReportParametersAsync(string reportPath, string reportServer)
     {
-        // TODO: Implement parameter extraction
+
         return Task.FromResult(new List<SSRSParameter>());
     }
 
     private string BuildListChildrenSoapRequest(string folderPath)
     {
         return $@"<?xml version=""1.0"" encoding=""utf-8""?>
-<soap:Envelope xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
+<soap:Envelope xmlns:soap=""http:
   <soap:Body>
-    <ListChildren xmlns=""http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer"">
+    <ListChildren xmlns=""http:
       <ItemPath>{SecurityElement.Escape(folderPath)}</ItemPath>
       <Recursive>false</Recursive>
     </ListChildren>
@@ -1990,7 +1919,6 @@ public class SSRSService : ISSRSService
                 }
             }
 
-            // Sort folders and reports by name
             result.Folders = result.Folders.OrderBy(f => f.Name).ToList();
             result.Reports = result.Reports.OrderBy(r => r.Name).ToList();
         }
@@ -2018,13 +1946,9 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Build the ReportViewer.aspx URL for full interactive report viewing
-            // This provides the complete SSRS experience with toolbar, parameters, and interactivity
-            // Format: {serverUrl}/Pages/ReportViewer.aspx?{reportPath}&rs:Command=Render&rs:Embed=true
             var reportPathEncoded = reportPath.StartsWith("/") ? reportPath : "/" + reportPath;
             var viewerUrl = $"{serverUrl}/Pages/ReportViewer.aspx?{reportPathEncoded}&rs:Command=Render&rs:Embed=true";
 
-            // Add any parameters
             if (parameters != null)
             {
                 foreach (var param in parameters)
@@ -2048,12 +1972,11 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Capture cookies from SSRS response and store for subsequent requests
             var cookies = new List<string>();
             if (response.Headers.TryGetValues("Set-Cookie", out var cookieHeaders))
             {
                 cookies.AddRange(cookieHeaders);
-                // Store cookies in cache for this session (keyed by report path)
+
                 var cacheKey = $"ssrs_cookies_{reportPath.GetHashCode().ToString()}";
                 _cache.Set(cacheKey, cookies, TimeSpan.FromMinutes(30));
                 _logger.LogDebug("Stored {Count} cookies for SSRS session", cookies.Count);
@@ -2062,7 +1985,6 @@ public class SSRSService : ISSRSService
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "text/html";
 
-            // Rewrite URLs in HTML to point to proxy endpoints
             if (!string.IsNullOrEmpty(proxyBaseUrl) && contentType.Contains("text/html"))
             {
                 content = RewriteHtmlUrls(content, serverUrl, proxyBaseUrl);
@@ -2101,7 +2023,6 @@ public class SSRSService : ISSRSService
                 };
             }
 
-            // Extract base URL (e.g., https://ssrs.example.com from https://ssrs.example.com/ReportServer)
             var uri = new Uri(serverUrl);
             var baseUrl = $"{uri.Scheme}://{uri.Host}";
             if (!uri.IsDefaultPort)
@@ -2109,7 +2030,6 @@ public class SSRSService : ISSRSService
                 baseUrl += $":{uri.Port}";
             }
 
-            // Build the full resource URL
             var resourceUrl = $"{baseUrl}{resourcePath}";
             if (!string.IsNullOrEmpty(queryString))
             {
@@ -2120,19 +2040,17 @@ public class SSRSService : ISSRSService
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
 
-            // Create request message to add cookies
             var request = new HttpRequestMessage(
                 method == "POST" ? HttpMethod.Post : HttpMethod.Get,
                 resourceUrl
             );
 
-            // Try to retrieve cached cookies for this session
             if (!string.IsNullOrEmpty(sessionKey))
             {
                 var cacheKey = $"ssrs_cookies_{sessionKey}";
                 if (_cache.TryGetValue(cacheKey, out List<string>? cachedCookies) && cachedCookies != null)
                 {
-                    // Extract cookie name=value pairs and add to request
+
                     var cookieValues = cachedCookies
                         .Select(c => c.Split(';')[0].Trim())
                         .ToList();
@@ -2187,9 +2105,6 @@ public class SSRSService : ISSRSService
         }
     }
 
-    /// <summary>
-    /// Rewrite URLs in SSRS HTML to point to the proxy endpoint
-    /// </summary>
     private byte[] RewriteHtmlUrls(byte[] content, string ssrsServerUrl, string proxyBaseUrl)
     {
         var html = Encoding.UTF8.GetString(content);
@@ -2200,19 +2115,15 @@ public class SSRSService : ISSRSService
             ssrsBaseUrl += $":{uri.Port}";
         }
 
-        // Rewrite absolute URLs to SSRS server
         html = html.Replace($"\"{ssrsBaseUrl}/", $"\"{proxyBaseUrl}/");
         html = html.Replace($"'{ssrsBaseUrl}/", $"'{proxyBaseUrl}/");
 
-        // Rewrite relative URLs starting with /ReportServer
         html = html.Replace("\"/ReportServer/", $"\"{proxyBaseUrl}/ReportServer/");
         html = html.Replace("'/ReportServer/", $"'{proxyBaseUrl}/ReportServer/");
 
-        // Rewrite relative URLs starting with /Reports (common SSRS path)
         html = html.Replace("\"/Reports/", $"\"{proxyBaseUrl}/Reports/");
         html = html.Replace("'/Reports/", $"'{proxyBaseUrl}/Reports/");
 
-        // Rewrite URLs in JavaScript (often uses escaped quotes or concatenation)
         html = html.Replace("src=\"/ReportServer/", $"src=\"{proxyBaseUrl}/ReportServer/");
         html = html.Replace("href=\"/ReportServer/", $"href=\"{proxyBaseUrl}/ReportServer/");
         html = html.Replace("action=\"/ReportServer/", $"action=\"{proxyBaseUrl}/ReportServer/");
@@ -2245,10 +2156,9 @@ public class AuditService : IAuditService
             command.CommandText = "portal.usp_AuditLog_Insert";
             command.CommandType = System.Data.CommandType.StoredProcedure;
 
-            // Add parameters
             AddParameter(command, "@UserId", userId ?? (object)DBNull.Value);
             AddParameter(command, "@EventType", action);
-            // Use description if provided, otherwise fall back to a generic message
+
             AddParameter(command, "@EventDescription", description ?? $"Action by {userEmail ?? "unknown"}" ?? (object)DBNull.Value);
             AddParameter(command, "@TargetType", entityType ?? (object)DBNull.Value);
             AddParameter(command, "@TargetId", entityId ?? (object)DBNull.Value);
@@ -2262,7 +2172,7 @@ public class AuditService : IAuditService
         }
         catch (Exception ex)
         {
-            // Don't let audit failures break the application
+
             _logger.LogError(ex, "Failed to log audit entry: {Action} by User {UserId}", action, userId);
         }
     }
@@ -2270,8 +2180,7 @@ public class AuditService : IAuditService
     public async Task LogLoginAsync(int? userId, string? email, string loginMethod, bool success,
         string? failureReason = null, string? ipAddress = null, string? userAgent = null)
     {
-        // Login history is already being logged elsewhere in AuthService
-        // This method can be used for additional login audit entries if needed
+
         var description = success
             ? $"User logged in via {loginMethod}"
             : $"Login failed via {loginMethod}: {failureReason ?? "Unknown reason"}";
@@ -2359,10 +2268,9 @@ public class ReportGroupService : IReportGroupService
 
     public async Task<AdminReportGroupDto> CreateReportGroupAsync(CreateReportGroupRequest request, int createdBy)
     {
-        // Generate group code from name
+
         var groupCode = request.GroupName.ToUpper().Replace(" ", "_");
 
-        // Get next sort order for the hub
         var existingGroups = await _context.ReportGroups
             .Where(g => g.HubId == request.HubId)
             .ToListAsync();
@@ -2383,7 +2291,6 @@ public class ReportGroupService : IReportGroupService
         _context.ReportGroups.Add(group);
         await _context.SaveChangesAsync();
 
-        // Reload with navigation properties
         var created = await _context.ReportGroups
             .Include(g => g.Hub)
             .Include(g => g.Reports)

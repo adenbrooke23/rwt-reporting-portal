@@ -34,7 +34,6 @@
   position: relative;
 }
 
-// Icon Buttons (Search, Notifications)
 .icon-button {
   display: flex;
   align-items: center;
@@ -58,7 +57,6 @@
   }
 }
 
-// User Profile Dropdown
 .user-profile-wrapper {
   position: relative;
 }
@@ -111,7 +109,6 @@
   }
 }
 
-// Dropdown Menu
 .profile-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
@@ -209,7 +206,6 @@
   }
 }
 
-// Dropdown Overlay
 .dropdown-overlay {
   position: fixed;
   top: 0;

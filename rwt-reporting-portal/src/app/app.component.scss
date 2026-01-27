@@ -11,15 +11,15 @@
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 48px); /* Account for fixed header */
-  margin-left: 48px; /* Collapsed sidebar width */
-  margin-top: 48px; /* Height of Carbon header */
+  min-height: calc(100vh - 48px); 
+  margin-left: 48px; 
+  margin-top: 48px; 
 
   &.with-sidebar {
-    margin-left: 256px; /* Expanded sidebar width */
+    margin-left: 256px; 
   }
 
-  transition: margin-left 0.11s cubic-bezier(0.2, 0, 0.38, 0.9); /* Carbon motion */
+  transition: margin-left 0.11s cubic-bezier(0.2, 0, 0.38, 0.9); 
 }
 
 .main-content {
@@ -28,13 +28,12 @@
   flex-direction: column;
 }
 
-/* Responsive - Mobile/Tablet */
 @media (max-width: 1024px) {
   .app-container {
     margin-left: 48px;
 
     &.with-sidebar {
-      margin-left: 48px; /* Keep same margin on mobile, overlay sidebar instead */
+      margin-left: 48px; 
     }
   }
 }

@@ -6,7 +6,6 @@
   overflow-x: hidden;
 }
 
-// Page Header - matches standard navigation pattern
 .page-header {
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
@@ -47,7 +46,6 @@
   align-items: center;
 }
 
-// Main Content
 .page-main {
   padding: spacing.$spacing-05 0;
 }
@@ -58,7 +56,6 @@
   padding: 0 spacing.$spacing-06;
 }
 
-// Filter Toolbar
 .filter-toolbar {
   display: flex;
   justify-content: space-between;
@@ -106,26 +103,23 @@
   gap: spacing.$spacing-03;
 }
 
-// Results info
 .results-info {
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   margin-bottom: spacing.$spacing-04;
 }
 
-// Updates Grid - Compact layout
 .updates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); // Reduced from 256px to 200px
-  gap: spacing.$spacing-04; // Reduced from spacing-05 (16px) to spacing-04 (12px)
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: spacing.$spacing-04;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: spacing.$spacing-04; // 12px - tighter on mobile
+    gap: spacing.$spacing-04;
   }
 }
 
-// Article Cards - Gatsby Carbon Design Pattern
 .article-card {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
@@ -142,7 +136,7 @@
 
 .card-image {
   width: 100%;
-  height: 140px; // Reduced from 200px to 140px
+  height: 140px;
   overflow: hidden;
   background: var(--color-bg-tertiary);
 
@@ -164,7 +158,7 @@
 
 .card-subtitle {
   margin: 0;
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   font-weight: 400;
   line-height: 1.33;
@@ -172,7 +166,7 @@
 
 .card-title {
   margin: 0;
-  font-size: 1.25rem; // 20px
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.4;
@@ -197,7 +191,7 @@
 
 .card-author {
   margin: 0;
-  font-size: 0.875rem; // 14px
+  font-size: 0.875rem;
   color: var(--color-text-primary);
   font-weight: 400;
   line-height: 1.43;
@@ -205,7 +199,7 @@
 
 .card-meta {
   margin: 0;
-  font-size: 0.75rem; // 12px
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   font-weight: 400;
   line-height: 1.33;
@@ -218,7 +212,6 @@
   color: var(--color-text-secondary);
 }
 
-// Skeleton Loading
 .skeleton {
   background: var(--color-bg-tertiary);
   border-radius: 2px;
@@ -267,14 +260,12 @@
   }
 }
 
-// Empty State
 .no-announcements {
   text-align: center;
   padding: spacing.$spacing-09;
   color: var(--color-text-secondary);
 }
 
-// Modal Styles
 .modal-category-tag {
   display: inline-block;
   font-size: 0.75rem;
@@ -312,7 +303,6 @@
   }
 }
 
-// Modal container styles
 ::ng-deep {
   .cds--modal-container {
     background: var(--color-bg-primary);
@@ -348,7 +338,6 @@
   line-height: 1.6;
   color: var(--color-text-primary);
 
-  // Markdown rendered content styling
   h1, h2, h3, h4, h5, h6 {
     margin-top: spacing.$spacing-06;
     margin-bottom: spacing.$spacing-03;
@@ -441,7 +430,6 @@
   }
 }
 
-// Reduced motion support
 @media (prefers-reduced-motion: reduce) {
   .article-card,
   .back-button,

@@ -322,14 +322,12 @@
   </cds-modal-footer>
 </cds-modal>
 
-<!-- SSRS Browser Modal -->
 <app-ssrs-browser
   [(open)]="showSSRSBrowser"
   [serverUrl]="ssrsServerUrl"
   (select)="onSSRSReportSelected($event)">
 </app-ssrs-browser>
 
-<!-- Power BI Browser Modal -->
 <app-powerbi-browser
   [(open)]="showPowerBIBrowser"
   (select)="onPowerBIReportSelected($event)">

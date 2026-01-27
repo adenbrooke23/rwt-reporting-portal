@@ -48,7 +48,6 @@
   padding: 0 spacing.$spacing-06;
 }
 
-// Stats Section
 .stats-section {
   margin-bottom: spacing.$spacing-07;
 }
@@ -143,7 +142,6 @@
   transition: transform 0.2s ease;
 }
 
-// Quick Actions Section
 .quick-actions-section {
   margin-bottom: spacing.$spacing-07;
 
@@ -161,7 +159,6 @@
   flex-wrap: wrap;
 }
 
-// Recent Sections
 .recent-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;

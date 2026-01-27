@@ -1,5 +1,5 @@
 <div class="personal-dashboard-container">
-  <!-- Page Header matching admin style -->
+  
   <header class="dashboard-header">
     <div class="header-content">
       <div class="header-left">
@@ -17,7 +17,7 @@
 
   <main class="dashboard-main">
     <div class="dashboard-content">
-      <!-- Reports Table with Toolbar -->
+      
       <div *ngIf="totalFavoritesCount > 0" class="favorites-table">
         <div class="carbon-table-wrapper" [ngClass]="'table-row-size-' + tableRowSize">
           <ibm-table-container>
@@ -31,7 +31,7 @@
                   [placeholder]="'Search reports...'"
                   [size]="'sm'">
                 </ibm-table-toolbar-search>
-                <!-- Row Height Settings Button -->
+                
                 <button
                   cdsButton="ghost"
                   type="button"
@@ -58,7 +58,7 @@
             </ibm-table>
           </ibm-table-container>
 
-          <!-- Pagination Controls -->
+          
           <div *ngIf="allReports.length > (paginationModel.pageLength || 6)" class="pagination-wrapper">
             <ibm-pagination
               [model]="paginationModel"
@@ -68,7 +68,7 @@
         </div>
       </div>
 
-      <!-- Row Height Settings Menu -->
+      
       <ng-template #rowHeightMenu>
         <ibm-overflow-menu-option (click)="setRowSize('xs')">
           <svg *ngIf="tableRowSize === 'xs'" cdsIcon="checkmark" size="16" class="menu-icon"></svg>
@@ -88,7 +88,7 @@
         </ibm-overflow-menu-option>
       </ng-template>
 
-      <!-- Templates for table cells -->
+      
       <ng-template #reportNameTemplate let-data="data">
         <div class="report-name-cell">
           <svg cdsIcon="document" size="16" class="report-icon"></svg>
@@ -112,12 +112,12 @@
 
       <ng-template #actionsTemplate let-data="data">
         <div class="action-cell">
-          <!-- Primary Action: View Report -->
+          
           <a [routerLink]="data.route" cdsButton="primary" size="sm" class="view-report-btn">
             <svg cdsIcon="view" size="16" class="cds--btn__icon"></svg>
             View
           </a>
-          <!-- Overflow Menu for Secondary Actions -->
+          
           <ibm-overflow-menu [flip]="true" [description]="''">
             <ibm-overflow-menu-option (click)="togglePin(data.id, data.categoryId, data.categoryName)">
               <svg [cdsIcon]="isPinned(data.id) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
@@ -131,7 +131,7 @@
         </div>
       </ng-template>
 
-      <!-- Empty State -->
+      
       <div *ngIf="totalFavoritesCount === 0" class="no-favorites">
         <svg cdsIcon="star" size="64" class="icon-large"></svg>
         <div class="empty-state-content">
@@ -143,7 +143,7 @@
         </button>
       </div>
 
-      <!-- No Search Results -->
+      
       <div *ngIf="totalFavoritesCount > 0 && tableModel.data.length === 0" class="no-results">
         <svg cdsIcon="document--blank" size="64" class="icon-large"></svg>
         <div class="empty-state-content">

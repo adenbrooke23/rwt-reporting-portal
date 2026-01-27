@@ -20,7 +20,7 @@
         <div class="users-panel">
           <div class="users-panel-header">
             <h2>Users</h2>
-            <!-- Carbon Fluid Search Component -->
+            
             <div class="search-container">
               <ibm-search
                 [value]="searchQuery"
@@ -31,7 +31,7 @@
             </div>
           </div>
 
-          <!-- Carbon Structured List for Users -->
+          
           <ibm-structured-list class="user-structured-list">
             <ibm-list-header>
               <ibm-list-column>User</ibm-list-column>
@@ -97,7 +97,7 @@
             <p>No users found matching your search.</p>
           </div>
 
-          <!-- Carbon Pagination -->
+          
           <ibm-pagination
             [model]="{ currentPage: currentPage, pageLength: pageSize, totalDataLength: totalUsers }"
             (selectPage)="onPaginationChange($event)">
@@ -133,7 +133,7 @@
                 </div>
               </div>
               <div class="account-actions">
-                <!-- Actions for active users -->
+                
                 <ng-container *ngIf="selectedUser.accountStatus === 'active'">
                   <button
                     cdsButton="danger--tertiary"
@@ -157,7 +157,7 @@
                   </button>
                 </ng-container>
 
-                <!-- Actions for locked users -->
+                
                 <ng-container *ngIf="selectedUser.accountStatus === 'locked'">
                   <button
                     cdsButton="secondary"
@@ -181,7 +181,7 @@
                   </button>
                 </ng-container>
 
-                <!-- Actions for expired users -->
+                
                 <ng-container *ngIf="selectedUser.accountStatus === 'expired'">
                   <button
                     cdsButton="primary"
@@ -313,7 +313,6 @@
   </main>
 </div>
 
-<!-- Expire User Modal -->
 <cds-modal
   [open]="showExpireModal"
   (close)="closeExpireModal()"

@@ -32,8 +32,8 @@ export class MockUserService {
         groups: ['admin'],
         accountStatus: 'active',
         failedLoginAttempts: 0,
-        businessBranch: 'sequoia', // Admin user - Sequoia theme
-        avatarId: 'mountain-peaks' // Default avatar
+        businessBranch: 'sequoia',
+        avatarId: 'mountain-peaks'
       },
       permissions: getAllReports().map(r => r.id)
     },
@@ -53,7 +53,7 @@ export class MockUserService {
         groups: ['finance'],
         accountStatus: 'active',
         failedLoginAttempts: 0,
-        businessBranch: 'enterprise', // Enterprise user - Default Carbon theme
+        businessBranch: 'enterprise',
         avatarId: 'forest'
       },
       permissions: ['sequoia-monthly-summary']
@@ -74,7 +74,7 @@ export class MockUserService {
         groups: ['finance'],
         accountStatus: 'active',
         failedLoginAttempts: 0,
-        businessBranch: 'corevest', // CoreVest user - CoreVest blue theme
+        businessBranch: 'corevest',
         avatarId: 'lake'
       },
       permissions: ['corevest-portfolio-overview', 'corevest-asset-analysis']
@@ -538,7 +538,7 @@ export class MockUserService {
   }
 
   deleteUser(userId: string): Observable<boolean> {
-    // Legacy method - now redirects to expireUser
+
     return this.expireUser(userId);
   }
 

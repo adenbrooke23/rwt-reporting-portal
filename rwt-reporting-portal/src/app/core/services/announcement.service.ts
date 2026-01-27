@@ -17,7 +17,6 @@ export class AnnouncementService {
   private readAnnouncementsSubject = new BehaviorSubject<Map<string, Set<number>>>(new Map());
   public readAnnouncements$ = this.readAnnouncementsSubject.asObservable();
 
-  // Mock announcements data
   private announcementsSubject = new BehaviorSubject<Announcement[]>([
     {
       id: 1,
@@ -164,7 +163,7 @@ Key improvements include:
       imagePath: '/images/grad-card-1.jpeg',
       readTimeMinutes: 1,
       isFeatured: false,
-      isPublished: false, // Draft
+      isPublished: false,
       publishedAt: null,
       authorId: null,
       authorName: 'Product Team',
@@ -198,31 +197,25 @@ Key improvements include:
 
   public announcements$ = this.announcementsSubject.asObservable();
 
-  /**
-   * Get all published announcements (for public dashboard)
-   * Excludes deleted and unpublished items
-   */
+  
   getPublishedAnnouncements(): Observable<AnnouncementSummary[]> {
     return this.announcements$.pipe(
       map(announcements =>
         announcements
           .filter(a => a.isPublished && !a.isDeleted)
           .sort((a, b) => {
-            // Featured first, then by publish date
+
             if (a.isFeatured && !b.isFeatured) return -1;
             if (!a.isFeatured && b.isFeatured) return 1;
             return (b.publishedAt?.getTime() || 0) - (a.publishedAt?.getTime() || 0);
           })
           .map(a => this.toSummary(a))
       ),
-      delay(300) // Simulate network delay
+      delay(300)
     );
   }
 
-  /**
-   * Get all announcements (for admin)
-   * Includes drafts but excludes deleted by default
-   */
+  
   getAllAnnouncements(includeDeleted = false): Observable<Announcement[]> {
     return this.announcements$.pipe(
       map(announcements =>
@@ -234,9 +227,7 @@ Key improvements include:
     );
   }
 
-  /**
-   * Get a single announcement by ID
-   */
+  
   getAnnouncementById(id: number): Observable<Announcement | undefined> {
     return this.announcements$.pipe(
       map(announcements => announcements.find(a => a.id === id)),
@@ -244,9 +235,7 @@ Key improvements include:
     );
   }
 
-  /**
-   * Create a new announcement
-   */
+  
   createAnnouncement(dto: CreateAnnouncementDto, authorId?: number): Observable<Announcement> {
     const newAnnouncement: Announcement = {
       id: this.nextId++,
@@ -274,9 +263,7 @@ Key improvements include:
     return of(newAnnouncement).pipe(delay(300));
   }
 
-  /**
-   * Update an existing announcement
-   */
+  
   updateAnnouncement(id: number, dto: UpdateAnnouncementDto, updatedBy?: number): Observable<Announcement | null> {
     const current = this.announcementsSubject.value;
     const index = current.findIndex(a => a.id === id);
@@ -300,9 +287,7 @@ Key improvements include:
     return of(updated).pipe(delay(300));
   }
 
-  /**
-   * Publish an announcement
-   */
+  
   publishAnnouncement(id: number): Observable<boolean> {
     const current = this.announcementsSubject.value;
     const index = current.findIndex(a => a.id === id);
@@ -325,9 +310,7 @@ Key improvements include:
     return of(true).pipe(delay(300));
   }
 
-  /**
-   * Unpublish an announcement
-   */
+  
   unpublishAnnouncement(id: number): Observable<boolean> {
     const current = this.announcementsSubject.value;
     const index = current.findIndex(a => a.id === id);
@@ -349,9 +332,7 @@ Key improvements include:
     return of(true).pipe(delay(300));
   }
 
-  /**
-   * Soft delete an announcement
-   */
+  
   deleteAnnouncement(id: number, deletedBy?: number): Observable<boolean> {
     const current = this.announcementsSubject.value;
     const index = current.findIndex(a => a.id === id);
@@ -374,9 +355,7 @@ Key improvements include:
     return of(true).pipe(delay(300));
   }
 
-  /**
-   * Restore a soft-deleted announcement
-   */
+  
   restoreAnnouncement(id: number): Observable<boolean> {
     const current = this.announcementsSubject.value;
     const index = current.findIndex(a => a.id === id);
@@ -399,13 +378,10 @@ Key improvements include:
     return of(true).pipe(delay(300));
   }
 
-  /**
-   * Set featured status (ensures only one featured at a time)
-   */
+  
   setFeatured(id: number, isFeatured: boolean): Observable<boolean> {
     const current = this.announcementsSubject.value;
 
-    // If setting as featured, unfeatured all others first
     const newList = current.map(a => {
       if (a.id === id) {
         return { ...a, isFeatured, updatedAt: new Date() };
@@ -420,9 +396,7 @@ Key improvements include:
     return of(true).pipe(delay(300));
   }
 
-  /**
-   * Convert full announcement to summary for dashboard display
-   */
+  
   private toSummary(announcement: Announcement): AnnouncementSummary {
     return {
       id: announcement.id,
@@ -436,9 +410,7 @@ Key improvements include:
     };
   }
 
-  /**
-   * Format date for display
-   */
+  
   private formatDate(date: Date): string {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -447,19 +419,14 @@ Key improvements include:
     });
   }
 
-  /**
-   * Estimate read time based on content length
-   * Assumes average reading speed of 200 words per minute
-   */
+  
   private estimateReadTime(content?: string): number {
     if (!content) return 1;
     const wordCount = content.split(/\s+/).length;
     return Math.max(1, Math.ceil(wordCount / 200));
   }
 
-  /**
-   * Get unread announcement count for a user
-   */
+  
   getUnreadCount(userId: string): Observable<number> {
     return combineLatest([this.announcements$, this.readAnnouncements$]).pipe(
       map(([announcements, readMap]) => {
@@ -470,18 +437,14 @@ Key improvements include:
     );
   }
 
-  /**
-   * Check if a specific announcement is read by user
-   */
+  
   isAnnouncementRead(userId: string, announcementId: number): boolean {
     const readMap = this.readAnnouncementsSubject.value;
     const userReadSet = readMap.get(userId);
     return userReadSet?.has(announcementId) || false;
   }
 
-  /**
-   * Mark a single announcement as read
-   */
+  
   markAsRead(userId: string, announcementId: number): void {
     const readMap = this.readAnnouncementsSubject.value;
     const userReadSet = readMap.get(userId) || new Set<number>();
@@ -490,9 +453,7 @@ Key improvements include:
     this.readAnnouncementsSubject.next(new Map(readMap));
   }
 
-  /**
-   * Mark all current published announcements as read for user
-   */
+  
   markAllAsRead(userId: string): void {
     const announcements = this.announcementsSubject.value;
     const published = announcements.filter(a => a.isPublished && !a.isDeleted);
@@ -504,9 +465,7 @@ Key improvements include:
     this.readAnnouncementsSubject.next(new Map(readMap));
   }
 
-  /**
-   * Get published announcements with optional filters
-   */
+  
   getFilteredAnnouncements(
     searchTerm?: string,
     startDate?: Date,

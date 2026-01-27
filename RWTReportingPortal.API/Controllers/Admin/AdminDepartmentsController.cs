@@ -20,9 +20,6 @@ public class AdminDepartmentsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all departments
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<DepartmentListResponse>> GetDepartments([FromQuery] bool includeInactive = false)
     {
@@ -30,9 +27,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Create a new department
-    /// </summary>
     [HttpPost]
     public async Task<ActionResult<DepartmentDto>> CreateDepartment([FromBody] CreateDepartmentRequest request)
     {
@@ -41,9 +35,6 @@ public class AdminDepartmentsController : ControllerBase
         return CreatedAtAction(nameof(GetDepartment), new { departmentId = result.DepartmentId }, result);
     }
 
-    /// <summary>
-    /// Get department by ID
-    /// </summary>
     [HttpGet("{departmentId}")]
     public async Task<ActionResult<DepartmentDto>> GetDepartment(int departmentId)
     {
@@ -55,9 +46,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Update a department
-    /// </summary>
     [HttpPut("{departmentId}")]
     public async Task<ActionResult<DepartmentDto>> UpdateDepartment(int departmentId, [FromBody] UpdateDepartmentRequest request)
     {
@@ -66,9 +54,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Delete a department
-    /// </summary>
     [HttpDelete("{departmentId}")]
     public async Task<IActionResult> DeleteDepartment(int departmentId, [FromQuery] bool hardDelete = false)
     {
@@ -76,9 +61,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(new { success = true });
     }
 
-    /// <summary>
-    /// Reorder departments
-    /// </summary>
     [HttpPut("reorder")]
     public async Task<IActionResult> ReorderDepartments([FromBody] ReorderDepartmentsRequest request)
     {
@@ -87,9 +69,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get users in a department
-    /// </summary>
     [HttpGet("{departmentId}/users")]
     public async Task<ActionResult<DepartmentUsersResponse>> GetDepartmentUsers(int departmentId)
     {
@@ -97,9 +76,6 @@ public class AdminDepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get reports with department access
-    /// </summary>
     [HttpGet("{departmentId}/reports")]
     public async Task<ActionResult<DepartmentReportsResponse>> GetDepartmentReports(int departmentId)
     {

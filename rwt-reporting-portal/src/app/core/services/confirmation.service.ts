@@ -27,9 +27,7 @@ export class ConfirmationNotificationService {
 
   public confirmation$ = this.confirmationSubject.asObservable();
 
-  /**
-   * Show a confirmation notification and wait for user response
-   */
+  
   async confirm(
     type: ConfirmationType,
     title: string,
@@ -48,7 +46,6 @@ export class ConfirmationNotificationService {
 
     this.confirmationSubject.next(request);
 
-    // Wait for result
     const result = await firstValueFrom(
       this.resultSubject.pipe(
         filter(r => r !== null && r.id === request.id),
@@ -56,15 +53,12 @@ export class ConfirmationNotificationService {
       )
     );
 
-    // Clear confirmation
     this.confirmationSubject.next(null);
 
     return result?.confirmed || false;
   }
 
-  /**
-   * Resolve the current confirmation
-   */
+  
   resolve(confirmed: boolean): void {
     const current = this.confirmationSubject.value;
     if (current) {
@@ -75,16 +69,12 @@ export class ConfirmationNotificationService {
     }
   }
 
-  /**
-   * Convenience method for warning confirmations
-   */
+  
   warning(title: string, message: string, confirmText?: string): Promise<boolean> {
     return this.confirm('warning', title, message, confirmText);
   }
 
-  /**
-   * Convenience method for danger confirmations
-   */
+  
   danger(title: string, message: string, confirmText?: string): Promise<boolean> {
     return this.confirm('danger', title, message, confirmText);
   }

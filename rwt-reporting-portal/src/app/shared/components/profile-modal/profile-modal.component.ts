@@ -35,11 +35,10 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.iconService.registerAll([UserAvatar, Checkmark, Close]);
 
-    // Subscribe to auth state changes
     this.authSubscription = this.authService.authState$.subscribe(state => {
       if (state.user) {
         this.currentUser = state.user;
-        // Use stored avatar or default to first option
+
         this.selectedAvatarId = state.user.avatarId || AVATAR_OPTIONS[0].id;
         this.originalAvatarId = this.selectedAvatarId;
       }
@@ -95,11 +94,9 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   getCompany(): string {
-    // For SSO users, default to Redwood Trust
-    // Company affiliation could be determined from email domain or JWT claims in the future
+
     if (!this.currentUser) return 'Redwood Trust';
 
-    // Check email domain for company affiliation
     const email = this.currentUser.email?.toLowerCase() || '';
     if (email.includes('corevest')) {
       return 'CoreVest';
@@ -115,7 +112,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   onCancel(): void {
-    // Reset to original avatar
+
     this.selectedAvatarId = this.originalAvatarId;
     this.closeModal.emit();
   }
@@ -126,7 +123,6 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     const selectedAvatar = getAvatarById(this.selectedAvatarId);
     const avatarName = selectedAvatar?.name || 'Avatar';
 
-    // Update user preferences via AuthService (persists to localStorage)
     this.authService.updateUserPreferences({ avatarId: this.selectedAvatarId });
 
     this.originalAvatarId = this.selectedAvatarId;

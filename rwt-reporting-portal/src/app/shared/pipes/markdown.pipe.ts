@@ -8,10 +8,10 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 })
 export class MarkdownPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {
-    // Configure marked options
+
     marked.setOptions({
-      breaks: true,  // Convert \n to <br>
-      gfm: true      // GitHub Flavored Markdown
+      breaks: true,
+      gfm: true
     });
   }
 

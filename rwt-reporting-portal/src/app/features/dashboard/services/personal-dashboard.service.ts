@@ -26,9 +26,7 @@ export class PersonalDashboardService {
     this.loadFavorites();
   }
 
-  /**
-   * Load user's favorited report IDs from localStorage
-   */
+  
   private loadFavorites(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -42,9 +40,7 @@ export class PersonalDashboardService {
     }
   }
 
-  /**
-   * Save favorites to localStorage
-   */
+  
   private saveFavorites(favorites: string[]): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -57,9 +53,7 @@ export class PersonalDashboardService {
     }
   }
 
-  /**
-   * Add a report to favorites
-   */
+  
   addFavorite(reportId: string): void {
     const currentFavorites = this.favoritesSubject.value;
     if (!currentFavorites.includes(reportId)) {
@@ -67,47 +61,35 @@ export class PersonalDashboardService {
     }
   }
 
-  /**
-   * Remove a report from favorites
-   */
+  
   removeFavorite(reportId: string): void {
     const currentFavorites = this.favoritesSubject.value;
     const updated = currentFavorites.filter(id => id !== reportId);
     this.saveFavorites(updated);
   }
 
-  /**
-   * Check if a report is favorited
-   */
+  
   isFavorite(reportId: string): boolean {
     return this.favoritesSubject.value.includes(reportId);
   }
 
-  /**
-   * Get all favorited report IDs
-   */
+  
   getFavoriteIds(): string[] {
     return this.favoritesSubject.value;
   }
 
-  /**
-   * Get favorited reports grouped by category
-   * Only returns reports the user has access to
-   */
+  
   getFavoriteReportsByCategory(): FavoriteReportsByCategory[] {
     const user = this.authService.getCurrentUser();
     if (!user) {
       return [];
     }
 
-    // Get user's accessible reports
     const userPermissions = this.mockUserService.getUserPermissions(user.id);
     const favoriteIds = this.favoritesSubject.value;
 
-    // Filter favorites to only accessible reports
     const accessibleFavorites = favoriteIds.filter(id => userPermissions.includes(id));
 
-    // Group by category
     const categoriesMap = new Map<string, SubReport[]>();
 
     for (const reportId of accessibleFavorites) {
@@ -124,7 +106,6 @@ export class PersonalDashboardService {
       categoriesMap.get(category.id)!.push(report);
     }
 
-    // Convert to array format
     const result: FavoriteReportsByCategory[] = [];
     for (const [categoryId, reports] of categoriesMap.entries()) {
       const category = getCategoryByReportId(reports[0].id);
@@ -140,16 +121,12 @@ export class PersonalDashboardService {
     return result;
   }
 
-  /**
-   * Get total count of favorite reports
-   */
+  
   getFavoritesCount(): number {
     return this.favoritesSubject.value.length;
   }
 
-  /**
-   * Clear all favorites (useful for logout)
-   */
+  
   clearFavorites(): void {
     this.saveFavorites([]);
   }

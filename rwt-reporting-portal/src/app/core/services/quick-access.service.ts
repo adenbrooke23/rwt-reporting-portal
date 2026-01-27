@@ -20,7 +20,7 @@ export class QuickAccessService {
   public pinnedReports$: Observable<PinnedReport[]>;
 
   constructor() {
-    // Initialize with stored data only in browser environment
+
     const initialData = this.loadFromStorage();
     this.pinnedReportsSubject = new BehaviorSubject<PinnedReport[]>(initialData);
     this.pinnedReports$ = this.pinnedReportsSubject.asObservable();
@@ -52,7 +52,6 @@ export class QuickAccessService {
   pinReport(report: SubReport, hubId: string, hubName: string): void {
     const current = this.pinnedReportsSubject.value;
 
-    // Don't add duplicates
     if (this.isPinned(report.id)) {
       return;
     }

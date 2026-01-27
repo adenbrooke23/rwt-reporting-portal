@@ -44,8 +44,8 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   currentUser = this.authService.getCurrentUser();
   favoritesByCategory: FavoriteReportsByCategory[] = [];
   tableModel: TableModel = new TableModel();
-  skeletonModel: TableModel = Table.skeletonModel(6, 5);  // 6 rows, 5 columns
-  isLoading = true;  // Loading state for skeleton
+  skeletonModel: TableModel = Table.skeletonModel(6, 5);
+  isLoading = true;
   totalFavoritesCount = 0;
   searchQuery = '';
   tableRowSize: 'xs' | 'sm' | 'md' | 'lg' = 'md';
@@ -62,10 +62,8 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       return;
     }
 
-    // Register Carbon icons
     this.iconService.registerAll([ArrowLeft, Document, Star, StarFilled, Pin, PinFilled, TrashCan, OverflowMenuVertical, View, Settings, Checkmark]);
 
-    // Load row size preference from localStorage (only in browser)
     if (isPlatformBrowser(this.platformId)) {
       const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
       if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
@@ -73,21 +71,17 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       }
     }
 
-    // Initialize pagination model
     this.paginationModel.currentPage = 1;
-    this.paginationModel.pageLength = 6;  // Fixed at 6 items per page
+    this.paginationModel.pageLength = 6;
     this.paginationModel.totalDataLength = 0;
 
-    // Load favorites data (but don't build tables yet - templates not ready)
     this.favoritesByCategory = this.personalDashboardService.getFavoriteReportsByCategory();
     this.totalFavoritesCount = this.favoritesByCategory.reduce((sum, category) => sum + category.reports.length, 0);
 
-    // Subscribe to favorites changes
     this.personalDashboardService.favorites$.subscribe(() => {
       this.loadFavorites();
     });
 
-    // Set up search debounce
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -104,9 +98,9 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngAfterViewInit(): void {
-    // Templates are now available, build the tables
+
     this.buildTables();
-    // Simulate a brief loading period for smooth skeleton transition
+
     setTimeout(() => {
       this.isLoading = false;
     }, 300);
@@ -128,7 +122,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   }
 
   buildTables(): void {
-    // Flatten all reports from all categories into a single list
+
     const allReports = this.favoritesByCategory.flatMap(category =>
       category.reports.map(report => ({
         ...report,
@@ -137,7 +131,6 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       }))
     );
 
-    // Filter reports based on search query
     let filteredReports = allReports;
 
     if (this.searchQuery.trim()) {
@@ -150,18 +143,14 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       );
     }
 
-    // Store all filtered reports for pagination
     this.allReports = filteredReports;
 
-    // Update pagination model total
     this.paginationModel.totalDataLength = filteredReports.length;
 
-    // Calculate pagination
     const startIndex = (this.paginationModel.currentPage - 1) * (this.paginationModel.pageLength || 6);
     const endIndex = startIndex + (this.paginationModel.pageLength || 6);
     const paginatedReports = filteredReports.slice(startIndex, endIndex);
 
-    // Set table headers with sorting enabled (except Actions column)
     this.tableModel.header = [
       new TableHeaderItem({
         data: 'Report',
@@ -189,7 +178,6 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       })
     ];
 
-    // Set table data with ONLY the current page's reports (6 max)
     this.tableModel.data = paginatedReports.map(report => [
       new TableItem({ data: report, template: this.reportNameTemplate }),
       new TableItem({ data: report.categoryName, template: this.hubTemplate }),
@@ -203,14 +191,14 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.paginationModel.currentPage = page;
     this.isLoading = true;
     this.buildTables();
-    // Brief loading state for smooth transition
+
     setTimeout(() => {
       this.isLoading = false;
     }, 200);
   }
 
   removeFavorite(reportId: string): void {
-    // Find the report name before removing
+
     let reportName = 'Report';
     for (const category of this.favoritesByCategory) {
       const report = category.reports.find(r => r.id === reportId);
@@ -243,7 +231,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   }
 
   togglePin(reportId: string, categoryId: string, categoryName: string): void {
-    // Find the report
+
     let report = null;
     for (const category of this.favoritesByCategory) {
       const foundReport = category.reports.find(r => r.id === reportId);

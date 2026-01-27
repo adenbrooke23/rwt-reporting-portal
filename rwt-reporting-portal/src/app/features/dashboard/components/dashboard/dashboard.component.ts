@@ -58,12 +58,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Skip API calls during SSR
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Wait for auth state to be ready before loading data
     this.authService.authState$.pipe(
       filter(state => state.isAuthenticated),
       take(1),
@@ -83,7 +81,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadQuickStats(): void {
-    // Subscribe to live updates for quick stats (updates when favorites change)
+
     const sub = this.userStatsService.getQuickStatsLive().subscribe({
       next: (stats) => {
         this.quickStats = stats;
@@ -111,9 +109,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.push(sub);
   }
 
-  /**
-   * Get color class based on hub code for visual distinction
-   */
+  
   private getHubColorClass(hubCode: string): string {
     const colorMap: Record<string, string> = {
       'SEQUOIA': 'sequoia',

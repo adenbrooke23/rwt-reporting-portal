@@ -19,9 +19,6 @@ public class AnnouncementsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get published announcements
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<AnnouncementListResponse>> GetAnnouncements([FromQuery] int limit = 10)
     {
@@ -29,9 +26,6 @@ public class AnnouncementsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get announcement details
-    /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<AnnouncementDto>> GetAnnouncement(int id)
     {

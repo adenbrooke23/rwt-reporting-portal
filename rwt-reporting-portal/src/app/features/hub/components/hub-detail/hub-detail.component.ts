@@ -12,7 +12,6 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { TilesModule, IconModule, IconService, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule, ListItem, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
 import { ReportType, ReportEmbedConfig } from '../../../auth/models/user-management.models';
 
-// Extended report interface with category and department info
 interface HubReport {
   id: string;
   name: string;
@@ -69,14 +68,13 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   hubDescription: string = '';
   reports: HubReport[] = [];
 
-  // Categories and departments for filtering
   categories: ReportGroup[] = [];
   departments: Department[] = [];
   selectedCategoryId: string = '';
   selectedDepartmentId: string = '';
 
   tableModel: TableModel = new TableModel();
-  skeletonModel: TableModel = Table.skeletonModel(6, 5); // 5 columns now (added Category)
+  skeletonModel: TableModel = Table.skeletonModel(6, 5);
   isLoading = true;
   searchQuery = '';
   tableRowSize: 'xs' | 'sm' | 'md' | 'lg' = 'md';
@@ -84,7 +82,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   paginationModel: PaginationModel = new PaginationModel();
   allReports: HubReport[] = [];
 
-  // Dropdown items for filters
   get categoryDropdownItems(): ListItem[] {
     const items: ListItem[] = [
       { content: 'All Categories', value: '', selected: this.selectedCategoryId === '' }
@@ -117,7 +114,7 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
-    // Register Carbon icons
+
     this.iconService.registerAll([
       ArrowLeft,
       Document,
@@ -140,7 +137,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Load row size preference from localStorage (only in browser)
     if (isPlatformBrowser(this.platformId)) {
       const savedRowSize = localStorage.getItem('tableRowSize') as 'xs' | 'sm' | 'md' | 'lg';
       if (savedRowSize && ['xs', 'sm', 'md', 'lg'].includes(savedRowSize)) {
@@ -148,9 +144,8 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    // Initialize pagination model
     this.paginationModel.currentPage = 1;
-    this.paginationModel.pageLength = 6;  // Match my-dashboard
+    this.paginationModel.pageLength = 6;
     this.paginationModel.totalDataLength = 0;
 
     this.route.params.subscribe(params => {
@@ -158,7 +153,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.loadHubReports();
     });
 
-    // Set up search debounce
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -175,7 +169,7 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Templates are now available, rebuild the table if data already loaded
+
     if (this.reports.length > 0) {
       this.buildTable();
     }
@@ -184,7 +178,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   loadHubReports(): void {
     this.isLoading = true;
 
-    // Load hub details, reports, categories, and departments
     forkJoin({
       hub: this.contentService.getHubById(this.hubId),
       reports: this.contentService.getReports(undefined, this.hubId),
@@ -203,11 +196,9 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         this.categories = categories.filter(c => c.isActive);
         this.departments = departments.filter(d => d.isActive);
 
-        // Create lookup maps for category and department names
         const categoryMap = new Map(this.categories.map(c => [c.id, c.name]));
         const departmentMap = new Map(this.departments.map(d => [d.id, d.name]));
 
-        // Convert Report to HubReport format with category and department info
         this.reports = reports.map(r => ({
           id: r.id,
           name: r.name,
@@ -253,24 +244,21 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   buildTable(): void {
-    // Filter reports based on search query, category, and department
+
     let filteredReports = this.reports;
 
-    // Apply category filter
     if (this.selectedCategoryId) {
       filteredReports = filteredReports.filter(report =>
         report.categoryId === this.selectedCategoryId
       );
     }
 
-    // Apply department filter
     if (this.selectedDepartmentId) {
       filteredReports = filteredReports.filter(report =>
         report.departmentIds.includes(this.selectedDepartmentId)
       );
     }
 
-    // Apply search query (includes category and department names)
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filteredReports = filteredReports.filter(report =>
@@ -282,18 +270,14 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       );
     }
 
-    // Store all filtered reports for pagination
     this.allReports = filteredReports;
 
-    // Update pagination model total
     this.paginationModel.totalDataLength = filteredReports.length;
 
-    // Calculate pagination
     const startIndex = (this.paginationModel.currentPage - 1) * (this.paginationModel.pageLength || 6);
     const endIndex = startIndex + (this.paginationModel.pageLength || 6);
     const paginatedReports = filteredReports.slice(startIndex, endIndex);
 
-    // Set table headers
     this.tableModel.header = [
       new TableHeaderItem({
         data: 'Report',
@@ -321,7 +305,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       })
     ];
 
-    // Set table data
     this.tableModel.data = paginatedReports.map(report => [
       new TableItem({ data: report, template: this.reportNameTemplate }),
       new TableItem({ data: report, template: this.categoryTemplate }),

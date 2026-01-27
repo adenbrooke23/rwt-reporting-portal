@@ -1,19 +1,19 @@
 <div class="dashboard-container">
-  <!-- Welcome Banner -->
+  
   <section class="welcome-banner">
     <div class="banner-overlay"></div>
     <div class="welcome-content">
-      <!-- Skeleton for welcome text -->
+      
       <ng-container *ngIf="isLoading">
         <div class="skeleton skeleton-title"></div>
         <div class="skeleton skeleton-description"></div>
       </ng-container>
-      <!-- Actual welcome text -->
+      
       <ng-container *ngIf="!isLoading">
         <h1 class="welcome-title">{{ getGreeting() }}, {{ getUserName() }}</h1>
         <p class="welcome-description">Your centralized hub for accessing enterprise reports, analytics, and business intelligence across all platforms.</p>
 
-        <!-- Quick Stats Row -->
+        
         <div class="quick-stats">
           <div class="stat-item" *ngFor="let stat of quickStats">
             <span class="stat-value">{{ stat.value }}</span>
@@ -24,12 +24,12 @@
     </div>
   </section>
 
-  <!-- Hubs Section -->
+  
   <div class="dashboard-main">
     <div class="dashboard-content">
       <h2 class="page-title">Reporting Hub</h2>
 
-      <!-- Skeleton Hub Cards -->
+      
       <div class="feature-cards-grid" *ngIf="isLoading">
         <div class="feature-card feature-card--skeleton" *ngFor="let item of skeletonHubs">
           <div class="card-overlay"></div>
@@ -46,17 +46,17 @@
         </div>
       </div>
 
-      <!-- Actual Hub Cards -->
+      
       <div class="feature-cards-grid" *ngIf="!isLoading && hubs.length > 0">
         <a [routerLink]="['/hub', hub.id]"
            class="feature-card"
            [ngClass]="'feature-card--' + hub.colorClass"
            *ngFor="let hub of hubs">
 
-          <!-- Dark Overlay -->
+          
           <div class="card-overlay"></div>
 
-          <!-- Card Header -->
+          
           <div class="feature-card-header">
             <h3 class="feature-card-title">{{ hub.name }}</h3>
             <svg class="feature-card-arrow" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -64,7 +64,7 @@
             </svg>
           </div>
 
-          <!-- Hover Reveal Content -->
+          
           <div class="feature-card-details">
             <p class="feature-card-description">{{ hub.description }}</p>
             <div class="feature-card-footer">
@@ -85,7 +85,7 @@
     </div>
   </div>
 
-  <!-- Latest Updates Section -->
+  
   <section class="updates-section">
     <div class="updates-content">
       <div class="section-header">
@@ -99,9 +99,9 @@
         <div class="skeleton skeleton-link" *ngIf="isLoading"></div>
       </div>
 
-      <!-- Skeleton Loading State -->
+      
       <div class="updates-layout" *ngIf="isLoading">
-        <!-- Featured Skeleton -->
+        
         <article class="featured-card featured-card--skeleton">
           <div class="featured-image">
             <div class="skeleton skeleton-image"></div>
@@ -116,7 +116,7 @@
             </div>
           </div>
         </article>
-        <!-- Grid Skeleton -->
+        
         <div class="updates-grid">
           <article class="article-card article-card--skeleton" *ngFor="let item of [1,2,3]">
             <div class="card-content">
@@ -130,9 +130,9 @@
         </div>
       </div>
 
-      <!-- Actual Content -->
+      
       <div class="updates-layout" *ngIf="!isLoading && announcements.length > 0">
-        <!-- Featured Article (First Item) -->
+        
         <article class="featured-card" *ngIf="announcements[0] as featured" (click)="openAnnouncement(featured.id)">
           <div class="featured-image">
             <img [src]="featured.imagePath" [alt]="featured.title" loading="lazy">
@@ -155,7 +155,7 @@
           </div>
         </article>
 
-        <!-- Remaining Articles Grid -->
+        
         <div class="updates-grid">
           <article class="article-card" *ngFor="let announcement of announcements.slice(1, 4)" (click)="openAnnouncement(announcement.id)">
             <div class="card-content">
@@ -179,7 +179,6 @@
   </section>
 </div>
 
-<!-- Announcement Detail Modal -->
 <cds-modal
   [open]="showAnnouncementModal"
   (overlaySelected)="closeAnnouncementModal()"

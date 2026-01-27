@@ -1,8 +1,5 @@
 namespace RWTReportingPortal.API.Models.DTOs.Admin;
 
-/// <summary>
-/// Report Group DTO for admin management
-/// </summary>
 public class AdminReportGroupDto
 {
     public int ReportGroupId { get; set; }
@@ -18,9 +15,6 @@ public class AdminReportGroupDto
     public string? CreatedByEmail { get; set; }
 }
 
-/// <summary>
-/// Request DTO for creating a new report group
-/// </summary>
 public class CreateReportGroupRequest
 {
     public int HubId { get; set; }
@@ -28,9 +22,6 @@ public class CreateReportGroupRequest
     public string? Description { get; set; }
 }
 
-/// <summary>
-/// Request DTO for updating a report group
-/// </summary>
 public class UpdateReportGroupRequest
 {
     public int? HubId { get; set; }
@@ -39,9 +30,6 @@ public class UpdateReportGroupRequest
     public bool? IsActive { get; set; }
 }
 
-/// <summary>
-/// Response for report group list
-/// </summary>
 public class AdminReportGroupListResponse
 {
     public List<AdminReportGroupDto> ReportGroups { get; set; } = new();

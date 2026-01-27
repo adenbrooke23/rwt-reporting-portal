@@ -13,6 +13,5 @@ public class UserSession
     public DateTime? RevokedAt { get; set; }
     public string? RevokedReason { get; set; }
 
-    // Navigation properties
     public User User { get; set; } = null!;
 }
