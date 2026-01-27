@@ -1671,24 +1671,29 @@ public class PowerBIService : IPowerBIService
     {
         try
         {
+            _logger.LogInformation("Getting embed info for report {ReportId} in workspace {WorkspaceId}", reportId, workspaceId);
+
             var client = await GetPowerBIClientAsync();
             var workspaceGuid = new Guid(workspaceId);
             var reportGuid = new Guid(reportId);
 
+            _logger.LogInformation("Fetching report details from Power BI...");
             var report = await client.Reports.GetReportInGroupAsync(workspaceGuid, reportGuid);
+            _logger.LogInformation("Got report: {ReportName}, EmbedUrl: {EmbedUrl}", report.Name, report.EmbedUrl);
 
             var generateTokenRequest = new GenerateTokenRequest(
                 accessLevel: "View",
                 allowSaveAs: false
             );
 
+            _logger.LogInformation("Generating embed token...");
             var tokenResponse = await client.Reports.GenerateTokenInGroupAsync(
                 workspaceGuid,
                 reportGuid,
                 generateTokenRequest
             );
 
-            _logger.LogInformation("Generated embed token for report {ReportId} in workspace {WorkspaceId}", reportId, workspaceId);
+            _logger.LogInformation("Generated embed token for report {ReportId} in workspace {WorkspaceId}, expires {Expiry}", reportId, workspaceId, tokenResponse.Expiration);
 
             return new PowerBIEmbedInfo
             {
@@ -1698,9 +1703,15 @@ public class PowerBIService : IPowerBIService
                 TokenExpiry = tokenResponse.Expiration
             };
         }
+        catch (HttpOperationException httpEx)
+        {
+            _logger.LogError(httpEx, "Power BI API error for report {ReportId}. Status: {Status}, Response: {Response}",
+                reportId, httpEx.Response?.StatusCode, httpEx.Response?.Content);
+            throw new Exception($"Power BI API error: {httpEx.Response?.StatusCode} - {httpEx.Response?.Content}", httpEx);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get embed info for report {ReportId}", reportId);
+            _logger.LogError(ex, "Failed to get embed info for report {ReportId}. Error: {Error}", reportId, ex.Message);
             throw;
         }
     }
@@ -1714,9 +1725,9 @@ public class PowerBIService : IPowerBIService
 
     private async Task<string> GetAccessTokenAsync()
     {
-
         if (_cache.TryGetValue(TokenCacheKey, out string? cachedToken) && !string.IsNullOrEmpty(cachedToken))
         {
+            _logger.LogDebug("Using cached Power BI access token");
             return cachedToken;
         }
 
@@ -1729,24 +1740,34 @@ public class PowerBIService : IPowerBIService
             throw new InvalidOperationException("Power BI configuration is missing. Please set TenantId, ClientId, and ClientSecret.");
         }
 
+        _logger.LogInformation("Acquiring new Power BI access token for client {ClientId}", clientId);
+
         var authority = $"https://login.microsoftonline.com/{tenantId}";
 
-        var app = ConfidentialClientApplicationBuilder
-            .Create(clientId)
-            .WithClientSecret(clientSecret)
-            .WithAuthority(new Uri(authority))
-            .Build();
-
-        var result = await app.AcquireTokenForClient(Scopes).ExecuteAsync();
-
-        var cacheExpiration = result.ExpiresOn.AddMinutes(-5) - DateTimeOffset.UtcNow;
-        if (cacheExpiration > TimeSpan.Zero)
+        try
         {
-            _cache.Set(TokenCacheKey, result.AccessToken, cacheExpiration);
-        }
+            var app = ConfidentialClientApplicationBuilder
+                .Create(clientId)
+                .WithClientSecret(clientSecret)
+                .WithAuthority(new Uri(authority))
+                .Build();
 
-        _logger.LogDebug("Acquired new Power BI access token, expires at {Expiry}", result.ExpiresOn);
-        return result.AccessToken;
+            var result = await app.AcquireTokenForClient(Scopes).ExecuteAsync();
+
+            var cacheExpiration = result.ExpiresOn.AddMinutes(-5) - DateTimeOffset.UtcNow;
+            if (cacheExpiration > TimeSpan.Zero)
+            {
+                _cache.Set(TokenCacheKey, result.AccessToken, cacheExpiration);
+            }
+
+            _logger.LogInformation("Acquired new Power BI access token, expires at {Expiry}", result.ExpiresOn);
+            return result.AccessToken;
+        }
+        catch (MsalServiceException msalEx)
+        {
+            _logger.LogError(msalEx, "MSAL authentication failed. Error: {Error}, ErrorCode: {Code}", msalEx.Message, msalEx.ErrorCode);
+            throw new Exception($"Power BI authentication failed: {msalEx.ErrorCode} - {msalEx.Message}", msalEx);
+        }
     }
 }
 

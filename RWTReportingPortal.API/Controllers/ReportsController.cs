@@ -111,7 +111,12 @@ public class ReportsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting Power BI embed for report {ReportId}", reportId);
-            return StatusCode(500, new { error = "Failed to generate Power BI embed token" });
+            return StatusCode(500, new {
+                error = "Failed to generate Power BI embed token",
+                details = ex.Message,
+                innerError = ex.InnerException?.Message,
+                exceptionType = ex.GetType().Name
+            });
         }
     }
 
