@@ -57,6 +57,7 @@
     
     <div
       class="powerbi-container"
+      [class.powerbi-loading]="isLoading"
       *ngIf="usePowerBIEmbed && !error && !needsConfiguration"
       #powerbiContainer>
     </div>
