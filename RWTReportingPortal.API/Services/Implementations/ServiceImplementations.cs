@@ -1930,14 +1930,24 @@ public class SSRSService : ISSRSService
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
-        catch (Exception ex)
+        catch (HttpRequestException httpEx)
         {
-            _logger.LogError(ex, "Failed to list SSRS children for path {Path}", folderPath);
+            _logger.LogError(httpEx, "HTTP error connecting to SSRS for path {Path}. Status: {Status}", folderPath, httpEx.StatusCode);
             return new SSRSFolderListResponse
             {
                 CurrentPath = folderPath,
                 Success = false,
-                ErrorMessage = "Unable to connect to SSRS server. Please check your network connection and try again."
+                ErrorMessage = $"SSRS connection failed: {httpEx.StatusCode} - {httpEx.Message}"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list SSRS children for path {Path}. Exception: {Type} - {Message}", folderPath, ex.GetType().Name, ex.Message);
+            return new SSRSFolderListResponse
+            {
+                CurrentPath = folderPath,
+                Success = false,
+                ErrorMessage = $"SSRS error: {ex.GetType().Name} - {ex.Message}"
             };
         }
     }
