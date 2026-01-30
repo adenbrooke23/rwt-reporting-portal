@@ -662,7 +662,101 @@ public class HubService : IHubService
         };
     }
 
-    public Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId) => throw new NotImplementedException();
+    public async Task<HubDetailResponse> GetHubDetailAsync(int hubId, int userId)
+    {
+        var hub = await _context.ReportingHubs
+            .Include(h => h.ReportGroups)
+                .ThenInclude(rg => rg.Reports)
+                    .ThenInclude(r => r.ReportDepartments)
+            .FirstOrDefaultAsync(h => h.HubId == hubId && h.IsActive);
+
+        if (hub == null)
+        {
+            return new HubDetailResponse
+            {
+                HubId = hubId,
+                HubName = "",
+                Description = null,
+                Reports = new List<HubReportDto>()
+            };
+        }
+
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Include(u => u.UserDepartments)
+            .Include(u => u.HubAccess)
+            .Include(u => u.ReportAccess)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+        {
+            return new HubDetailResponse
+            {
+                HubId = hub.HubId,
+                HubName = hub.HubName,
+                Description = hub.Description,
+                Reports = new List<HubReportDto>()
+            };
+        }
+
+        var isAdmin = user.UserRoles?.Any(ur =>
+            ur.Role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)) ?? false;
+
+        var hasFullHubAccess = user.HubAccess?.Any(ha =>
+            ha.HubId == hubId && (ha.ExpiresAt == null || ha.ExpiresAt > DateTime.UtcNow)) ?? false;
+
+        var userDepartmentIds = user.UserDepartments?.Select(ud => ud.DepartmentId).ToHashSet() ?? new HashSet<int>();
+        var directReportAccessIds = user.ReportAccess?
+            .Where(ra => ra.ExpiresAt == null || ra.ExpiresAt > DateTime.UtcNow)
+            .Select(ra => ra.ReportId)
+            .ToHashSet() ?? new HashSet<int>();
+
+        var allReports = hub.ReportGroups?
+            .Where(rg => rg.IsActive)
+            .SelectMany(rg => rg.Reports ?? new List<Models.Entities.Report>())
+            .Where(r => r.IsActive)
+            .ToList() ?? new List<Models.Entities.Report>();
+
+        List<Models.Entities.Report> accessibleReports;
+
+        if (isAdmin || hasFullHubAccess)
+        {
+            accessibleReports = allReports;
+        }
+        else
+        {
+            accessibleReports = allReports.Where(r =>
+                directReportAccessIds.Contains(r.ReportId) ||
+                (r.ReportDepartments?.Any(rd => userDepartmentIds.Contains(rd.DepartmentId)) ?? false)
+            ).ToList();
+        }
+
+        var reportDtos = accessibleReports
+            .OrderBy(r => r.ReportGroup?.GroupName)
+            .ThenBy(r => r.ReportName)
+            .Select(r => new HubReportDto
+            {
+                ReportId = r.ReportId,
+                ReportCode = r.ReportCode ?? "",
+                ReportName = r.ReportName,
+                Description = r.Description,
+                ReportType = r.ReportType ?? "Unknown",
+                GroupId = r.ReportGroupId,
+                GroupName = r.ReportGroup?.GroupName ?? "Uncategorized",
+                AccessLevel = isAdmin ? "Admin" : (hasFullHubAccess ? "Hub" :
+                    (directReportAccessIds.Contains(r.ReportId) ? "Direct" : "Department"))
+            })
+            .ToList();
+
+        return new HubDetailResponse
+        {
+            HubId = hub.HubId,
+            HubName = hub.HubName,
+            Description = hub.Description,
+            Reports = reportDtos
+        };
+    }
 
     public async Task<HubDto?> GetHubByIdAsync(int hubId)
     {
