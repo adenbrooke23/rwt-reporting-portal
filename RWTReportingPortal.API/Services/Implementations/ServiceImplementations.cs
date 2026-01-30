@@ -2048,7 +2048,11 @@ public class SSRSService : ISSRSService
 
     public async Task<SSRSFolderListResponse> ListChildrenAsync(string folderPath)
     {
-        var cacheKey = $"ssrs_folder_{folderPath}";
+        // Use configured ReportServerPath as the root if "/" is passed
+        var basePath = _configuration["SSRS:ReportServerPath"] ?? "/";
+        var effectivePath = folderPath == "/" ? basePath : folderPath;
+
+        var cacheKey = $"ssrs_folder_{effectivePath}";
 
         if (_cache.TryGetValue(cacheKey, out SSRSFolderListResponse? cached) && cached != null)
         {
@@ -2062,45 +2066,53 @@ public class SSRSService : ISSRSService
             {
                 return new SSRSFolderListResponse
                 {
-                    CurrentPath = folderPath,
+                    CurrentPath = effectivePath,
                     Success = false,
                     ErrorMessage = "SSRS server URL not configured"
                 };
             }
 
+            // Ensure HTTPS
+            if (serverUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                serverUrl = "https://" + serverUrl.Substring(7);
+            }
+
             var soapUrl = $"{serverUrl}/ReportService2010.asmx";
 
-            var soapEnvelope = BuildListChildrenSoapRequest(folderPath);
+            var soapEnvelope = BuildListChildrenSoapRequest(effectivePath);
 
             var httpClient = _httpClientFactory.CreateClient("SSRSClient");
             var content = new StringContent(soapEnvelope, Encoding.UTF8, "text/xml");
             content.Headers.Add("SOAPAction", "http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer/ListChildren");
 
+            _logger.LogInformation("Calling SSRS SOAP endpoint: {Url} for path: {Path}", soapUrl, effectivePath);
+
             var response = await httpClient.PostAsync(soapUrl, content);
             response.EnsureSuccessStatusCode();
 
             var result = ParseListChildrenResponse(await response.Content.ReadAsStringAsync());
-            result.CurrentPath = folderPath;
+            result.CurrentPath = effectivePath;
 
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
         catch (HttpRequestException httpEx)
         {
-            _logger.LogError(httpEx, "HTTP error connecting to SSRS for path {Path}. Status: {Status}", folderPath, httpEx.StatusCode);
+            _logger.LogError(httpEx, "HTTP error connecting to SSRS for path {Path}. Status: {Status}", effectivePath, httpEx.StatusCode);
             return new SSRSFolderListResponse
             {
-                CurrentPath = folderPath,
+                CurrentPath = effectivePath,
                 Success = false,
                 ErrorMessage = $"SSRS connection failed: {httpEx.StatusCode} - {httpEx.Message}"
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to list SSRS children for path {Path}. Exception: {Type} - {Message}", folderPath, ex.GetType().Name, ex.Message);
+            _logger.LogError(ex, "Failed to list SSRS children for path {Path}. Exception: {Type} - {Message}", effectivePath, ex.GetType().Name, ex.Message);
             return new SSRSFolderListResponse
             {
-                CurrentPath = folderPath,
+                CurrentPath = effectivePath,
                 Success = false,
                 ErrorMessage = $"SSRS error: {ex.GetType().Name} - {ex.Message}"
             };
