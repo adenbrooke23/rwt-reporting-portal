@@ -7,6 +7,20 @@ public class ReportDto
     public string ReportName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string ReportType { get; set; } = string.Empty;
+    public int HubId { get; set; }
+    public string HubName { get; set; } = string.Empty;
+    public int ReportGroupId { get; set; }
+    public string ReportGroupName { get; set; } = string.Empty;
+    public ReportEmbedConfigDto? EmbedConfig { get; set; }
+}
+
+public class ReportEmbedConfigDto
+{
+    public string? WorkspaceId { get; set; }
+    public string? ReportId { get; set; }
+    public string? EmbedUrl { get; set; }
+    public string? ServerUrl { get; set; }
+    public string? ReportPath { get; set; }
 }
 
 public class ReportEmbedResponse

@@ -6,7 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule, IconModule, IconService, TagModule } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import { ReportType, SubReport } from '../../../auth/models/user-management.models';
-import { ContentManagementService } from '../../../admin/services/content-management.service';
+import { ReportService } from '../../services/report.service';
 import { Report } from '../../../admin/models/content-management.models';
 
 declare const powerbi: any;
@@ -32,7 +32,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
   private iconService = inject(IconService);
-  private contentService = inject(ContentManagementService);
+  private reportService = inject(ReportService);
   private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
 
@@ -107,10 +107,10 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
     this.usePowerBIEmbed = false;
     this.reportUrl = null;
 
-    this.contentService.getReportById(this.reportId).subscribe({
+    this.reportService.getReport(this.reportId).subscribe({
       next: (report) => {
         if (!report) {
-          this.error = 'Report not found';
+          this.error = 'Report not found or access denied';
           this.isLoading = false;
           return;
         }

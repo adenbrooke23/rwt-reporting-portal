@@ -930,8 +930,79 @@ public class ReportService : IReportService
         _ssrsService = ssrsService;
     }
 
-    public Task<ReportDto?> GetReportAsync(int reportId, int userId) => throw new NotImplementedException();
-    public Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId) => throw new NotImplementedException();
+    public async Task<ReportDto?> GetReportAsync(int reportId, int userId)
+    {
+        var report = await _context.Reports
+            .Include(r => r.ReportGroup)
+                .ThenInclude(rg => rg!.Hub)
+            .FirstOrDefaultAsync(r => r.ReportId == reportId && r.IsActive);
+
+        if (report == null) return null;
+
+        return new ReportDto
+        {
+            ReportId = report.ReportId,
+            ReportCode = report.ReportCode,
+            ReportName = report.ReportName,
+            Description = report.Description,
+            ReportType = report.ReportType,
+            HubId = report.ReportGroup?.HubId ?? 0,
+            HubName = report.ReportGroup?.Hub?.HubName ?? "",
+            ReportGroupId = report.ReportGroupId,
+            ReportGroupName = report.ReportGroup?.GroupName ?? "",
+            EmbedConfig = new ReportEmbedConfigDto
+            {
+                WorkspaceId = report.PowerBIWorkspaceId,
+                ReportId = report.PowerBIReportId,
+                EmbedUrl = null, // Fetched dynamically via powerbi-embed endpoint
+                ServerUrl = report.SSRSReportServer,
+                ReportPath = report.SSRSReportPath
+            }
+        };
+    }
+
+    public async Task<ReportEmbedResponse> GetReportEmbedAsync(int reportId, int userId)
+    {
+        var report = await _context.Reports
+            .FirstOrDefaultAsync(r => r.ReportId == reportId && r.IsActive);
+
+        if (report == null)
+        {
+            return new ReportEmbedResponse { ReportId = reportId, ReportType = "Unknown" };
+        }
+
+        var response = new ReportEmbedResponse
+        {
+            ReportId = report.ReportId,
+            ReportType = report.ReportType
+        };
+
+        if (report.ReportType == "PowerBI" || report.ReportType == "Paginated")
+        {
+            if (!string.IsNullOrEmpty(report.PowerBIWorkspaceId) && !string.IsNullOrEmpty(report.PowerBIReportId))
+            {
+                var embedInfo = await _powerBIService.GetEmbedInfoAsync(
+                    report.PowerBIWorkspaceId,
+                    report.PowerBIReportId
+                );
+
+                response.EmbedUrl = embedInfo.EmbedUrl;
+                response.EmbedToken = embedInfo.EmbedToken;
+                response.TokenExpiry = DateTime.Parse(embedInfo.TokenExpiry);
+            }
+        }
+        else if (report.ReportType == "SSRS")
+        {
+            if (!string.IsNullOrEmpty(report.SSRSReportServer) && !string.IsNullOrEmpty(report.SSRSReportPath))
+            {
+                var baseUrl = report.SSRSReportServer.TrimEnd('/');
+                var path = report.SSRSReportPath.StartsWith("/") ? report.SSRSReportPath : "/" + report.SSRSReportPath;
+                response.ReportUrl = $"{baseUrl}/Pages/ReportViewer.aspx?{path}&rs:Command=Render&rs:Embed=true";
+            }
+        }
+
+        return response;
+    }
 
     public async Task LogReportAccessAsync(int reportId, int userId, string accessType, string ipAddress)
     {
@@ -1371,8 +1442,92 @@ public class PermissionService : IPermissionService
         _context = context;
     }
 
-    public Task<bool> CanAccessReportAsync(int userId, int reportId) => throw new NotImplementedException();
-    public Task<bool> CanAccessHubAsync(int userId, int hubId) => throw new NotImplementedException();
+    public async Task<bool> CanAccessReportAsync(int userId, int reportId)
+    {
+        // 1. Check if user is admin
+        var isAdmin = await _userRepository.IsAdminAsync(userId);
+        if (isAdmin) return true;
+
+        // Get the report with its hub info
+        var report = await _context.Reports
+            .Include(r => r.ReportGroup)
+            .Include(r => r.ReportDepartments)
+            .FirstOrDefaultAsync(r => r.ReportId == reportId && r.IsActive);
+
+        if (report == null) return false;
+
+        var hubId = report.ReportGroup?.HubId ?? 0;
+        if (hubId == 0) return false;
+
+        // 2. Check if user has hub access
+        var hasHubAccess = await _context.UserHubAccess
+            .AnyAsync(uha => uha.UserId == userId && uha.HubId == hubId
+                && (uha.ExpiresAt == null || uha.ExpiresAt > DateTime.UtcNow));
+        if (hasHubAccess) return true;
+
+        // 3. Check if user has direct report access
+        var hasReportAccess = await _context.UserReportAccess
+            .AnyAsync(ura => ura.UserId == userId && ura.ReportId == reportId
+                && (ura.ExpiresAt == null || ura.ExpiresAt > DateTime.UtcNow));
+        if (hasReportAccess) return true;
+
+        // 4. Check if user's departments match report's departments
+        var reportDepartmentIds = report.ReportDepartments?.Select(rd => rd.DepartmentId).ToList() ?? new List<int>();
+        if (reportDepartmentIds.Any())
+        {
+            var userDepartmentIds = await _context.UserDepartments
+                .Where(ud => ud.UserId == userId)
+                .Select(ud => ud.DepartmentId)
+                .ToListAsync();
+
+            if (reportDepartmentIds.Intersect(userDepartmentIds).Any())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public async Task<bool> CanAccessHubAsync(int userId, int hubId)
+    {
+        // 1. Check if user is admin
+        var isAdmin = await _userRepository.IsAdminAsync(userId);
+        if (isAdmin) return true;
+
+        // 2. Check if user has direct hub access
+        var hasHubAccess = await _context.UserHubAccess
+            .AnyAsync(uha => uha.UserId == userId && uha.HubId == hubId
+                && (uha.ExpiresAt == null || uha.ExpiresAt > DateTime.UtcNow));
+        if (hasHubAccess) return true;
+
+        // 3. Check if user has access to any report in this hub
+        var hubReportIds = await _context.Reports
+            .Where(r => r.ReportGroup!.HubId == hubId && r.IsActive)
+            .Select(r => r.ReportId)
+            .ToListAsync();
+
+        // Check direct report access
+        var hasReportAccess = await _context.UserReportAccess
+            .AnyAsync(ura => ura.UserId == userId && hubReportIds.Contains(ura.ReportId)
+                && (ura.ExpiresAt == null || ura.ExpiresAt > DateTime.UtcNow));
+        if (hasReportAccess) return true;
+
+        // 4. Check if user's departments have any reports in this hub
+        var userDepartmentIds = await _context.UserDepartments
+            .Where(ud => ud.UserId == userId)
+            .Select(ud => ud.DepartmentId)
+            .ToListAsync();
+
+        if (userDepartmentIds.Any())
+        {
+            var hasAccessViaDepartment = await _context.ReportDepartments
+                .AnyAsync(rd => hubReportIds.Contains(rd.ReportId) && userDepartmentIds.Contains(rd.DepartmentId));
+            if (hasAccessViaDepartment) return true;
+        }
+
+        return false;
+    }
     public Task<bool> IsAdminAsync(int userId) => _userRepository.IsAdminAsync(userId);
 
     public async Task<UserPermissionsResponse> GetUserPermissionsAsync(int userId)
