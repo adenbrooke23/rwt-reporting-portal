@@ -2162,9 +2162,9 @@ public class SSRSService : ISSRSService
     private string BuildListChildrenSoapRequest(string folderPath)
     {
         return $@"<?xml version=""1.0"" encoding=""utf-8""?>
-<soap:Envelope xmlns:soap=""http:
+<soap:Envelope xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
   <soap:Body>
-    <ListChildren xmlns=""http:
+    <ListChildren xmlns=""http://schemas.microsoft.com/sqlserver/reporting/2010/03/01/ReportServer"">
       <ItemPath>{SecurityElement.Escape(folderPath)}</ItemPath>
       <Recursive>false</Recursive>
     </ListChildren>
