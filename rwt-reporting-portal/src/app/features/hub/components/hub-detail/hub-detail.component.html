@@ -34,14 +34,6 @@
             (selected)="onCategoryFilterChange($event)">
             <ibm-dropdown-list [items]="categoryDropdownItems"></ibm-dropdown-list>
           </ibm-dropdown>
-          <ibm-dropdown
-            [appendInline]="true"
-            [size]="'sm'"
-            class="filter-dropdown"
-            placeholder="All Departments"
-            (selected)="onDepartmentFilterChange($event)">
-            <ibm-dropdown-list [items]="departmentDropdownItems"></ibm-dropdown-list>
-          </ibm-dropdown>
         </div>
         <div class="toolbar-right">
           <ibm-tag type="cool-gray" size="sm">

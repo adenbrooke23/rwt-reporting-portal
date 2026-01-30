@@ -1,16 +1,15 @@
 import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
-import { ContentManagementService } from '../../../admin/services/content-management.service';
-import { ReportGroup, Department } from '../../../admin/models/content-management.models';
+import { HubService } from '../../../dashboard/services/hub.service';
 import { PersonalDashboardService } from '../../../dashboard/services/personal-dashboard.service';
 import { QuickAccessService } from '../../../../core/services/quick-access.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { TilesModule, IconModule, IconService, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule, ListItem, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
-import { ReportType, ReportEmbedConfig } from '../../../auth/models/user-management.models';
+import { ReportType } from '../../../auth/models/user-management.models';
 
 interface HubReport {
   id: string;
@@ -18,11 +17,8 @@ interface HubReport {
   description: string;
   type: ReportType;
   route: string;
-  embedConfig?: ReportEmbedConfig;
   categoryId: string;
   categoryName: string;
-  departmentIds: string[];
-  departmentNames: string[];
 }
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import Document from '@carbon/icons/es/document/16';
@@ -47,7 +43,7 @@ import Filter from '@carbon/icons/es/filter/16';
 })
 export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private authService = inject(AuthService);
-  private contentService = inject(ContentManagementService);
+  private hubService = inject(HubService);
   private personalDashboardService = inject(PersonalDashboardService);
   private quickAccessService = inject(QuickAccessService);
   private notificationService = inject(NotificationService);
@@ -68,10 +64,8 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   hubDescription: string = '';
   reports: HubReport[] = [];
 
-  categories: ReportGroup[] = [];
-  departments: Department[] = [];
+  categories: { id: string; name: string }[] = [];
   selectedCategoryId: string = '';
-  selectedDepartmentId: string = '';
 
   tableModel: TableModel = new TableModel();
   skeletonModel: TableModel = Table.skeletonModel(6, 5);
@@ -91,20 +85,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         content: cat.name,
         value: cat.id,
         selected: this.selectedCategoryId === cat.id
-      });
-    });
-    return items;
-  }
-
-  get departmentDropdownItems(): ListItem[] {
-    const items: ListItem[] = [
-      { content: 'All Departments', value: '', selected: this.selectedDepartmentId === '' }
-    ];
-    this.departments.forEach(dept => {
-      items.push({
-        content: dept.name,
-        value: dept.id,
-        selected: this.selectedDepartmentId === dept.id
       });
     });
     return items;
@@ -178,38 +158,36 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   loadHubReports(): void {
     this.isLoading = true;
 
-    forkJoin({
-      hub: this.contentService.getHubById(this.hubId),
-      reports: this.contentService.getReports(undefined, this.hubId),
-      categories: this.contentService.getReportGroups(this.hubId),
-      departments: this.contentService.getDepartments()
-    }).subscribe({
-      next: ({ hub, reports, categories, departments }) => {
-        if (!hub) {
+    this.hubService.getHubDetail(this.hubId).subscribe({
+      next: (hubDetail) => {
+        if (!hubDetail) {
           this.isLoading = false;
           this.router.navigate(['/dashboard']);
           return;
         }
 
-        this.hubName = hub.name;
-        this.hubDescription = hub.description;
-        this.categories = categories.filter(c => c.isActive);
-        this.departments = departments.filter(d => d.isActive);
+        this.hubName = hubDetail.hubName;
+        this.hubDescription = hubDetail.description || '';
 
-        const categoryMap = new Map(this.categories.map(c => [c.id, c.name]));
-        const departmentMap = new Map(this.departments.map(d => [d.id, d.name]));
+        const categorySet = new Map<number, string>();
+        hubDetail.reports.forEach(r => {
+          if (r.groupId && r.groupName) {
+            categorySet.set(r.groupId, r.groupName);
+          }
+        });
+        this.categories = Array.from(categorySet.entries()).map(([id, name]) => ({
+          id: id.toString(),
+          name
+        }));
 
-        this.reports = reports.map(r => ({
-          id: r.id,
-          name: r.name,
-          description: r.description,
-          type: r.type,
-          route: `/hub/${this.hubId}/report/${r.id}`,
-          embedConfig: r.embedConfig,
-          categoryId: r.reportGroupId,
-          categoryName: categoryMap.get(r.reportGroupId) || 'Uncategorized',
-          departmentIds: r.departmentIds || [],
-          departmentNames: (r.departmentIds || []).map(id => departmentMap.get(id) || '').filter(n => n)
+        this.reports = hubDetail.reports.map(r => ({
+          id: r.reportId.toString(),
+          name: r.reportName,
+          description: r.description || '',
+          type: r.reportType as ReportType,
+          route: `/hub/${this.hubId}/report/${r.reportId}`,
+          categoryId: r.groupId.toString(),
+          categoryName: r.groupName || 'Uncategorized'
         }));
 
         this.buildTable();
@@ -224,12 +202,6 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onCategoryFilterChange(event: any): void {
     this.selectedCategoryId = event?.item?.value || '';
-    this.paginationModel.currentPage = 1;
-    this.buildTable();
-  }
-
-  onDepartmentFilterChange(event: any): void {
-    this.selectedDepartmentId = event?.item?.value || '';
     this.paginationModel.currentPage = 1;
     this.buildTable();
   }
@@ -253,20 +225,13 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       );
     }
 
-    if (this.selectedDepartmentId) {
-      filteredReports = filteredReports.filter(report =>
-        report.departmentIds.includes(this.selectedDepartmentId)
-      );
-    }
-
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filteredReports = filteredReports.filter(report =>
         report.name.toLowerCase().includes(query) ||
         report.description.toLowerCase().includes(query) ||
         report.type.toLowerCase().includes(query) ||
-        report.categoryName.toLowerCase().includes(query) ||
-        report.departmentNames.some(d => d.toLowerCase().includes(query))
+        report.categoryName.toLowerCase().includes(query)
       );
     }
 
