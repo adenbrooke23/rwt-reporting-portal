@@ -272,6 +272,10 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         layoutType: 0,
         // Intercept hyperlink clicks to handle in-app navigation
         hyperlinkClickBehavior: 2  // RaiseEvent - intercept instead of navigate
+      },
+      // Disable Power BI telemetry to prevent CORS errors
+      telemetry: {
+        disabled: true
       }
     };
 
@@ -300,8 +304,14 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       // Also handle button clicks (Power BI button visuals with URL actions)
       this.embeddedReport.on('buttonClicked', (event: any) => {
         console.log('buttonClicked event fired:', event);
-        if (event.detail?.title || event.detail?.url) {
-          this.handlePowerBIHyperlinkClick(event.detail);
+        const detail = event.detail;
+        if (detail) {
+          // Button click structure: { title, type, url } or nested in detail
+          const url = detail.url || detail.destination;
+          if (url) {
+            console.log('Button URL detected:', url);
+            this.handlePowerBIHyperlinkClick({ url, title: detail.title });
+          }
         }
       });
 
@@ -323,14 +333,18 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle hyperlink clicks within Power BI reports.
+   * Handle hyperlink/button clicks within Power BI reports.
    * Parses the URL to check if it's a Power BI report link and loads it in the same container.
    */
   private handlePowerBIHyperlinkClick(detail: any): void {
     const url = detail?.url;
-    if (!url) return;
+    const title = detail?.title;
+    if (!url) {
+      console.log('No URL in click event detail:', detail);
+      return;
+    }
 
-    console.log('Power BI hyperlink clicked:', url);
+    console.log('Power BI link clicked:', url, 'Title:', title);
 
     // Parse the URL to extract workspace and report IDs
     const parsed = this.parsePowerBIUrl(url);
@@ -353,8 +367,9 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       isLinkedReport: this.isViewingLinkedReport
     });
 
-    // Load the linked report
-    this.loadLinkedReport(parsed.workspaceId, parsed.reportId, parsed.reportName);
+    // Load the linked report - use button title if available, otherwise use parsed name
+    const linkedName = title || parsed.reportName || 'Linked Report';
+    this.loadLinkedReport(parsed.workspaceId, parsed.reportId, linkedName);
   }
 
   /**
