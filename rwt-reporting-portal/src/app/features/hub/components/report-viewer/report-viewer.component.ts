@@ -94,6 +94,8 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         this.embeddedReport.off('loaded');
         this.embeddedReport.off('error');
         this.embeddedReport.off('dataHyperlinkClicked');
+        this.embeddedReport.off('buttonClicked');
+        this.embeddedReport.off('rendered');
       } catch (e) {
         // Ignore cleanup errors
       }
@@ -291,7 +293,21 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
 
       // Handle hyperlink clicks to navigate within the same iframe
       this.embeddedReport.on('dataHyperlinkClicked', (event: any) => {
+        console.log('dataHyperlinkClicked event fired:', event);
         this.handlePowerBIHyperlinkClick(event.detail);
+      });
+
+      // Also handle button clicks (Power BI button visuals with URL actions)
+      this.embeddedReport.on('buttonClicked', (event: any) => {
+        console.log('buttonClicked event fired:', event);
+        if (event.detail?.title || event.detail?.url) {
+          this.handlePowerBIHyperlinkClick(event.detail);
+        }
+      });
+
+      // Log when report is fully rendered to confirm events are registered
+      this.embeddedReport.on('rendered', () => {
+        console.log('Power BI report rendered - event handlers registered');
       });
 
       setTimeout(() => {
