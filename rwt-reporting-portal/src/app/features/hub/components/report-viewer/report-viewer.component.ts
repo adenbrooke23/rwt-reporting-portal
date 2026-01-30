@@ -70,10 +70,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   private originalReportId: string = '';
   private currentWorkspaceId: string = '';
 
-  // Store original window.open to restore later
-  private originalWindowOpen: ((url?: string | URL, target?: string, features?: string) => Window | null) | null = null;
-  private blockNextWindowOpen = false;
-
   constructor() {
 
     afterNextRender(() => {
@@ -84,11 +80,6 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.iconService.registerAll([ArrowLeft, Undo]);
 
-    // Intercept window.open to prevent Power BI buttons from opening new tabs
-    if (isPlatformBrowser(this.platformId)) {
-      this.setupWindowOpenInterceptor();
-    }
-
     this.route.params.subscribe(params => {
       this.hubId = params['hubId'];
       this.reportId = params['reportId'];
@@ -97,32 +88,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setupWindowOpenInterceptor(): void {
-    // Store original window.open
-    this.originalWindowOpen = window.open.bind(window);
-
-    // Override window.open to intercept Power BI button clicks
-    window.open = (url?: string | URL, target?: string, features?: string): Window | null => {
-      const urlString = url?.toString() || '';
-
-      // If we're blocking and this is a Power BI URL, don't open the new tab
-      if (this.blockNextWindowOpen && urlString.includes('app.powerbi.com')) {
-        console.log('Blocked window.open for Power BI URL:', urlString);
-        this.blockNextWindowOpen = false;
-        return null;
-      }
-
-      // Otherwise, use the original window.open
-      return this.originalWindowOpen!(url, target, features);
-    };
-  }
-
   ngOnDestroy(): void {
-    // Restore original window.open
-    if (this.originalWindowOpen && isPlatformBrowser(this.platformId)) {
-      window.open = this.originalWindowOpen;
-    }
-
     if (this.embeddedReport) {
       try {
         this.embeddedReport.off('loaded');
@@ -336,21 +302,15 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       });
 
       // Also handle button clicks (Power BI button visuals with URL actions)
+      // Note: Button Web URL actions will still open new tabs - this is a Power BI limitation.
+      // To avoid new tabs, report authors should use data hyperlinks instead of buttons.
       this.embeddedReport.on('buttonClicked', (event: any) => {
         console.log('buttonClicked event fired:', event);
         const detail = event.detail;
         if (detail) {
-          // Button click structure: { title, type, url } or nested in detail
           const url = detail.url || detail.destination;
           if (url) {
             console.log('Button URL detected:', url);
-            // Check if this is a Power BI URL we can handle
-            const parsed = this.parsePowerBIUrl(url);
-            if (parsed) {
-              // Block the next window.open call since we're handling it
-              this.blockNextWindowOpen = true;
-              setTimeout(() => { this.blockNextWindowOpen = false; }, 1000);
-            }
             this.handlePowerBIHyperlinkClick({ url, title: detail.title });
           }
         }

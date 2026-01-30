@@ -77,6 +77,10 @@ export class AppComponent implements OnInit {
       this.remainingSeconds = remainingSeconds;
     });
 
+    this.idleTimeoutService.warningDismissed$.subscribe(() => {
+      this.showIdleWarning = false;
+    });
+
     this.idleTimeoutService.logout$.subscribe(() => {
       this.showIdleWarning = false;
       this.authService.logout();
@@ -85,8 +89,8 @@ export class AppComponent implements OnInit {
   }
 
   onStayActive(): void {
-    this.showIdleWarning = false;
     this.idleTimeoutService.resetActivity();
+    this.showIdleWarning = false;
   }
 
   onSidebarToggle(isOpen: boolean): void {
