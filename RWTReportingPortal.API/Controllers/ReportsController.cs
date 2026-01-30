@@ -130,6 +130,69 @@ public class ReportsController : ControllerBase
         return Ok(new { success = true });
     }
 
+    /// <summary>
+    /// Get Power BI embed token for a linked report (not in database).
+    /// Used when users click links within Power BI reports that navigate to other reports.
+    /// </summary>
+    [HttpGet("powerbi-embed-direct")]
+    public async Task<IActionResult> GetPowerBIEmbedDirect(
+        [FromQuery] string workspaceId,
+        [FromQuery] string reportId,
+        [FromQuery] int? sourceReportId = null)
+    {
+        try
+        {
+            var userId = GetUserId();
+
+            if (string.IsNullOrEmpty(workspaceId) || string.IsNullOrEmpty(reportId))
+            {
+                return BadRequest(new { error = "workspaceId and reportId are required" });
+            }
+
+            // Security check: verify user has access to at least one report in this workspace
+            // (via the source report they navigated from)
+            if (sourceReportId.HasValue)
+            {
+                if (!await _permissionService.CanAccessReportAsync(userId, sourceReportId.Value))
+                {
+                    return Forbid();
+                }
+
+                // Verify the source report is in the same workspace
+                var sourceReport = await _reportService.GetReportByIdAsync(sourceReportId.Value);
+                if (sourceReport?.PowerBIWorkspaceId != workspaceId)
+                {
+                    _logger.LogWarning(
+                        "User {UserId} attempted to access report in workspace {WorkspaceId} from source report in different workspace",
+                        userId, workspaceId);
+                    return Forbid();
+                }
+            }
+
+            var embedInfo = await _powerBIService.GetEmbedInfoAsync(workspaceId, reportId);
+
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            _logger.LogInformation(
+                "Generated Power BI embed token for linked report {ReportId} in workspace {WorkspaceId} for user {UserId}",
+                reportId, workspaceId, userId);
+
+            return Ok(embedInfo);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Power BI not configured");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Power BI embed for linked report {ReportId}", reportId);
+            return StatusCode(500, new {
+                error = "Failed to generate Power BI embed token",
+                details = ex.Message
+            });
+        }
+    }
+
     private int GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

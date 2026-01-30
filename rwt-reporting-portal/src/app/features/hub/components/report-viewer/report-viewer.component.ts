@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule, IconModule, IconService, TagModule } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
+import Undo from '@carbon/icons/es/undo/16';
 import { ReportType, SubReport } from '../../../auth/models/user-management.models';
 import { ReportService } from '../../services/report.service';
 import { Report } from '../../../admin/models/content-management.models';
@@ -16,6 +17,13 @@ interface PowerBIEmbedInfo {
   embedToken: string;
   reportId: string;
   tokenExpiry: string;
+}
+
+interface NavigationHistoryItem {
+  reportId: string;
+  reportName: string;
+  workspaceId: string;
+  isLinkedReport: boolean;
 }
 
 @Component({
@@ -55,6 +63,13 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   private embeddedReport: any = null;
   private currentReport: Report | null = null;
 
+  // Navigation history for linked reports
+  navigationHistory: NavigationHistoryItem[] = [];
+  isViewingLinkedReport = false;
+  linkedReportName = '';
+  private originalReportId: string = '';
+  private currentWorkspaceId: string = '';
+
   constructor() {
 
     afterNextRender(() => {
@@ -63,23 +78,24 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.iconService.registerAll([ArrowLeft]);
+    this.iconService.registerAll([ArrowLeft, Undo]);
 
     this.route.params.subscribe(params => {
       this.hubId = params['hubId'];
       this.reportId = params['reportId'];
+      this.originalReportId = this.reportId;
       this.loadReport();
     });
   }
 
   ngOnDestroy(): void {
-
     if (this.embeddedReport) {
       try {
         this.embeddedReport.off('loaded');
         this.embeddedReport.off('error');
+        this.embeddedReport.off('dataHyperlinkClicked');
       } catch (e) {
-
+        // Ignore cleanup errors
       }
     }
   }
@@ -106,6 +122,9 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
     this.needsConfiguration = false;
     this.usePowerBIEmbed = false;
     this.reportUrl = null;
+    this.navigationHistory = [];
+    this.isViewingLinkedReport = false;
+    this.linkedReportName = '';
 
     this.reportService.getReport(this.reportId).subscribe({
       next: (report) => {
@@ -138,6 +157,7 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
 
         if (config?.workspaceId && config?.reportId) {
           this.usePowerBIEmbed = true;
+          this.currentWorkspaceId = config.workspaceId;
           this.embedPowerBIReport(config.workspaceId, config.reportId);
           return;
         }
@@ -248,11 +268,12 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         },
         background: 1,
         layoutType: 0,
+        // Intercept hyperlink clicks to handle in-app navigation
+        hyperlinkClickBehavior: 2  // RaiseEvent - intercept instead of navigate
       }
     };
 
     try {
-
       this.embeddedReport = this.powerbiService.embed(
         this.powerbiContainer.nativeElement,
         config
@@ -268,6 +289,11 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       });
 
+      // Handle hyperlink clicks to navigate within the same iframe
+      this.embeddedReport.on('dataHyperlinkClicked', (event: any) => {
+        this.handlePowerBIHyperlinkClick(event.detail);
+      });
+
       setTimeout(() => {
         if (this.isLoading) {
           this.isLoading = false;
@@ -278,6 +304,136 @@ export class ReportViewerComponent implements OnInit, OnDestroy {
       this.error = 'Failed to embed Power BI report';
       this.isLoading = false;
     }
+  }
+
+  /**
+   * Handle hyperlink clicks within Power BI reports.
+   * Parses the URL to check if it's a Power BI report link and loads it in the same container.
+   */
+  private handlePowerBIHyperlinkClick(detail: any): void {
+    const url = detail?.url;
+    if (!url) return;
+
+    console.log('Power BI hyperlink clicked:', url);
+
+    // Parse the URL to extract workspace and report IDs
+    const parsed = this.parsePowerBIUrl(url);
+    if (!parsed) {
+      // Not a Power BI report URL - open in new tab
+      window.open(url, '_blank');
+      return;
+    }
+
+    console.log('Parsed Power BI URL:', parsed);
+
+    // Save current report to navigation history
+    const currentName = this.isViewingLinkedReport ? this.linkedReportName : this.reportName;
+    const currentPbiReportId = this.currentReport?.embedConfig?.reportId || '';
+
+    this.navigationHistory.push({
+      reportId: this.isViewingLinkedReport ? currentPbiReportId : this.reportId,
+      reportName: currentName,
+      workspaceId: this.currentWorkspaceId,
+      isLinkedReport: this.isViewingLinkedReport
+    });
+
+    // Load the linked report
+    this.loadLinkedReport(parsed.workspaceId, parsed.reportId, parsed.reportName);
+  }
+
+  /**
+   * Parse a Power BI URL to extract workspace ID and report ID.
+   * Handles various Power BI URL formats.
+   */
+  private parsePowerBIUrl(url: string): { workspaceId: string; reportId: string; reportName?: string } | null {
+    try {
+      const urlObj = new URL(url);
+
+      // Format: https://app.powerbi.com/groups/{workspaceId}/reports/{reportId}
+      // or: https://app.powerbi.com/groups/{workspaceId}/reports/{reportId}/ReportSection...
+      const pathMatch = urlObj.pathname.match(/\/groups\/([^\/]+)\/reports\/([^\/\?]+)/);
+      if (pathMatch) {
+        return {
+          workspaceId: pathMatch[1],
+          reportId: pathMatch[2]
+        };
+      }
+
+      // Format: https://app.powerbi.com/reportEmbed?reportId=...&groupId=...
+      const reportIdParam = urlObj.searchParams.get('reportId');
+      const groupIdParam = urlObj.searchParams.get('groupId');
+      if (reportIdParam && groupIdParam) {
+        return {
+          workspaceId: groupIdParam,
+          reportId: reportIdParam
+        };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Load a linked Power BI report in the same container.
+   */
+  private loadLinkedReport(workspaceId: string, pbiReportId: string, reportName?: string): void {
+    this.isLoading = true;
+    this.error = null;
+    this.isViewingLinkedReport = true;
+    this.linkedReportName = reportName || 'Linked Report';
+    this.currentWorkspaceId = workspaceId;
+
+    // Get embed token for the linked report
+    const params = new URLSearchParams({
+      workspaceId,
+      reportId: pbiReportId,
+      sourceReportId: this.originalReportId
+    });
+
+    this.http.get<PowerBIEmbedInfo>(
+      `${this.API_BASE_URL}/reports/powerbi-embed-direct?${params.toString()}`
+    ).subscribe({
+      next: (embedInfo) => {
+        this.linkedReportName = reportName || 'Linked Report';
+        this.initPowerBIEmbed(embedInfo);
+      },
+      error: (err) => {
+        console.error('Failed to get embed token for linked report:', err);
+        this.error = 'Failed to load linked report. You may not have access to this report.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Navigate back to the previous report in the navigation history.
+   */
+  goBackToPreviousReport(): void {
+    if (this.navigationHistory.length === 0) return;
+
+    const previous = this.navigationHistory.pop()!;
+
+    if (!previous.isLinkedReport) {
+      // Going back to the original database report
+      this.isViewingLinkedReport = false;
+      this.linkedReportName = '';
+      this.loadReport();
+    } else {
+      // Going back to a previous linked report
+      this.loadLinkedReport(previous.workspaceId, previous.reportId, previous.reportName);
+    }
+  }
+
+  /**
+   * Navigate back to the original report (skip all linked reports).
+   */
+  goBackToOriginalReport(): void {
+    this.navigationHistory = [];
+    this.isViewingLinkedReport = false;
+    this.linkedReportName = '';
+    this.loadReport();
   }
 
   getReportTypeLabel(): string {

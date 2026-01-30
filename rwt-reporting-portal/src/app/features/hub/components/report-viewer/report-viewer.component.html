@@ -1,12 +1,26 @@
 <div class="report-viewer-container">
   <header class="report-header">
-    <button cdsButton="ghost" size="sm" (click)="backToHub()">
+    <button cdsButton="ghost" size="sm" (click)="backToHub()" *ngIf="!isViewingLinkedReport">
       <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
       Back to Hub
     </button>
+
+    <!-- Navigation for linked reports -->
+    <ng-container *ngIf="isViewingLinkedReport">
+      <button cdsButton="ghost" size="sm" (click)="goBackToPreviousReport()">
+        <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
+        Back
+      </button>
+      <button cdsButton="ghost" size="sm" (click)="goBackToOriginalReport()" *ngIf="navigationHistory.length > 0">
+        <svg cdsIcon="undo" size="16" class="cds--btn__icon"></svg>
+        Original Report
+      </button>
+    </ng-container>
+
     <span class="header-divider"></span>
     <ibm-tag [type]="getReportTypeTagType()" size="sm">{{ getReportTypeLabel() }}</ibm-tag>
-    <h1>{{ reportName }}</h1>
+    <ibm-tag type="cyan" size="sm" *ngIf="isViewingLinkedReport">Linked</ibm-tag>
+    <h1>{{ isViewingLinkedReport ? linkedReportName : reportName }}</h1>
   </header>
 
   <main class="report-content">
