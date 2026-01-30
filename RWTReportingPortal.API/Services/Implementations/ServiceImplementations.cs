@@ -988,7 +988,7 @@ public class ReportService : IReportService
 
                 response.EmbedUrl = embedInfo.EmbedUrl;
                 response.EmbedToken = embedInfo.EmbedToken;
-                response.TokenExpiry = DateTime.Parse(embedInfo.TokenExpiry);
+                response.TokenExpiry = embedInfo.TokenExpiry;
             }
         }
         else if (report.ReportType == "SSRS")
