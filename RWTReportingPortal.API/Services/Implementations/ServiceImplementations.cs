@@ -2089,9 +2089,21 @@ public class SSRSService : ISSRSService
             _logger.LogInformation("Calling SSRS SOAP endpoint: {Url} for path: {Path}", soapUrl, effectivePath);
 
             var response = await httpClient.PostAsync(soapUrl, content);
-            response.EnsureSuccessStatusCode();
 
-            var result = ParseListChildrenResponse(await response.Content.ReadAsStringAsync());
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("SSRS returned {StatusCode}. Response body: {Body}", response.StatusCode, responseBody);
+                return new SSRSFolderListResponse
+                {
+                    CurrentPath = effectivePath,
+                    Success = false,
+                    ErrorMessage = $"SSRS error ({response.StatusCode}): {responseBody}"
+                };
+            }
+
+            var result = ParseListChildrenResponse(responseBody);
             result.CurrentPath = effectivePath;
 
             _cache.Set(cacheKey, result, CacheDuration);
