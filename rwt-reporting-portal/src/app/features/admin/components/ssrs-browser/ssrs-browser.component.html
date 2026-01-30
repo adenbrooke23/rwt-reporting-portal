@@ -3,12 +3,12 @@
   size="md"
   (overlaySelected)="closeModal()">
 
-  <cds-modal-header (closeSelect)="closeModal()">
+  <cds-modal-header [showCloseButton]="true" [closeLabel]="''" (closeSelect)="closeModal()">
     <p cdsModalHeaderLabel>SSRS Report Server</p>
     <p cdsModalHeaderHeading>Browse Reports</p>
   </cds-modal-header>
 
-  <section cdsModalContent class="browser-content" (open)="onModalOpen()">
+  <section cdsModalContent class="browser-content">
     
     <div class="browser-toolbar">
       <div class="toolbar-left">

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -36,7 +36,7 @@ import WarningFilled from '@carbon/icons/es/warning--filled/20';
   templateUrl: './ssrs-browser.component.html',
   styleUrl: './ssrs-browser.component.scss'
 })
-export class SSRSBrowserComponent implements OnInit, OnDestroy {
+export class SSRSBrowserComponent implements OnInit, OnDestroy, OnChanges {
   private ssrsService = inject(SSRSBrowserService);
   private iconService = inject(IconService);
   private destroy$ = new Subject<void>();
@@ -60,6 +60,12 @@ export class SSRSBrowserComponent implements OnInit, OnDestroy {
 
     this.ssrsService.isLoading$.pipe(takeUntil(this.destroy$))
       .subscribe(loading => this.isLoading = loading);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['open'] && changes['open'].currentValue === true && !changes['open'].previousValue) {
+      this.onModalOpen();
+    }
   }
 
   ngOnDestroy(): void {

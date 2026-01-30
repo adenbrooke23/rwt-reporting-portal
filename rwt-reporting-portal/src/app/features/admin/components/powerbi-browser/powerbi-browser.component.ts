@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -39,7 +39,7 @@ import Analytics from '@carbon/icons/es/analytics/16';
   templateUrl: './powerbi-browser.component.html',
   styleUrl: './powerbi-browser.component.scss'
 })
-export class PowerBIBrowserComponent implements OnInit, OnDestroy {
+export class PowerBIBrowserComponent implements OnInit, OnDestroy, OnChanges {
   private powerBIService = inject(PowerBIBrowserService);
   private iconService = inject(IconService);
   private destroy$ = new Subject<void>();
@@ -65,6 +65,12 @@ export class PowerBIBrowserComponent implements OnInit, OnDestroy {
 
     this.powerBIService.isLoading$.pipe(takeUntil(this.destroy$))
       .subscribe(loading => this.isLoading = loading);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['open'] && changes['open'].currentValue === true && !changes['open'].previousValue) {
+      this.onModalOpen();
+    }
   }
 
   ngOnDestroy(): void {
