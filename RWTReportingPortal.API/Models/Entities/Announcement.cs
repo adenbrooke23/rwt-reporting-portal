@@ -18,7 +18,9 @@ public class Announcement
     public int? DeletedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public int? UpdatedBy { get; set; }
 
     public User? Author { get; set; }
     public User? DeletedByUser { get; set; }
+    public User? UpdatedByUser { get; set; }
 }

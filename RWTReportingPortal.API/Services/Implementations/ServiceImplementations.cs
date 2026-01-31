@@ -1923,15 +1923,178 @@ public class AnnouncementService : IAnnouncementService
         _announcementRepository = announcementRepository;
     }
 
-    public Task<AnnouncementListResponse> GetPublishedAnnouncementsAsync(int limit = 10) => throw new NotImplementedException();
-    public Task<AnnouncementDto?> GetAnnouncementAsync(int announcementId) => throw new NotImplementedException();
-    public Task<List<AdminAnnouncementDto>> GetAllAnnouncementsAsync(bool includeUnpublished = true, bool includeDeleted = false) => throw new NotImplementedException();
-    public Task<AdminAnnouncementDto> CreateAnnouncementAsync(CreateAnnouncementRequest request, int authorId) => throw new NotImplementedException();
-    public Task<AdminAnnouncementDto> UpdateAnnouncementAsync(int announcementId, UpdateAnnouncementRequest request) => throw new NotImplementedException();
-    public Task PublishAnnouncementAsync(int announcementId) => throw new NotImplementedException();
-    public Task UnpublishAnnouncementAsync(int announcementId) => throw new NotImplementedException();
-    public Task DeleteAnnouncementAsync(int announcementId, int deletedBy) => throw new NotImplementedException();
-    public Task RestoreAnnouncementAsync(int announcementId) => throw new NotImplementedException();
+    public async Task<AnnouncementListResponse> GetPublishedAnnouncementsAsync(int limit = 10)
+    {
+        var announcements = await _announcementRepository.GetPublishedAsync(limit);
+        return new AnnouncementListResponse
+        {
+            Announcements = announcements.Select(MapToDto).ToList()
+        };
+    }
+
+    public async Task<AnnouncementDto?> GetAnnouncementAsync(int announcementId)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null || announcement.IsDeleted || !announcement.IsPublished)
+        {
+            return null;
+        }
+        return MapToDto(announcement);
+    }
+
+    public async Task<List<AdminAnnouncementDto>> GetAllAnnouncementsAsync(bool includeUnpublished = true, bool includeDeleted = false)
+    {
+        var announcements = await _announcementRepository.GetAllAsync(includeUnpublished, includeDeleted);
+        return announcements.Select(MapToAdminDto).ToList();
+    }
+
+    public async Task<AdminAnnouncementDto> CreateAnnouncementAsync(CreateAnnouncementRequest request, int authorId)
+    {
+        var announcement = new Announcement
+        {
+            Title = request.Title,
+            Subtitle = request.Subtitle,
+            Content = request.Content,
+            ImagePath = request.ImagePath,
+            ReadTimeMinutes = request.ReadTimeMinutes,
+            IsFeatured = request.IsFeatured,
+            IsPublished = request.IsPublished,
+            PublishedAt = request.IsPublished ? DateTime.UtcNow : null,
+            AuthorId = authorId,
+            AuthorName = request.AuthorName,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        var created = await _announcementRepository.CreateAsync(announcement);
+        return MapToAdminDto(created);
+    }
+
+    public async Task<AdminAnnouncementDto> UpdateAnnouncementAsync(int announcementId, UpdateAnnouncementRequest request)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null)
+        {
+            throw new InvalidOperationException($"Announcement with ID {announcementId} not found");
+        }
+
+        if (request.Title != null)
+            announcement.Title = request.Title;
+        if (request.Subtitle != null)
+            announcement.Subtitle = request.Subtitle;
+        if (request.Content != null)
+            announcement.Content = request.Content;
+        if (request.ImagePath != null)
+            announcement.ImagePath = request.ImagePath;
+        if (request.ReadTimeMinutes.HasValue)
+            announcement.ReadTimeMinutes = request.ReadTimeMinutes.Value;
+        if (request.IsFeatured.HasValue)
+            announcement.IsFeatured = request.IsFeatured.Value;
+
+        announcement.UpdatedAt = DateTime.UtcNow;
+
+        await _announcementRepository.UpdateAsync(announcement);
+        return MapToAdminDto(announcement);
+    }
+
+    public async Task PublishAnnouncementAsync(int announcementId)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null)
+        {
+            throw new InvalidOperationException($"Announcement with ID {announcementId} not found");
+        }
+
+        announcement.IsPublished = true;
+        announcement.PublishedAt = DateTime.UtcNow;
+        announcement.UpdatedAt = DateTime.UtcNow;
+
+        await _announcementRepository.UpdateAsync(announcement);
+    }
+
+    public async Task UnpublishAnnouncementAsync(int announcementId)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null)
+        {
+            throw new InvalidOperationException($"Announcement with ID {announcementId} not found");
+        }
+
+        announcement.IsPublished = false;
+        announcement.UpdatedAt = DateTime.UtcNow;
+
+        await _announcementRepository.UpdateAsync(announcement);
+    }
+
+    public async Task DeleteAnnouncementAsync(int announcementId, int deletedBy)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null)
+        {
+            throw new InvalidOperationException($"Announcement with ID {announcementId} not found");
+        }
+
+        announcement.IsDeleted = true;
+        announcement.DeletedAt = DateTime.UtcNow;
+        announcement.DeletedBy = deletedBy;
+        announcement.UpdatedAt = DateTime.UtcNow;
+
+        await _announcementRepository.UpdateAsync(announcement);
+    }
+
+    public async Task RestoreAnnouncementAsync(int announcementId)
+    {
+        var announcement = await _announcementRepository.GetByIdAsync(announcementId);
+        if (announcement == null)
+        {
+            throw new InvalidOperationException($"Announcement with ID {announcementId} not found");
+        }
+
+        announcement.IsDeleted = false;
+        announcement.DeletedAt = null;
+        announcement.DeletedBy = null;
+        announcement.UpdatedAt = DateTime.UtcNow;
+
+        await _announcementRepository.UpdateAsync(announcement);
+    }
+
+    private static AnnouncementDto MapToDto(Announcement announcement)
+    {
+        return new AnnouncementDto
+        {
+            AnnouncementId = announcement.AnnouncementId,
+            Title = announcement.Title,
+            Subtitle = announcement.Subtitle,
+            Content = announcement.Content,
+            ImagePath = announcement.ImagePath,
+            ReadTimeMinutes = announcement.ReadTimeMinutes,
+            IsFeatured = announcement.IsFeatured,
+            AuthorName = announcement.AuthorName ?? announcement.Author?.FirstName + " " + announcement.Author?.LastName,
+            PublishedAt = announcement.PublishedAt
+        };
+    }
+
+    private static AdminAnnouncementDto MapToAdminDto(Announcement announcement)
+    {
+        return new AdminAnnouncementDto
+        {
+            AnnouncementId = announcement.AnnouncementId,
+            Title = announcement.Title,
+            Subtitle = announcement.Subtitle,
+            Content = announcement.Content,
+            ImagePath = announcement.ImagePath,
+            ReadTimeMinutes = announcement.ReadTimeMinutes,
+            IsFeatured = announcement.IsFeatured,
+            AuthorName = announcement.AuthorName ?? announcement.Author?.FirstName + " " + announcement.Author?.LastName,
+            PublishedAt = announcement.PublishedAt,
+            IsPublished = announcement.IsPublished,
+            AuthorId = announcement.AuthorId,
+            AuthorEmail = announcement.Author?.Email,
+            CreatedAt = announcement.CreatedAt,
+            UpdatedAt = announcement.UpdatedAt,
+            IsDeleted = announcement.IsDeleted
+        };
+    }
 }
 
 public class UserStatsService : IUserStatsService
