@@ -1047,10 +1047,97 @@ public class ReportService : IReportService
 
         }
     }
-    public Task<List<FavoriteDto>> GetFavoritesAsync(int userId) => throw new NotImplementedException();
-    public Task AddFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
-    public Task RemoveFavoriteAsync(int userId, int reportId) => throw new NotImplementedException();
-    public Task ReorderFavoritesAsync(int userId, List<int> reportIds) => throw new NotImplementedException();
+    public async Task<List<FavoriteDto>> GetFavoritesAsync(int userId)
+    {
+        var favorites = await _context.UserFavorites
+            .Where(f => f.UserId == userId)
+            .Include(f => f.Report)
+                .ThenInclude(r => r.ReportGroup!)
+                    .ThenInclude(rg => rg.Hub)
+            .OrderBy(f => f.SortOrder)
+            .ThenByDescending(f => f.CreatedAt)
+            .ToListAsync();
+
+        return favorites
+            .Where(f => f.Report != null && f.Report.IsActive)
+            .Select(f => new FavoriteDto
+            {
+                UserFavoriteId = f.UserFavoriteId,
+                ReportId = f.ReportId,
+                ReportCode = f.Report.ReportCode,
+                ReportName = f.Report.ReportName,
+                Description = f.Report.Description,
+                ReportType = f.Report.ReportType,
+                HubName = f.Report.ReportGroup?.Hub?.HubName ?? "Unknown",
+                SortOrder = f.SortOrder
+            })
+            .ToList();
+    }
+
+    public async Task AddFavoriteAsync(int userId, int reportId)
+    {
+        // Check if already favorited
+        var existing = await _context.UserFavorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.ReportId == reportId);
+
+        if (existing != null)
+        {
+            return; // Already favorited, no-op
+        }
+
+        // Verify the report exists and is active
+        var report = await _context.Reports.FirstOrDefaultAsync(r => r.ReportId == reportId && r.IsActive);
+        if (report == null)
+        {
+            throw new InvalidOperationException("Report not found or is inactive");
+        }
+
+        // Get the next sort order
+        var maxSortOrder = await _context.UserFavorites
+            .Where(f => f.UserId == userId)
+            .MaxAsync(f => (int?)f.SortOrder) ?? 0;
+
+        var favorite = new UserFavorite
+        {
+            UserId = userId,
+            ReportId = reportId,
+            SortOrder = maxSortOrder + 1,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.UserFavorites.Add(favorite);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveFavoriteAsync(int userId, int reportId)
+    {
+        var favorite = await _context.UserFavorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.ReportId == reportId);
+
+        if (favorite != null)
+        {
+            _context.UserFavorites.Remove(favorite);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ReorderFavoritesAsync(int userId, List<int> reportIds)
+    {
+        var favorites = await _context.UserFavorites
+            .Where(f => f.UserId == userId && reportIds.Contains(f.ReportId))
+            .ToListAsync();
+
+        for (int i = 0; i < reportIds.Count; i++)
+        {
+            var favorite = favorites.FirstOrDefault(f => f.ReportId == reportIds[i]);
+            if (favorite != null)
+            {
+                favorite.SortOrder = i;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
 
     public async Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false)
     {

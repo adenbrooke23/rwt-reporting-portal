@@ -85,11 +85,11 @@
         </ibm-overflow-menu-option>
       </ng-template>
 
-      
+
       <ng-template #reportNameTemplate let-data="data">
         <div class="report-name-cell">
           <svg cdsIcon="document" size="16" class="report-icon"></svg>
-          <span class="report-name">{{ data.name }}</span>
+          <span class="report-name">{{ data.reportName }}</span>
         </div>
       </ng-template>
 
@@ -102,25 +102,25 @@
       </ng-template>
 
       <ng-template #typeTemplate let-data="data">
-        <span class="type-badge" [class.ssrs]="data.type === 'SSRS'" [class.powerbi]="data.type === 'PowerBI'">
-          {{ data.type }}
+        <span class="type-badge" [class.ssrs]="data.reportType === 'SSRS'" [class.powerbi]="data.reportType === 'PowerBI'">
+          {{ data.reportType }}
         </span>
       </ng-template>
 
       <ng-template #actionsTemplate let-data="data">
         <div class="action-cell">
-          
-          <a [routerLink]="data.route" cdsButton="primary" size="sm" class="view-report-btn">
+
+          <button cdsButton="primary" size="sm" class="view-report-btn" (click)="viewReport(data)">
             <svg cdsIcon="view" size="16" class="cds--btn__icon"></svg>
             View
-          </a>
-          
+          </button>
+
           <ibm-overflow-menu [flip]="true" [description]="''">
-            <ibm-overflow-menu-option (click)="togglePin(data.id, data.categoryId, data.categoryName)">
-              <svg [cdsIcon]="isPinned(data.id) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
-              {{ isPinned(data.id) ? 'Unpin' : 'Pin' }}
+            <ibm-overflow-menu-option (click)="togglePin(data)">
+              <svg [cdsIcon]="isPinned(data.reportId) ? 'pin--filled' : 'pin'" size="16" class="menu-icon"></svg>
+              {{ isPinned(data.reportId) ? 'Unpin' : 'Pin' }}
             </ibm-overflow-menu-option>
-            <ibm-overflow-menu-option (click)="removeFavorite(data.id)" class="danger-option">
+            <ibm-overflow-menu-option (click)="removeFavorite(data.reportId)" class="danger-option">
               <svg cdsIcon="trash-can" size="16" class="menu-icon"></svg>
               Remove
             </ibm-overflow-menu-option>

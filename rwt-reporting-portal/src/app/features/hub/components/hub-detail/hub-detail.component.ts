@@ -300,19 +300,34 @@ export class HubDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isFavorite(reportId: string): boolean {
-    return this.personalDashboardService.isFavorite(reportId);
+    return this.personalDashboardService.isFavorite(parseInt(reportId, 10));
   }
 
   toggleFavorite(reportId: string): void {
     const report = this.reports.find(r => r.id === reportId);
     const reportName = report?.name || 'Report';
+    const reportIdNum = parseInt(reportId, 10);
 
     if (this.isFavorite(reportId)) {
-      this.personalDashboardService.removeFavorite(reportId);
-      this.notificationService.info('Removed from Favorites', `${reportName} has been removed from your favorites`);
+      this.personalDashboardService.removeFavorite(reportIdNum)
+        .subscribe({
+          next: () => {
+            this.notificationService.info('Removed from Favorites', `${reportName} has been removed from your favorites`);
+          },
+          error: () => {
+            this.notificationService.error('Error', 'Failed to remove from favorites');
+          }
+        });
     } else {
-      this.personalDashboardService.addFavorite(reportId);
-      this.notificationService.success('Added to Favorites', `${reportName} has been added to your favorites`);
+      this.personalDashboardService.addFavorite(reportIdNum)
+        .subscribe({
+          next: () => {
+            this.notificationService.success('Added to Favorites', `${reportName} has been added to your favorites`);
+          },
+          error: () => {
+            this.notificationService.error('Error', 'Failed to add to favorites');
+          }
+        });
     }
   }
 

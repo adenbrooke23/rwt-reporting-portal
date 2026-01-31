@@ -1,133 +1,103 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { AuthService } from '../../auth/services/auth.service';
-import { MockUserService } from '../../auth/services/mock-user.service';
-import { SubReport, getCategoryByReportId, getReportById } from '../../auth/models/user-management.models';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { FavoritesApiService, FavoriteReport } from '../../../core/services/favorites-api.service';
 
 export interface FavoriteReportsByCategory {
   categoryId: string;
   categoryName: string;
-  reports: SubReport[];
+  reports: FavoriteReport[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PersonalDashboardService {
-  private authService = inject(AuthService);
-  private mockUserService = inject(MockUserService);
-  private platformId = inject(PLATFORM_ID);
+  private favoritesApi = inject(FavoritesApiService);
 
-  private favoritesSubject = new BehaviorSubject<string[]>([]);
-  public favorites$ = this.favoritesSubject.asObservable();
+  /**
+   * Observable of all favorite reports
+   */
+  public favorites$ = this.favoritesApi.favorites$;
 
-  constructor() {
-    this.loadFavorites();
+  /**
+   * Observable of loading state
+   */
+  public loading$ = this.favoritesApi.loading$;
+
+  /**
+   * Load favorites from the API
+   */
+  loadFavorites(): Observable<FavoriteReport[]> {
+    return this.favoritesApi.loadFavorites();
   }
 
-  
-  private loadFavorites(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      const stored = localStorage.getItem(`favorites_${user.id}`);
-      const favorites = stored ? JSON.parse(stored) : [];
-      this.favoritesSubject.next(favorites);
-    }
+  /**
+   * Refresh favorites from the API (bypass cache)
+   */
+  refreshFavorites(): Observable<FavoriteReport[]> {
+    return this.favoritesApi.refreshFavorites();
   }
 
-  
-  private saveFavorites(favorites: string[]): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      localStorage.setItem(`favorites_${user.id}`, JSON.stringify(favorites));
-      this.favoritesSubject.next(favorites);
-    }
+  /**
+   * Add a report to favorites
+   */
+  addFavorite(reportId: number): Observable<{ success: boolean }> {
+    return this.favoritesApi.addFavorite(reportId);
   }
 
-  
-  addFavorite(reportId: string): void {
-    const currentFavorites = this.favoritesSubject.value;
-    if (!currentFavorites.includes(reportId)) {
-      this.saveFavorites([...currentFavorites, reportId]);
-    }
+  /**
+   * Remove a report from favorites
+   */
+  removeFavorite(reportId: number): Observable<{ success: boolean }> {
+    return this.favoritesApi.removeFavorite(reportId);
   }
 
-  
-  removeFavorite(reportId: string): void {
-    const currentFavorites = this.favoritesSubject.value;
-    const updated = currentFavorites.filter(id => id !== reportId);
-    this.saveFavorites(updated);
+  /**
+   * Check if a report is favorited
+   */
+  isFavorite(reportId: number): boolean {
+    return this.favoritesApi.isFavorite(reportId);
   }
 
-  
-  isFavorite(reportId: string): boolean {
-    return this.favoritesSubject.value.includes(reportId);
+  /**
+   * Get all favorite report IDs
+   */
+  getFavoriteIds(): number[] {
+    return this.favoritesApi.getFavorites().map(f => f.reportId);
   }
 
-  
-  getFavoriteIds(): string[] {
-    return this.favoritesSubject.value;
-  }
-
-  
-  getFavoriteReportsByCategory(): FavoriteReportsByCategory[] {
-    const user = this.authService.getCurrentUser();
-    if (!user) {
-      return [];
-    }
-
-    const userPermissions = this.mockUserService.getUserPermissions(user.id);
-    const favoriteIds = this.favoritesSubject.value;
-
-    const accessibleFavorites = favoriteIds.filter(id => userPermissions.includes(id));
-
-    const categoriesMap = new Map<string, SubReport[]>();
-
-    for (const reportId of accessibleFavorites) {
-      const report = getReportById(reportId);
-      if (!report) continue;
-
-      const category = getCategoryByReportId(reportId);
-      if (!category) continue;
-
-      if (!categoriesMap.has(category.id)) {
-        categoriesMap.set(category.id, []);
-      }
-
-      categoriesMap.get(category.id)!.push(report);
-    }
-
-    const result: FavoriteReportsByCategory[] = [];
-    for (const [categoryId, reports] of categoriesMap.entries()) {
-      const category = getCategoryByReportId(reports[0].id);
-      if (category) {
-        result.push({
-          categoryId: category.id,
-          categoryName: category.name,
-          reports: reports
-        });
-      }
-    }
-
-    return result;
-  }
-
-  
+  /**
+   * Get favorites count
+   */
   getFavoritesCount(): number {
-    return this.favoritesSubject.value.length;
+    return this.favoritesApi.getFavoritesCount();
   }
 
-  
+  /**
+   * Get favorites grouped by hub
+   */
+  getFavoritesByHub(): Observable<Map<string, FavoriteReport[]>> {
+    return this.favorites$.pipe(
+      map(favorites => {
+        const byHub = new Map<string, FavoriteReport[]>();
+
+        for (const fav of favorites) {
+          const hubName = fav.hubName || 'Unknown';
+          if (!byHub.has(hubName)) {
+            byHub.set(hubName, []);
+          }
+          byHub.get(hubName)!.push(fav);
+        }
+
+        return byHub;
+      })
+    );
+  }
+
+  /**
+   * Clear favorites state (for logout)
+   */
   clearFavorites(): void {
-    this.saveFavorites([]);
+    this.favoritesApi.clearFavorites();
   }
 }

@@ -1,10 +1,11 @@
 import { Component, OnInit, AfterViewInit, inject, TemplateRef, ViewChild, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../auth/services/auth.service';
-import { PersonalDashboardService, FavoriteReportsByCategory } from '../../services/personal-dashboard.service';
+import { PersonalDashboardService } from '../../services/personal-dashboard.service';
+import { FavoriteReport } from '../../../../core/services/favorites-api.service';
 import { QuickAccessService } from '../../../../core/services/quick-access.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ButtonModule, IconModule, IconService, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, BreadcrumbModule, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
@@ -22,7 +23,7 @@ import Checkmark from '@carbon/icons/es/checkmark/16';
 
 @Component({
   selector: 'app-personal-dashboard',
-  imports: [CommonModule, RouterLink, ButtonModule, IconModule, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, BreadcrumbModule],
+  imports: [CommonModule, ButtonModule, IconModule, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, BreadcrumbModule],
   templateUrl: './personal-dashboard.component.html',
   styleUrl: './personal-dashboard.component.scss'
 })
@@ -42,7 +43,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   @ViewChild('actionsTemplate', { static: false }) actionsTemplate!: TemplateRef<any>;
 
   currentUser = this.authService.getCurrentUser();
-  favoritesByCategory: FavoriteReportsByCategory[] = [];
+  favorites: FavoriteReport[] = [];
   tableModel: TableModel = new TableModel();
   skeletonModel: TableModel = Table.skeletonModel(6, 5);
   isLoading = true;
@@ -51,7 +52,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   tableRowSize: 'xs' | 'sm' | 'md' | 'lg' = 'md';
 
   paginationModel: PaginationModel = new PaginationModel();
-  allReports: any[] = [];
+  allReports: FavoriteReport[] = [];
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -75,12 +76,19 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.paginationModel.pageLength = 6;
     this.paginationModel.totalDataLength = 0;
 
-    this.favoritesByCategory = this.personalDashboardService.getFavoriteReportsByCategory();
-    this.totalFavoritesCount = this.favoritesByCategory.reduce((sum, category) => sum + category.reports.length, 0);
+    // Subscribe to favorites updates
+    this.personalDashboardService.favorites$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(favorites => {
+        this.favorites = favorites;
+        this.totalFavoritesCount = favorites.length;
+        this.buildTables();
+      });
 
-    this.personalDashboardService.favorites$.subscribe(() => {
-      this.loadFavorites();
-    });
+    // Load favorites from API
+    this.personalDashboardService.loadFavorites()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
 
     this.searchSubject.pipe(
       debounceTime(300),
@@ -89,27 +97,16 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
     ).subscribe(query => {
       this.searchQuery = query;
       this.paginationModel.currentPage = 1;
-      this.isLoading = true;
       this.buildTables();
-      setTimeout(() => {
-        this.isLoading = false;
-      }, 200);
     });
   }
 
   ngAfterViewInit(): void {
-
-    this.buildTables();
-
+    // Build tables after view initializes (templates are ready)
     setTimeout(() => {
+      this.buildTables();
       this.isLoading = false;
     }, 300);
-  }
-
-  loadFavorites(): void {
-    this.favoritesByCategory = this.personalDashboardService.getFavoriteReportsByCategory();
-    this.totalFavoritesCount = this.favoritesByCategory.reduce((sum, category) => sum + category.reports.length, 0);
-    this.buildTables();
   }
 
   onSearchChange(query: string): void {
@@ -122,24 +119,15 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
   }
 
   buildTables(): void {
-
-    const allReports = this.favoritesByCategory.flatMap(category =>
-      category.reports.map(report => ({
-        ...report,
-        categoryId: category.categoryId,
-        categoryName: category.categoryName
-      }))
-    );
-
-    let filteredReports = allReports;
+    let filteredReports = [...this.favorites];
 
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
-      filteredReports = allReports.filter(report =>
-        report.name.toLowerCase().includes(query) ||
-        report.categoryName.toLowerCase().includes(query) ||
-        report.description.toLowerCase().includes(query) ||
-        report.type.toLowerCase().includes(query)
+      filteredReports = this.favorites.filter(report =>
+        report.reportName.toLowerCase().includes(query) ||
+        report.hubName.toLowerCase().includes(query) ||
+        (report.description || '').toLowerCase().includes(query) ||
+        report.reportType.toLowerCase().includes(query)
       );
     }
 
@@ -155,7 +143,7 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       new TableHeaderItem({
         data: 'Report',
         sortable: true,
-        compare: (a: any, b: any) => a.data.name.localeCompare(b.data.name)
+        compare: (a: any, b: any) => a.data.reportName.localeCompare(b.data.reportName)
       }),
       new TableHeaderItem({
         data: 'Hub',
@@ -165,12 +153,12 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
       new TableHeaderItem({
         data: 'Description',
         sortable: true,
-        compare: (a: any, b: any) => a.data.localeCompare(b.data)
+        compare: (a: any, b: any) => (a.data || '').localeCompare(b.data || '')
       }),
       new TableHeaderItem({
         data: 'Type',
         sortable: true,
-        compare: (a: any, b: any) => a.data.type.localeCompare(b.data.type)
+        compare: (a: any, b: any) => a.data.reportType.localeCompare(b.data.reportType)
       }),
       new TableHeaderItem({
         data: 'Actions',
@@ -180,8 +168,8 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     this.tableModel.data = paginatedReports.map(report => [
       new TableItem({ data: report, template: this.reportNameTemplate }),
-      new TableItem({ data: report.categoryName, template: this.hubTemplate }),
-      new TableItem({ data: report.description, template: this.descriptionTemplate }),
+      new TableItem({ data: report.hubName, template: this.hubTemplate }),
+      new TableItem({ data: report.description || '', template: this.descriptionTemplate }),
       new TableItem({ data: report, template: this.typeTemplate }),
       new TableItem({ data: report, template: this.actionsTemplate })
     ]);
@@ -189,68 +177,63 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
 
   onPageChange(page: number): void {
     this.paginationModel.currentPage = page;
-    this.isLoading = true;
     this.buildTables();
-
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 200);
   }
 
-  removeFavorite(reportId: string): void {
+  removeFavorite(reportId: number): void {
+    const report = this.favorites.find(r => r.reportId === reportId);
+    const reportName = report?.reportName || 'Report';
 
-    let reportName = 'Report';
-    for (const category of this.favoritesByCategory) {
-      const report = category.reports.find(r => r.id === reportId);
-      if (report) {
-        reportName = report.name;
-        break;
-      }
-    }
-
-    this.personalDashboardService.removeFavorite(reportId);
-    this.notificationService.info('Removed from Favorites', `${reportName} has been removed from your favorites`);
+    this.personalDashboardService.removeFavorite(reportId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.notificationService.info('Removed from Favorites', `${reportName} has been removed from your favorites`);
+        },
+        error: () => {
+          this.notificationService.error('Error', 'Failed to remove favorite');
+        }
+      });
   }
 
   backToDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
 
-  getCategoryColorClass(categoryId: string): string {
+  getHubColorClass(hubName: string): string {
     const colorMap: Record<string, string> = {
-      sequoia: 'sequoia',
-      corevest: 'corevest',
-      enterprise: 'enterprise',
-      aspire: 'aspire'
+      'Sequoia': 'sequoia',
+      'CoreVest': 'corevest',
+      'Enterprise': 'enterprise',
+      'Aspire': 'aspire'
     };
-    return colorMap[categoryId] || 'default';
+    return colorMap[hubName] || 'default';
   }
 
-  isPinned(reportId: string): boolean {
-    return this.quickAccessService.isPinned(reportId);
+  isPinned(reportId: number): boolean {
+    return this.quickAccessService.isPinned(reportId.toString());
   }
 
-  togglePin(reportId: string, categoryId: string, categoryName: string): void {
+  togglePin(report: FavoriteReport): void {
+    const reportIdStr = report.reportId.toString();
 
-    let report = null;
-    for (const category of this.favoritesByCategory) {
-      const foundReport = category.reports.find(r => r.id === reportId);
-      if (foundReport) {
-        report = foundReport;
-        break;
-      }
-    }
+    // Create a SubReport-like object for the QuickAccessService
+    // Need to derive the hub slug from the hub name for the route
+    const hubSlug = report.hubName.toLowerCase().replace(/\s+/g, '-');
+    const subReport = {
+      id: reportIdStr,
+      name: report.reportName,
+      description: report.description || '',
+      type: report.reportType as 'SSRS' | 'PowerBI',
+      route: `/hub/${hubSlug}/report/${report.reportId}`
+    };
 
-    if (!report) return;
-
-    const reportName = report.name;
-
-    if (this.isPinned(reportId)) {
-      this.quickAccessService.unpinReport(reportId);
-      this.notificationService.info('Removed from Quick Access', `${reportName} has been removed from quick access`);
+    if (this.isPinned(report.reportId)) {
+      this.quickAccessService.unpinReport(reportIdStr);
+      this.notificationService.info('Removed from Quick Access', `${report.reportName} has been removed from quick access`);
     } else {
-      this.quickAccessService.pinReport(report, categoryId, categoryName);
-      this.notificationService.success('Added to Quick Access', `${reportName} has been added to quick access`);
+      this.quickAccessService.pinReport(subReport, report.hubName, report.hubName);
+      this.notificationService.success('Added to Quick Access', `${report.reportName} has been added to quick access`);
     }
   }
 
@@ -259,5 +242,11 @@ export class PersonalDashboardComponent implements OnInit, AfterViewInit, OnDest
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('tableRowSize', size);
     }
+  }
+
+  viewReport(report: FavoriteReport): void {
+    // Navigate to the report viewer
+    // We need to find the hub ID - for now use the hub name as identifier
+    this.router.navigate(['/hub', report.hubName.toLowerCase().replace(/\s+/g, '-'), 'report', report.reportId]);
   }
 }
