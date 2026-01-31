@@ -71,6 +71,20 @@ cds-header .cds--header__action svg {
   fill: #f4f4f4 !important;
 }
 
+// Dark theme sidebar - use layer-01 (#262626) to contrast with header (#161616)
+.theme-g90,
+.theme-g100,
+.dark-theme {
+  cds-sidenav,
+  cds-sidenav .cds--side-nav,
+  cds-sidenav .cds--side-nav--ux,
+  .cds--side-nav,
+  .cds--side-nav--ux {
+    background-color: #262626 !important;
+    border-right: 1px solid #393939 !important;
+  }
+}
+
 :root,
 .light-theme,
 .theme-white {

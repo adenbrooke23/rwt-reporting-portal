@@ -116,17 +116,6 @@
   }
 }
 
-// Dark theme sidebar override - visually distinct from header (#161616)
-:host-context(.theme-g90),
-:host-context(.theme-g100),
-:host-context(.dark-theme) {
-  ::ng-deep cds-sidenav .cds--side-nav,
-  ::ng-deep cds-sidenav .cds--side-nav--ux {
-    background-color: #393939 !important;
-    border-right-color: #525252 !important;
-  }
-}
-
 @media (max-width: 1024px) {
   ::ng-deep cds-sidenav {
     .cds--side-nav--expanded {
