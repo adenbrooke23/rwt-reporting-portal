@@ -1,25 +1,25 @@
 <div class="announcements-container">
-  <header class="page-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>Announcements</h1>
-        <p class="header-subtitle">Create and manage announcements for the dashboard</p>
-      </div>
-      <div class="header-actions">
-        <button cdsButton="ghost" size="sm" (click)="backToAdmin()">
-          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
-          Back to Admin
-        </button>
-        <button cdsButton="primary" size="sm" (click)="openCreateModal()">
-          <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
-          New Announcement
-        </button>
-      </div>
-    </div>
-  </header>
-
   <main class="page-main">
     <div class="page-content">
+      <!-- Breadcrumb navigation -->
+      <ibm-breadcrumb [noTrailingSlash]="true" class="page-breadcrumb">
+        <ibm-breadcrumb-item [href]="'/dashboard'">Dashboard</ibm-breadcrumb-item>
+        <ibm-breadcrumb-item>Announcements</ibm-breadcrumb-item>
+      </ibm-breadcrumb>
+
+      <!-- Page title section -->
+      <div class="page-title-section">
+        <div class="page-title-left">
+          <h1 class="page-title">Announcements</h1>
+          <p class="page-description">Create and manage announcements for the dashboard</p>
+        </div>
+        <div class="page-title-actions">
+          <button cdsButton="primary" size="sm" (click)="openCreateModal()">
+            <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
+            New Announcement
+          </button>
+        </div>
+      </div>
       <div class="carbon-table-wrapper">
         <ibm-table-container>
           <ibm-table-toolbar [model]="tableModel">

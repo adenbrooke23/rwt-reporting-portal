@@ -2,14 +2,14 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ThemeService, Theme, ThemeInfo, AVAILABLE_THEMES } from '../../../../core/services/theme.service';
-import { IconModule, IconService, ButtonModule } from 'carbon-components-angular';
+import { IconModule, IconService, ButtonModule, BreadcrumbModule } from 'carbon-components-angular';
 import Checkmark from '@carbon/icons/es/checkmark/20';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-theme-settings',
-  imports: [CommonModule, IconModule, ButtonModule],
+  imports: [CommonModule, IconModule, ButtonModule, BreadcrumbModule],
   templateUrl: './theme-settings.component.html',
   styleUrl: './theme-settings.component.scss'
 })

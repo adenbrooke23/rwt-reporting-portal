@@ -7,7 +7,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { PersonalDashboardService, FavoriteReportsByCategory } from '../../services/personal-dashboard.service';
 import { QuickAccessService } from '../../../../core/services/quick-access.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { ButtonModule, IconModule, IconService, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
+import { ButtonModule, IconModule, IconService, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, BreadcrumbModule, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import Document from '@carbon/icons/es/document/16';
 import Star from '@carbon/icons/es/star/20';
@@ -22,7 +22,7 @@ import Checkmark from '@carbon/icons/es/checkmark/16';
 
 @Component({
   selector: 'app-personal-dashboard',
-  imports: [CommonModule, RouterLink, ButtonModule, IconModule, TableModule, TagModule, SearchModule, DialogModule, PaginationModule],
+  imports: [CommonModule, RouterLink, ButtonModule, IconModule, TableModule, TagModule, SearchModule, DialogModule, PaginationModule, BreadcrumbModule],
   templateUrl: './personal-dashboard.component.html',
   styleUrl: './personal-dashboard.component.scss'
 })

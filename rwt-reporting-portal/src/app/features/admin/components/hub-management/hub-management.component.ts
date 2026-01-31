@@ -33,7 +33,8 @@ import {
   PaginationModule,
   PaginationModel,
   SearchModule,
-  ToggleModule
+  ToggleModule,
+  BreadcrumbModule
 } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import Add from '@carbon/icons/es/add/16';
@@ -56,7 +57,8 @@ import Folder from '@carbon/icons/es/folder/16';
     TagModule,
     PaginationModule,
     SearchModule,
-    ToggleModule
+    ToggleModule,
+    BreadcrumbModule
   ],
   templateUrl: './hub-management.component.html',
   styleUrl: './hub-management.component.scss'

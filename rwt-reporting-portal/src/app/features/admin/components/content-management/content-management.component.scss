@@ -1,45 +1,73 @@
 @use '@carbon/styles/scss/spacing';
 
 .content-management-container {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.page-header {
-  background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-light);
-  padding: spacing.$spacing-07 0;
-}
-
-.header-content {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: 0 spacing.$spacing-06;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 400;
-    margin: 0 0 spacing.$spacing-02;
-    color: var(--color-text-primary);
-  }
-
-  .header-subtitle {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+  overflow-x: hidden;
 }
 
 .page-main {
+  padding: spacing.$spacing-05 0;
+}
+
+.page-breadcrumb {
+  margin-bottom: spacing.$spacing-04;
+
+  ::ng-deep {
+    .cds--breadcrumb {
+      padding: 0;
+    }
+
+    .cds--breadcrumb-item {
+      &::after {
+        color: var(--color-text-secondary);
+      }
+    }
+
+    .cds--link {
+      color: var(--color-primary);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--color-primary-hover);
+        text-decoration: underline;
+      }
+    }
+
+    .cds--breadcrumb-item--current {
+      .cds--link {
+        color: var(--color-text-primary);
+        pointer-events: none;
+      }
+    }
+  }
+}
+
+.page-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: spacing.$spacing-05;
+  gap: spacing.$spacing-05;
+}
+
+.page-title-left {
   flex: 1;
-  background: var(--color-bg-secondary);
-  padding: spacing.$spacing-06 0;
+}
+
+.page-title {
+  margin: 0 0 spacing.$spacing-02 0;
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.page-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 
 .page-content {

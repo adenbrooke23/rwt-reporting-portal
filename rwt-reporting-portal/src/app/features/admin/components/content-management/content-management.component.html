@@ -1,21 +1,19 @@
 <div class="content-management-container">
-  <header class="page-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>Content Management</h1>
-        <p class="header-subtitle">Manage hubs, reports, departments, and access control</p>
-      </div>
-      <div class="header-actions">
-        <button cdsButton="ghost" size="sm" (click)="backToAdmin()">
-          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
-          Back to Admin
-        </button>
-      </div>
-    </div>
-  </header>
-
   <main class="page-main">
     <div class="page-content">
+      <!-- Breadcrumb navigation -->
+      <ibm-breadcrumb [noTrailingSlash]="true" class="page-breadcrumb">
+        <ibm-breadcrumb-item [href]="'/dashboard'">Dashboard</ibm-breadcrumb-item>
+        <ibm-breadcrumb-item>Content Management</ibm-breadcrumb-item>
+      </ibm-breadcrumb>
+
+      <!-- Page title section -->
+      <div class="page-title-section">
+        <div class="page-title-left">
+          <h1 class="page-title">Content Management</h1>
+          <p class="page-description">Manage hubs, reports, departments, and access control</p>
+        </div>
+      </div>
       
       <section class="stats-section">
         <div class="stats-grid">

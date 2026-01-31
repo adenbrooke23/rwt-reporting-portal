@@ -29,7 +29,8 @@ import {
   PaginationModule,
   TagModule,
   ModalModule,
-  InputModule
+  InputModule,
+  BreadcrumbModule
 } from 'carbon-components-angular';
 import Search from '@carbon/icons/es/search/20';
 import Close from '@carbon/icons/es/close/20';
@@ -54,7 +55,8 @@ import User from '@carbon/icons/es/user/32';
     PaginationModule,
     TagModule,
     ModalModule,
-    InputModule
+    InputModule,
+    BreadcrumbModule
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'

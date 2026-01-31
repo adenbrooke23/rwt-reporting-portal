@@ -8,7 +8,7 @@ import { HubService } from '../../../dashboard/services/hub.service';
 import { PersonalDashboardService } from '../../../dashboard/services/personal-dashboard.service';
 import { QuickAccessService } from '../../../../core/services/quick-access.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { TilesModule, IconModule, IconService, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule, ListItem, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
+import { TilesModule, IconModule, IconService, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule, BreadcrumbModule, ListItem, Table, TableModel, TableHeaderItem, TableItem, PaginationModel } from 'carbon-components-angular';
 import { ReportType } from '../../../auth/models/user-management.models';
 
 interface HubReport {
@@ -37,7 +37,7 @@ import Filter from '@carbon/icons/es/filter/16';
 
 @Component({
   selector: 'app-hub-detail',
-  imports: [CommonModule, RouterLink, TilesModule, IconModule, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule],
+  imports: [CommonModule, RouterLink, TilesModule, IconModule, ButtonModule, TableModule, TagModule, SearchModule, PaginationModule, DialogModule, DropdownModule, BreadcrumbModule],
   templateUrl: './hub-detail.component.html',
   styleUrl: './hub-detail.component.scss'
 })

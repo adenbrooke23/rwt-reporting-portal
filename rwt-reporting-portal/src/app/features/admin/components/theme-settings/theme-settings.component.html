@@ -1,22 +1,19 @@
 <div class="theme-settings-container">
-  
-  <header class="page-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>Theme Settings</h1>
-        <p class="header-subtitle">Choose a theme to customize the look and feel of the application</p>
-      </div>
-      <div class="header-actions">
-        <button cdsButton="ghost" size="sm" (click)="goBack()">
-          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
-          Back to Dashboard
-        </button>
-      </div>
-    </div>
-  </header>
-
   <main class="page-main">
     <div class="page-content">
+      <!-- Breadcrumb navigation -->
+      <ibm-breadcrumb [noTrailingSlash]="true" class="page-breadcrumb">
+        <ibm-breadcrumb-item [href]="'/dashboard'">Dashboard</ibm-breadcrumb-item>
+        <ibm-breadcrumb-item>Theme Settings</ibm-breadcrumb-item>
+      </ibm-breadcrumb>
+
+      <!-- Page title section -->
+      <div class="page-title-section">
+        <div class="page-title-left">
+          <h1 class="page-title">Theme Settings</h1>
+          <p class="page-description">Choose a theme to customize the look and feel of the application</p>
+        </div>
+      </div>
 
   
   <div class="theme-section">

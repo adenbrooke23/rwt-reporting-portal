@@ -6,54 +6,78 @@
   transition: background-color 0.3s ease;
 }
 
-.admin-header {
-  background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-light);
-  padding: spacing.$spacing-07 0;
-}
-
-.header-content {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: 0 spacing.$spacing-06;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  h1 {
-    margin: 0 0 spacing.$spacing-02 0;
-    font-size: 1.5rem;
-    font-weight: 400;
-    color: var(--color-text-primary);
-  }
-
-  .header-subtitle {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-  }
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: spacing.$spacing-02;
-}
-
-.header-actions {
-  display: flex;
-  gap: spacing.$spacing-04;
-  align-items: center;
-}
-
-.admin-main {
+.page-main {
   padding: spacing.$spacing-05 0;
 }
 
-.admin-content {
+.page-breadcrumb {
+  margin-bottom: spacing.$spacing-04;
+
+  ::ng-deep {
+    .cds--breadcrumb {
+      padding: 0;
+    }
+
+    .cds--breadcrumb-item {
+      &::after {
+        color: var(--color-text-secondary);
+      }
+    }
+
+    .cds--link {
+      color: var(--color-primary);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--color-primary-hover);
+        text-decoration: underline;
+      }
+    }
+
+    .cds--breadcrumb-item--current {
+      .cds--link {
+        color: var(--color-text-primary);
+        pointer-events: none;
+      }
+    }
+  }
+}
+
+.page-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: spacing.$spacing-05;
+  gap: spacing.$spacing-05;
+}
+
+.page-title-left {
+  flex: 1;
+}
+
+.page-title {
+  margin: 0 0 spacing.$spacing-02 0;
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.page-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.page-content {
   max-width: 1800px;
   margin: 0 auto;
   padding: 0 spacing.$spacing-06;
+}
+
+.admin-content {
+  margin-top: spacing.$spacing-05;
 }
 
 .admin-grid {

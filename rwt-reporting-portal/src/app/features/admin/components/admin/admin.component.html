@@ -1,21 +1,21 @@
 <div class="admin-container">
-  <header class="admin-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>User Management</h1>
-        <p class="header-subtitle">Manage user accounts, permissions, and access control</p>
-      </div>
-      <div class="header-actions">
-        <button cdsButton="ghost" size="sm" (click)="backToDashboard()">
-          <svg cdsIcon="arrow--left" size="16" class="cds--btn__icon"></svg>
-          Back to Dashboard
-        </button>
-      </div>
-    </div>
-  </header>
+  <main class="page-main">
+    <div class="page-content">
+      <!-- Breadcrumb navigation -->
+      <ibm-breadcrumb [noTrailingSlash]="true" class="page-breadcrumb">
+        <ibm-breadcrumb-item [href]="'/dashboard'">Dashboard</ibm-breadcrumb-item>
+        <ibm-breadcrumb-item>User Management</ibm-breadcrumb-item>
+      </ibm-breadcrumb>
 
-  <main class="admin-main">
-    <div class="admin-content">
+      <!-- Page title section -->
+      <div class="page-title-section">
+        <div class="page-title-left">
+          <h1 class="page-title">User Management</h1>
+          <p class="page-description">Manage user accounts, permissions, and access control</p>
+        </div>
+      </div>
+
+      <div class="admin-content">
       <div class="admin-grid">
         <div class="users-panel">
           <div class="users-panel-header">

@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AnnouncementService } from '../../../../core/services/announcement.service';
 import { Announcement, AnnouncementSummary } from '../../../../core/models/announcement.model';
-import { ButtonModule, IconModule, IconService, ModalModule, SearchModule, DatePickerModule, DropdownModule } from 'carbon-components-angular';
+import { ButtonModule, IconModule, IconService, ModalModule, SearchModule, DatePickerModule, DropdownModule, BreadcrumbModule } from 'carbon-components-angular';
 import { MarkdownPipe } from '../../../../shared/pipes/markdown.pipe';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import Search from '@carbon/icons/es/search/16';
@@ -14,7 +14,7 @@ import Close from '@carbon/icons/es/close/16';
 
 @Component({
   selector: 'app-updates',
-  imports: [CommonModule, FormsModule, ButtonModule, IconModule, ModalModule, SearchModule, DatePickerModule, DropdownModule, MarkdownPipe],
+  imports: [CommonModule, FormsModule, ButtonModule, IconModule, ModalModule, SearchModule, DatePickerModule, DropdownModule, BreadcrumbModule, MarkdownPipe],
   templateUrl: './updates.component.html',
   styleUrl: './updates.component.scss'
 })

@@ -11,7 +11,8 @@ import {
   IconModule,
   IconService,
   TilesModule,
-  TagModule
+  TagModule,
+  BreadcrumbModule
 } from 'carbon-components-angular';
 import ArrowLeft from '@carbon/icons/es/arrow--left/16';
 import ArrowRight from '@carbon/icons/es/arrow--right/16';
@@ -28,7 +29,8 @@ import Add from '@carbon/icons/es/add/16';
     ButtonModule,
     IconModule,
     TilesModule,
-    TagModule
+    TagModule,
+    BreadcrumbModule
   ],
   templateUrl: './content-management.component.html',
   styleUrl: './content-management.component.scss'
