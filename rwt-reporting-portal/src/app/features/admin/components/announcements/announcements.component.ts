@@ -58,7 +58,8 @@ import StarFilled from '@carbon/icons/es/star--filled/16';
     ToggleModule,
     TagModule,
     PaginationModule,
-    SearchModule
+    SearchModule,
+    BreadcrumbModule
   ],
   templateUrl: './announcements.component.html',
   styleUrl: './announcements.component.scss'
