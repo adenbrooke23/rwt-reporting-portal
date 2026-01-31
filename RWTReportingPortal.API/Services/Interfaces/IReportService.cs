@@ -14,6 +14,11 @@ public interface IReportService
     Task RemoveFavoriteAsync(int userId, int reportId);
     Task ReorderFavoritesAsync(int userId, List<int> reportIds);
 
+    Task<List<PinnedReportDto>> GetPinnedReportsAsync(int userId);
+    Task PinReportAsync(int userId, int reportId);
+    Task UnpinReportAsync(int userId, int reportId);
+    Task ReorderPinnedReportsAsync(int userId, List<int> reportIds);
+
     Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false);
     Task<AdminReportDto?> GetReportByIdAsync(int reportId);
     Task<AdminReportDto> CreateReportAsync(CreateReportRequest request, int createdBy);

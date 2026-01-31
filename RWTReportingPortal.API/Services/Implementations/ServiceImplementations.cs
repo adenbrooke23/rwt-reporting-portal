@@ -1139,6 +1139,96 @@ public class ReportService : IReportService
         await _context.SaveChangesAsync();
     }
 
+    public async Task<List<PinnedReportDto>> GetPinnedReportsAsync(int userId)
+    {
+        var pinnedReports = await _context.UserPinnedReports
+            .Where(p => p.UserId == userId)
+            .Include(p => p.Report)
+                .ThenInclude(r => r.ReportGroup!)
+                    .ThenInclude(rg => rg.Hub)
+            .OrderBy(p => p.SortOrder)
+            .ThenByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        return pinnedReports
+            .Where(p => p.Report != null && p.Report.IsActive)
+            .Select(p => new PinnedReportDto
+            {
+                UserPinnedReportId = p.UserPinnedReportId,
+                ReportId = p.ReportId,
+                ReportCode = p.Report.ReportCode,
+                ReportName = p.Report.ReportName,
+                Description = p.Report.Description,
+                ReportType = p.Report.ReportType,
+                HubId = p.Report.ReportGroup?.Hub?.HubId ?? 0,
+                HubName = p.Report.ReportGroup?.Hub?.HubName ?? "Unknown",
+                SortOrder = p.SortOrder
+            })
+            .ToList();
+    }
+
+    public async Task PinReportAsync(int userId, int reportId)
+    {
+        var existing = await _context.UserPinnedReports
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.ReportId == reportId);
+
+        if (existing != null)
+        {
+            return;
+        }
+
+        var report = await _context.Reports.FirstOrDefaultAsync(r => r.ReportId == reportId && r.IsActive);
+        if (report == null)
+        {
+            throw new InvalidOperationException("Report not found or is inactive");
+        }
+
+        var maxSortOrder = await _context.UserPinnedReports
+            .Where(p => p.UserId == userId)
+            .MaxAsync(p => (int?)p.SortOrder) ?? 0;
+
+        var pinnedReport = new UserPinnedReport
+        {
+            UserId = userId,
+            ReportId = reportId,
+            SortOrder = maxSortOrder + 1,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.UserPinnedReports.Add(pinnedReport);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UnpinReportAsync(int userId, int reportId)
+    {
+        var pinnedReport = await _context.UserPinnedReports
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.ReportId == reportId);
+
+        if (pinnedReport != null)
+        {
+            _context.UserPinnedReports.Remove(pinnedReport);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ReorderPinnedReportsAsync(int userId, List<int> reportIds)
+    {
+        var pinnedReports = await _context.UserPinnedReports
+            .Where(p => p.UserId == userId && reportIds.Contains(p.ReportId))
+            .ToListAsync();
+
+        for (int i = 0; i < reportIds.Count; i++)
+        {
+            var pinned = pinnedReports.FirstOrDefault(p => p.ReportId == reportIds[i]);
+            if (pinned != null)
+            {
+                pinned.SortOrder = i;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<AdminReportDto>> GetAllReportsAsync(bool includeInactive = false)
     {
         var reports = await _reportRepository.GetAllAsync(includeInactive);

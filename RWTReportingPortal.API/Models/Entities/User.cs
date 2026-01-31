@@ -37,6 +37,7 @@ public class User
     public ICollection<UserDepartment> UserDepartments { get; set; } = new List<UserDepartment>();
     public ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
     public ICollection<UserFavorite> Favorites { get; set; } = new List<UserFavorite>();
+    public ICollection<UserPinnedReport> PinnedReports { get; set; } = new List<UserPinnedReport>();
     public ICollection<UserHubAccess> HubAccess { get; set; } = new List<UserHubAccess>();
     public ICollection<UserReportGroupAccess> ReportGroupAccess { get; set; } = new List<UserReportGroupAccess>();
     public ICollection<UserReportAccess> ReportAccess { get; set; } = new List<UserReportAccess>();

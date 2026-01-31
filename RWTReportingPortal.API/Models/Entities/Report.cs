@@ -22,4 +22,5 @@ public class Report
     public ReportGroup ReportGroup { get; set; } = null!;
     public ICollection<ReportDepartment> ReportDepartments { get; set; } = new List<ReportDepartment>();
     public ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();
+    public ICollection<UserPinnedReport> UserPinnedReports { get; set; } = new List<UserPinnedReport>();
 }

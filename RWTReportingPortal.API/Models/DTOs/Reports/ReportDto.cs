@@ -52,3 +52,16 @@ public class FavoriteDto
     public string HubName { get; set; } = string.Empty;
     public int SortOrder { get; set; }
 }
+
+public class PinnedReportDto
+{
+    public int UserPinnedReportId { get; set; }
+    public int ReportId { get; set; }
+    public string ReportCode { get; set; } = string.Empty;
+    public string ReportName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string ReportType { get; set; } = string.Empty;
+    public int HubId { get; set; }
+    public string HubName { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+}

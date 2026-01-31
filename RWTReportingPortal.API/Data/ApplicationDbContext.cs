@@ -36,6 +36,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserReportAccess> UserReportAccess => Set<UserReportAccess>();
 
     public DbSet<UserFavorite> UserFavorites => Set<UserFavorite>();
+    public DbSet<UserPinnedReport> UserPinnedReports => Set<UserPinnedReport>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ReportAccessLog> ReportAccessLogs => Set<ReportAccessLog>();
@@ -69,6 +70,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<UserReportGroupAccess>().ToTable("UserReportGroupAccess", "portal");
         modelBuilder.Entity<UserReportAccess>().ToTable("UserReportAccess", "portal");
         modelBuilder.Entity<UserFavorite>().ToTable("UserFavorite", "portal");
+        modelBuilder.Entity<UserPinnedReport>().ToTable("UserPinnedReport", "portal");
         modelBuilder.Entity<AuditLog>().ToTable("AuditLog", "portal");
         modelBuilder.Entity<ReportAccessLog>().ToTable("ReportAccessLog", "portal");
         modelBuilder.Entity<AppSetting>().ToTable("AppSetting", "portal");
@@ -93,6 +95,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<UserReportGroupAccess>().HasKey(e => e.UserReportGroupAccessId);
         modelBuilder.Entity<UserReportAccess>().HasKey(e => e.UserReportAccessId);
         modelBuilder.Entity<UserFavorite>().HasKey(e => e.UserFavoriteId);
+        modelBuilder.Entity<UserPinnedReport>().HasKey(e => e.UserPinnedReportId);
         modelBuilder.Entity<AuditLog>().HasKey(e => e.AuditLogId);
         modelBuilder.Entity<ReportAccessLog>().HasKey(e => e.ReportAccessLogId);
         modelBuilder.Entity<AppSetting>().HasKey(e => e.SettingId);
@@ -186,6 +189,22 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<UserFavorite>()
             .HasIndex(f => new { f.UserId, f.ReportId })
+            .IsUnique();
+
+        modelBuilder.Entity<UserPinnedReport>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.PinnedReports)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPinnedReport>()
+            .HasOne(p => p.Report)
+            .WithMany(r => r.UserPinnedReports)
+            .HasForeignKey(p => p.ReportId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPinnedReport>()
+            .HasIndex(p => new { p.UserId, p.ReportId })
             .IsUnique();
 
         modelBuilder.Entity<UserSession>()
