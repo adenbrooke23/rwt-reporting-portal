@@ -191,10 +191,39 @@
           [size]="'md'">
       </div>
 
-      
+
       <div class="form-field full-width">
         <label class="form-label">Content</label>
+        <div class="markdown-toolbar">
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('bold')" title="Bold">
+            <svg cdsIcon="text--bold" size="16"></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('italic')" title="Italic">
+            <svg cdsIcon="text--italic" size="16"></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('strikethrough')" title="Strikethrough">
+            <svg cdsIcon="text--strikethrough" size="16"></svg>
+          </button>
+          <span class="toolbar-divider"></span>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('heading')" title="Heading">
+            <span class="toolbar-text">H</span>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('bullet')" title="Bullet List">
+            <svg cdsIcon="list--bulleted" size="16"></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('numbered')" title="Numbered List">
+            <svg cdsIcon="list--numbered" size="16"></svg>
+          </button>
+          <span class="toolbar-divider"></span>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('link')" title="Link">
+            <svg cdsIcon="link" size="16"></svg>
+          </button>
+          <button type="button" class="toolbar-btn" (click)="insertMarkdown('hr')" title="Horizontal Rule">
+            <svg cdsIcon="subtract" size="16"></svg>
+          </button>
+        </div>
         <textarea
+          #contentTextarea
           class="content-textarea"
           [(ngModel)]="formData.content"
           placeholder="Enter announcement content (Markdown supported)"

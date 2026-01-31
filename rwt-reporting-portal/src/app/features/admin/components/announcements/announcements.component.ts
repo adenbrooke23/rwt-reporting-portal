@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, TemplateRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -43,6 +43,13 @@ import Close from '@carbon/icons/es/close/16';
 import Renew from '@carbon/icons/es/renew/16';
 import Star from '@carbon/icons/es/star/16';
 import StarFilled from '@carbon/icons/es/star--filled/16';
+import TextBold from '@carbon/icons/es/text--bold/16';
+import TextItalic from '@carbon/icons/es/text--italic/16';
+import TextStrikethrough from '@carbon/icons/es/text--strikethrough/16';
+import ListBulleted from '@carbon/icons/es/list--bulleted/16';
+import ListNumbered from '@carbon/icons/es/list--numbered/16';
+import Link from '@carbon/icons/es/link/16';
+import Subtract from '@carbon/icons/es/subtract/16';
 
 @Component({
   selector: 'app-announcements',
@@ -68,6 +75,7 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
   @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
   @ViewChild('actionsTemplate') actionsTemplate!: TemplateRef<any>;
   @ViewChild('featuredTemplate') featuredTemplate!: TemplateRef<any>;
+  @ViewChild('contentTextarea') contentTextarea!: ElementRef<HTMLTextAreaElement>;
 
   private authService = inject(AuthService);
   private announcementService = inject(AnnouncementService);
@@ -125,7 +133,8 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
     }
 
     this.iconService.registerAll([
-      ArrowLeft, Add, Edit, TrashCan, View, Checkmark, Close, Renew, Star, StarFilled
+      ArrowLeft, Add, Edit, TrashCan, View, Checkmark, Close, Renew, Star, StarFilled,
+      TextBold, TextItalic, TextStrikethrough, ListBulleted, ListNumbered, Link, Subtract
     ]);
 
     this.searchSubject.pipe(
@@ -407,5 +416,64 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
       month: 'short',
       day: 'numeric'
     });
+  }
+
+  // Markdown toolbar methods
+  insertMarkdown(type: 'bold' | 'italic' | 'strikethrough' | 'bullet' | 'numbered' | 'link' | 'hr' | 'heading'): void {
+    const textarea = this.contentTextarea?.nativeElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = this.formData.content.substring(start, end);
+    const beforeText = this.formData.content.substring(0, start);
+    const afterText = this.formData.content.substring(end);
+
+    let insertion = '';
+    let cursorOffset = 0;
+
+    switch (type) {
+      case 'bold':
+        insertion = `**${selectedText || 'bold text'}**`;
+        cursorOffset = selectedText ? insertion.length : 2;
+        break;
+      case 'italic':
+        insertion = `*${selectedText || 'italic text'}*`;
+        cursorOffset = selectedText ? insertion.length : 1;
+        break;
+      case 'strikethrough':
+        insertion = `~~${selectedText || 'strikethrough text'}~~`;
+        cursorOffset = selectedText ? insertion.length : 2;
+        break;
+      case 'bullet':
+        insertion = `\n- ${selectedText || 'List item'}`;
+        cursorOffset = insertion.length;
+        break;
+      case 'numbered':
+        insertion = `\n1. ${selectedText || 'List item'}`;
+        cursorOffset = insertion.length;
+        break;
+      case 'link':
+        insertion = `[${selectedText || 'link text'}](url)`;
+        cursorOffset = selectedText ? insertion.length - 1 : 1;
+        break;
+      case 'hr':
+        insertion = `\n\n---\n\n`;
+        cursorOffset = insertion.length;
+        break;
+      case 'heading':
+        insertion = `\n## ${selectedText || 'Heading'}`;
+        cursorOffset = insertion.length;
+        break;
+    }
+
+    this.formData.content = beforeText + insertion + afterText;
+
+    // Restore focus and set cursor position
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + cursorOffset;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   }
 }
