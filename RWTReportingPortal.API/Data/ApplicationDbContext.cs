@@ -299,5 +299,24 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<UserAnnouncementRead>()
             .HasIndex(r => new { r.UserId, r.AnnouncementId })
             .IsUnique();
+
+        // Announcement navigation property mappings
+        modelBuilder.Entity<Announcement>()
+            .HasOne(a => a.Author)
+            .WithMany()
+            .HasForeignKey(a => a.AuthorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Announcement>()
+            .HasOne(a => a.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(a => a.DeletedBy)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Announcement>()
+            .HasOne(a => a.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(a => a.UpdatedBy)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

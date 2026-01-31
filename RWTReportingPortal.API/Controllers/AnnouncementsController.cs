@@ -37,19 +37,35 @@ public class AnnouncementsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<AnnouncementListResponse>> GetAnnouncements([FromQuery] int limit = 10)
     {
-        var result = await _announcementService.GetPublishedAnnouncementsAsync(limit);
-        return Ok(result);
+        try
+        {
+            var result = await _announcementService.GetPublishedAnnouncementsAsync(limit);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching published announcements");
+            return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<AnnouncementDto>> GetAnnouncement(int id)
     {
-        var result = await _announcementService.GetAnnouncementAsync(id);
-        if (result == null)
+        try
         {
-            return NotFound();
+            var result = await _announcementService.GetAnnouncementAsync(id);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
-        return Ok(result);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching announcement {AnnouncementId}", id);
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     // Read status tracking endpoints
