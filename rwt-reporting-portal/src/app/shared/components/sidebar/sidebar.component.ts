@@ -78,16 +78,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
       ) || false;
 
       if (state.user?.id) {
-        this.loadUnreadCount(state.user.id);
+        this.loadUnreadCount();
       }
     });
     this.subscriptions.push(authSub);
-  }
 
-  private loadUnreadCount(userId: string): void {
-    const unreadSub = this.announcementService.getUnreadCount(userId).subscribe(count => {
+    // Subscribe to unread count changes
+    const unreadCountSub = this.announcementService.unreadCount$.subscribe(count => {
       this.unreadCount = count;
     });
+    this.subscriptions.push(unreadCountSub);
+  }
+
+  private loadUnreadCount(): void {
+    const unreadSub = this.announcementService.getUnreadCount().subscribe();
     this.subscriptions.push(unreadSub);
   }
 

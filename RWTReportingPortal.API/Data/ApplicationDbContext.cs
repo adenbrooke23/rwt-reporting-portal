@@ -44,6 +44,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<UserAnnouncementRead> UserAnnouncementReads => Set<UserAnnouncementRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +76,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ReportAccessLog>().ToTable("ReportAccessLog", "portal");
         modelBuilder.Entity<AppSetting>().ToTable("AppSetting", "portal");
         modelBuilder.Entity<Announcement>().ToTable("Announcement", "portal");
+        modelBuilder.Entity<UserAnnouncementRead>().ToTable("UserAnnouncementRead", "portal");
 
         modelBuilder.Entity<Company>().HasKey(e => e.CompanyId);
         modelBuilder.Entity<User>().HasKey(e => e.UserId);
@@ -100,6 +102,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ReportAccessLog>().HasKey(e => e.ReportAccessLogId);
         modelBuilder.Entity<AppSetting>().HasKey(e => e.SettingId);
         modelBuilder.Entity<Announcement>().HasKey(e => e.AnnouncementId);
+        modelBuilder.Entity<UserAnnouncementRead>().HasKey(e => e.UserAnnouncementReadId);
 
         modelBuilder.Entity<User>()
             .HasOne(u => u.Company)
@@ -279,6 +282,22 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<AppSetting>()
             .HasIndex(s => s.SettingKey)
+            .IsUnique();
+
+        modelBuilder.Entity<UserAnnouncementRead>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserAnnouncementRead>()
+            .HasOne(r => r.Announcement)
+            .WithMany()
+            .HasForeignKey(r => r.AnnouncementId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserAnnouncementRead>()
+            .HasIndex(r => new { r.UserId, r.AnnouncementId })
             .IsUnique();
     }
 }

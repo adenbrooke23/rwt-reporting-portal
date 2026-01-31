@@ -10,6 +10,12 @@ public interface IAnnouncementRepository
     Task<List<Announcement>> GetAllAsync(bool includeUnpublished = true, bool includeDeleted = false);
     Task<Announcement> CreateAsync(Announcement announcement);
     Task UpdateAsync(Announcement announcement);
+
+    // Read status tracking
+    Task<List<int>> GetReadAnnouncementIdsAsync(int userId);
+    Task<int> GetUnreadCountAsync(int userId);
+    Task MarkAsReadAsync(int userId, int announcementId);
+    Task MarkAllAsReadAsync(int userId);
 }
 
 public class AnnouncementRepository : IAnnouncementRepository
@@ -69,6 +75,70 @@ public class AnnouncementRepository : IAnnouncementRepository
     public async Task UpdateAsync(Announcement announcement)
     {
         _context.Announcements.Update(announcement);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<int>> GetReadAnnouncementIdsAsync(int userId)
+    {
+        return await _context.UserAnnouncementReads
+            .Where(r => r.UserId == userId)
+            .Select(r => r.AnnouncementId)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetUnreadCountAsync(int userId)
+    {
+        var readIds = await _context.UserAnnouncementReads
+            .Where(r => r.UserId == userId)
+            .Select(r => r.AnnouncementId)
+            .ToListAsync();
+
+        return await _context.Announcements
+            .Where(a => a.IsPublished && !a.IsDeleted && !readIds.Contains(a.AnnouncementId))
+            .CountAsync();
+    }
+
+    public async Task MarkAsReadAsync(int userId, int announcementId)
+    {
+        var existing = await _context.UserAnnouncementReads
+            .FirstOrDefaultAsync(r => r.UserId == userId && r.AnnouncementId == announcementId);
+
+        if (existing == null)
+        {
+            _context.UserAnnouncementReads.Add(new UserAnnouncementRead
+            {
+                UserId = userId,
+                AnnouncementId = announcementId,
+                ReadAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task MarkAllAsReadAsync(int userId)
+    {
+        var publishedIds = await _context.Announcements
+            .Where(a => a.IsPublished && !a.IsDeleted)
+            .Select(a => a.AnnouncementId)
+            .ToListAsync();
+
+        var alreadyReadIds = await _context.UserAnnouncementReads
+            .Where(r => r.UserId == userId)
+            .Select(r => r.AnnouncementId)
+            .ToListAsync();
+
+        var unreadIds = publishedIds.Except(alreadyReadIds).ToList();
+
+        foreach (var announcementId in unreadIds)
+        {
+            _context.UserAnnouncementReads.Add(new UserAnnouncementRead
+            {
+                UserId = userId,
+                AnnouncementId = announcementId,
+                ReadAt = DateTime.UtcNow
+            });
+        }
+
         await _context.SaveChangesAsync();
     }
 }

@@ -57,9 +57,8 @@ export class UpdatesComponent implements OnInit, OnDestroy {
 
     this.loadAnnouncements();
 
-    if (this.currentUser?.id) {
-      this.announcementService.markAllAsRead(this.currentUser.id);
-    }
+    // Mark all announcements as read when viewing the updates page
+    this.announcementService.markAllAsRead().subscribe();
   }
 
   ngOnDestroy(): void {

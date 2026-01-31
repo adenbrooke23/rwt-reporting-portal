@@ -55,20 +55,20 @@ export class GlobalHeaderComponent implements OnInit, OnDestroy {
     const authSub = this.authService.authState$.subscribe(state => {
       this.currentUser = state.user;
       if (state.user?.id) {
-        this.loadUnreadCount(state.user.id);
+        this.loadUnreadCount();
       }
     });
     this.subscriptions.push(authSub);
 
-    if (this.currentUser?.id) {
-      this.loadUnreadCount(this.currentUser.id);
-    }
-  }
-
-  private loadUnreadCount(userId: string): void {
-    const sub = this.announcementService.getUnreadCount(userId).subscribe(count => {
+    // Subscribe to unread count changes
+    const unreadSub = this.announcementService.unreadCount$.subscribe(count => {
       this.unreadCount = count;
     });
+    this.subscriptions.push(unreadSub);
+  }
+
+  private loadUnreadCount(): void {
+    const sub = this.announcementService.getUnreadCount().subscribe();
     this.subscriptions.push(sub);
   }
 

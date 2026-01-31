@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import {
   Announcement,
@@ -39,6 +39,19 @@ interface AdminAnnouncementListResponse {
   announcements: AdminAnnouncementDto[];
 }
 
+// Read status API response interfaces
+interface ReadAnnouncementIdsResponse {
+  readIds: number[];
+}
+
+interface UnreadCountResponse {
+  unreadCount: number;
+}
+
+interface SuccessResponse {
+  success: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -50,9 +63,16 @@ export class AnnouncementService {
   private announcementsSubject = new BehaviorSubject<Announcement[]>([]);
   public announcements$ = this.announcementsSubject.asObservable();
 
-  // Read status tracking (still client-side for now)
-  private readAnnouncementsSubject = new BehaviorSubject<Map<string, Set<number>>>(new Map());
-  public readAnnouncements$ = this.readAnnouncementsSubject.asObservable();
+  // Read status tracking (server-side, cached locally)
+  private readIdsSubject = new BehaviorSubject<Set<number>>(new Set());
+  public readIds$ = this.readIdsSubject.asObservable();
+
+  // Unread count (server-side, cached locally)
+  private unreadCountSubject = new BehaviorSubject<number>(0);
+  public unreadCount$ = this.unreadCountSubject.asObservable();
+
+  // Track if read status has been loaded
+  private readStatusLoaded = false;
 
   /**
    * Get published announcements for public view
@@ -296,52 +316,104 @@ export class AnnouncementService {
     );
   }
 
+  // ============================================
+  // Read Status Tracking (Server-Side API)
+  // ============================================
+
   /**
-   * Get unread count for a user (still client-side)
+   * Load read announcement IDs from server
    */
-  getUnreadCount(userId: string): Observable<number> {
-    return combineLatest([
-      this.getPublishedAnnouncements(),
-      this.readAnnouncements$
-    ]).pipe(
-      map(([announcements, readMap]) => {
-        const userReadSet = readMap.get(userId) || new Set();
-        return announcements.filter(a => !userReadSet.has(a.id)).length;
+  loadReadStatus(): Observable<number[]> {
+    return this.http.get<ReadAnnouncementIdsResponse>(`${this.API_BASE_URL}/announcements/read-ids`).pipe(
+      map(response => response.readIds),
+      tap(readIds => {
+        this.readIdsSubject.next(new Set(readIds));
+        this.readStatusLoaded = true;
+      }),
+      catchError(error => {
+        console.error('Error loading read status:', error);
+        return of([]);
       })
     );
   }
 
   /**
-   * Check if an announcement is read
+   * Get unread count from server
    */
-  isAnnouncementRead(userId: string, announcementId: number): boolean {
-    const readMap = this.readAnnouncementsSubject.value;
-    const userReadSet = readMap.get(userId);
-    return userReadSet?.has(announcementId) || false;
+  getUnreadCount(): Observable<number> {
+    return this.http.get<UnreadCountResponse>(`${this.API_BASE_URL}/announcements/unread-count`).pipe(
+      map(response => response.unreadCount),
+      tap(count => this.unreadCountSubject.next(count)),
+      catchError(error => {
+        console.error('Error fetching unread count:', error);
+        return of(0);
+      })
+    );
+  }
+
+  /**
+   * Check if an announcement is read (uses local cache)
+   */
+  isAnnouncementRead(announcementId: number): boolean {
+    return this.readIdsSubject.value.has(announcementId);
   }
 
   /**
    * Mark an announcement as read
    */
-  markAsRead(userId: string, announcementId: number): void {
-    const readMap = this.readAnnouncementsSubject.value;
-    const userReadSet = readMap.get(userId) || new Set<number>();
-    userReadSet.add(announcementId);
-    readMap.set(userId, userReadSet);
-    this.readAnnouncementsSubject.next(new Map(readMap));
+  markAsRead(announcementId: number): Observable<boolean> {
+    // Optimistically update local cache
+    const currentIds = this.readIdsSubject.value;
+    currentIds.add(announcementId);
+    this.readIdsSubject.next(new Set(currentIds));
+
+    // Decrease unread count optimistically
+    const currentCount = this.unreadCountSubject.value;
+    if (currentCount > 0) {
+      this.unreadCountSubject.next(currentCount - 1);
+    }
+
+    return this.http.post<SuccessResponse>(`${this.API_BASE_URL}/announcements/${announcementId}/mark-read`, {}).pipe(
+      map(response => response.success),
+      catchError(error => {
+        console.error('Error marking announcement as read:', error);
+        // Revert optimistic update on error
+        currentIds.delete(announcementId);
+        this.readIdsSubject.next(new Set(currentIds));
+        this.unreadCountSubject.next(currentCount);
+        return of(false);
+      })
+    );
   }
 
   /**
    * Mark all announcements as read
    */
-  markAllAsRead(userId: string): void {
-    this.getPublishedAnnouncements().subscribe(announcements => {
-      const readMap = this.readAnnouncementsSubject.value;
-      const userReadSet = readMap.get(userId) || new Set<number>();
-      announcements.forEach(a => userReadSet.add(a.id));
-      readMap.set(userId, userReadSet);
-      this.readAnnouncementsSubject.next(new Map(readMap));
-    });
+  markAllAsRead(): Observable<boolean> {
+    return this.http.post<SuccessResponse>(`${this.API_BASE_URL}/announcements/mark-all-read`, {}).pipe(
+      map(response => response.success),
+      tap(success => {
+        if (success) {
+          // Refresh read status and unread count
+          this.loadReadStatus().subscribe();
+          this.unreadCountSubject.next(0);
+        }
+      }),
+      catchError(error => {
+        console.error('Error marking all as read:', error);
+        return of(false);
+      })
+    );
+  }
+
+  /**
+   * Initialize read status (call on app init or login)
+   */
+  initializeReadStatus(): void {
+    if (!this.readStatusLoaded) {
+      this.loadReadStatus().subscribe();
+      this.getUnreadCount().subscribe();
+    }
   }
 
   /**

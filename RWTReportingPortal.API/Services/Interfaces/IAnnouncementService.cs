@@ -13,4 +13,10 @@ public interface IAnnouncementService
     Task UnpublishAnnouncementAsync(int announcementId);
     Task DeleteAnnouncementAsync(int announcementId, int deletedBy);
     Task RestoreAnnouncementAsync(int announcementId);
+
+    // Read status tracking
+    Task<List<int>> GetReadAnnouncementIdsAsync(int userId);
+    Task<int> GetUnreadCountAsync(int userId);
+    Task MarkAsReadAsync(int userId, int announcementId);
+    Task MarkAllAsReadAsync(int userId);
 }

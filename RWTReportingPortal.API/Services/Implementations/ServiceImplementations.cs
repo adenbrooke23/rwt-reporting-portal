@@ -2058,6 +2058,27 @@ public class AnnouncementService : IAnnouncementService
         await _announcementRepository.UpdateAsync(announcement);
     }
 
+    // Read status tracking methods
+    public async Task<List<int>> GetReadAnnouncementIdsAsync(int userId)
+    {
+        return await _announcementRepository.GetReadAnnouncementIdsAsync(userId);
+    }
+
+    public async Task<int> GetUnreadCountAsync(int userId)
+    {
+        return await _announcementRepository.GetUnreadCountAsync(userId);
+    }
+
+    public async Task MarkAsReadAsync(int userId, int announcementId)
+    {
+        await _announcementRepository.MarkAsReadAsync(userId, announcementId);
+    }
+
+    public async Task MarkAllAsReadAsync(int userId)
+    {
+        await _announcementRepository.MarkAllAsReadAsync(userId);
+    }
+
     private static AnnouncementDto MapToDto(Announcement announcement)
     {
         return new AnnouncementDto
