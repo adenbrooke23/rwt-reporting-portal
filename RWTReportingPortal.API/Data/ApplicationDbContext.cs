@@ -102,7 +102,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ReportAccessLog>().HasKey(e => e.ReportAccessLogId);
         modelBuilder.Entity<AppSetting>().HasKey(e => e.SettingId);
         modelBuilder.Entity<Announcement>().HasKey(e => e.AnnouncementId);
-        modelBuilder.Entity<UserAnnouncementRead>().HasKey(e => e.UserAnnouncementReadId);
+        modelBuilder.Entity<UserAnnouncementRead>().HasKey(e => new { e.UserId, e.AnnouncementId });
 
         modelBuilder.Entity<User>()
             .HasOne(u => u.Company)
@@ -295,10 +295,6 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.AnnouncementId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<UserAnnouncementRead>()
-            .HasIndex(r => new { r.UserId, r.AnnouncementId })
-            .IsUnique();
 
         // Announcement navigation property mappings
         modelBuilder.Entity<Announcement>()

@@ -2,7 +2,6 @@ namespace RWTReportingPortal.API.Models.Entities;
 
 public class UserAnnouncementRead
 {
-    public int UserAnnouncementReadId { get; set; }
     public int UserId { get; set; }
     public int AnnouncementId { get; set; }
     public DateTime ReadAt { get; set; } = DateTime.UtcNow;
