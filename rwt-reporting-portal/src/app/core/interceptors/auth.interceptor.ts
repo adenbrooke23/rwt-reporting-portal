@@ -18,7 +18,6 @@ export class AuthInterceptor implements HttpInterceptor {
   private router = inject(Router);
 
   private readonly API_BASE = 'https://erpqaapi.redwoodtrust.com/api';
-  private readonly NON_CRITICAL_ENDPOINTS = ['/users/preferences', '/users/profile'];
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
 
@@ -38,13 +37,7 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
 
         if (error.status === 401 && request.url.startsWith(this.API_BASE)) {
-          const isNonCritical = this.NON_CRITICAL_ENDPOINTS.some(
-            endpoint => request.url.includes(endpoint)
-          );
-
-          if (!isNonCritical) {
-            this.handleUnauthorized();
-          }
+          this.handleUnauthorized();
         }
         return throwError(() => error);
       })
