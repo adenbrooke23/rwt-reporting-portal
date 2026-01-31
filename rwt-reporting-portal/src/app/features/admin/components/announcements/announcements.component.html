@@ -13,34 +13,35 @@
           <h1 class="page-title">Announcements</h1>
           <p class="page-description">Create and manage announcements for the dashboard</p>
         </div>
-        <div class="page-title-actions">
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <ibm-search
+            [value]="searchQuery"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Search announcements..."
+            [size]="'sm'">
+          </ibm-search>
+          <ibm-toggle
+            [checked]="showDeleted"
+            (checkedChange)="toggleShowDeleted()"
+            size="sm"
+            [onText]="''"
+            [offText]="''"
+            label="Show deleted">
+          </ibm-toggle>
+        </div>
+        <div class="toolbar-right">
           <button cdsButton="primary" size="sm" (click)="openCreateModal()">
             <svg cdsIcon="add" size="16" class="cds--btn__icon"></svg>
             New Announcement
           </button>
         </div>
       </div>
-      <div class="carbon-table-wrapper">
+
+      <div class="table-container">
         <ibm-table-container>
-          <ibm-table-toolbar [model]="tableModel">
-            <ibm-table-toolbar-content>
-              <ibm-table-toolbar-search
-                [expandable]="true"
-                [value]="searchQuery"
-                (valueChange)="onSearchChange($event)"
-                (clear)="onSearchChange('')"
-                [placeholder]="'Search announcements...'"
-                [size]="'sm'">
-              </ibm-table-toolbar-search>
-              <label class="show-deleted-toggle">
-                <input type="checkbox" [checked]="showDeleted" (change)="toggleShowDeleted()">
-                <span>Show deleted</span>
-              </label>
-              <ibm-tag type="cool-gray" size="md">
-                {{ totalItems }} announcement{{ totalItems !== 1 ? 's' : '' }}
-              </ibm-tag>
-            </ibm-table-toolbar-content>
-          </ibm-table-toolbar>
           <ibm-table
             [model]="isLoading ? skeletonModel : tableModel"
             [skeleton]="isLoading"

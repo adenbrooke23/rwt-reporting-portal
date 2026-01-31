@@ -70,106 +70,88 @@
   line-height: 1.5;
 }
 
-.page-title-actions {
-  display: flex;
-  align-items: center;
-  gap: spacing.$spacing-03;
-}
-
 .page-content {
   max-width: 1800px;
   margin: 0 auto;
   padding: 0 spacing.$spacing-06;
 }
 
-.carbon-table-wrapper {
-  background: var(--color-bg-primary);
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light);
-  overflow: hidden;
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: spacing.$spacing-05;
+  gap: spacing.$spacing-04;
+  flex-wrap: wrap;
+}
 
-  ::ng-deep ibm-table-toolbar,
-  ::ng-deep .cds--toolbar,
-  ::ng-deep .cds--table-toolbar {
-    background: var(--color-bg-primary);
-    border-bottom: 1px solid var(--color-border-light);
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-04;
+  flex-wrap: wrap;
 
-    .cds--toolbar-content {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: spacing.$spacing-05;
-      padding: spacing.$spacing-04 spacing.$spacing-05;
-    }
+  ibm-search {
+    width: 250px;
+  }
 
-    ibm-table-toolbar-search,
-    .cds--toolbar-search-container {
-      flex: 1;
-      max-width: 400px;
+  ibm-toggle {
+    display: flex;
+    align-items: center;
 
-      .cds--search {
-        background: var(--color-bg-primary);
-
-        .cds--search-input {
-          background: var(--color-bg-primary);
-          color: var(--color-text-primary);
-          border-bottom-color: var(--color-border-light);
-
-          &:focus {
-            outline: 2px solid var(--color-primary);
-          }
-
-          &::placeholder {
-            color: var(--color-text-tertiary);
-          }
-        }
-
-        .cds--search-magnifier-icon {
-          fill: var(--color-text-secondary);
-        }
-
-        .cds--search-close {
-          fill: var(--color-text-primary);
-
-          &:hover {
-            background: var(--color-bg-hover);
-          }
-        }
+    ::ng-deep {
+      .cds--toggle {
+        display: flex;
+        align-items: center;
       }
-    }
 
-    ibm-tag {
-      .cds--tag {
-        background: var(--color-bg-tertiary);
-        color: var(--color-text-primary);
-        border: 1px solid var(--color-border-light);
+      .cds--toggle-input__label {
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+        margin-right: spacing.$spacing-03;
       }
     }
   }
 }
 
-.show-deleted-toggle {
+.toolbar-right {
   display: flex;
   align-items: center;
   gap: spacing.$spacing-03;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  margin-right: spacing.$spacing-03;
-
-  input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-  }
-
-  &:hover {
-    color: var(--color-text-primary);
-  }
 }
 
-.pagination-wrapper {
-  border-top: 1px solid var(--color-border-light);
+.table-container {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  margin-bottom: spacing.$spacing-05;
+
+  ::ng-deep {
+    .cds--data-table {
+      background: var(--color-bg-primary);
+
+      thead th {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-inverse);
+        font-weight: 600;
+        border-bottom: 1px solid var(--color-border-light);
+      }
+
+      tbody tr {
+        background: var(--color-bg-primary);
+        border-bottom: 1px solid var(--color-border-light);
+
+        &:hover {
+          background: var(--color-bg-hover);
+        }
+
+        td {
+          color: var(--color-text-primary);
+          border-bottom: 1px solid var(--color-border-light);
+        }
+      }
+    }
+  }
 }
 
 ::ng-deep {
@@ -472,23 +454,21 @@
 }
 
 @media (max-width: 768px) {
-  .page-title-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: spacing.$spacing-04;
-  }
-
-  .page-title-actions {
-    width: 100%;
-  }
-
-  .table-toolbar {
+  .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
   .toolbar-left {
-    max-width: none;
+    width: 100%;
+
+    ibm-search {
+      width: 100%;
+    }
+  }
+
+  .toolbar-right {
+    width: 100%;
   }
 
   .form-grid {
