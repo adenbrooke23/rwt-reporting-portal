@@ -71,44 +71,6 @@ cds-header .cds--header__action svg {
   fill: #f4f4f4 !important;
 }
 
-// Light theme sidebar - white (default)
-cds-sidenav .cds--side-nav {
-  background-color: #ffffff !important;
-  border-right: 1px solid #e0e0e0 !important;
-}
-
-cds-sidenav .cds--side-nav__link,
-cds-sidenav .cds--side-nav__submenu {
-  color: #161616 !important;
-}
-
-cds-sidenav .cds--side-nav__icon svg {
-  fill: #161616 !important;
-}
-
-// Dark theme sidebar - black (override)
-html.theme-g90 cds-sidenav .cds--side-nav,
-html.theme-g100 cds-sidenav .cds--side-nav,
-html.dark-theme cds-sidenav .cds--side-nav {
-  background-color: #161616 !important;
-  border-right: 1px solid #393939 !important;
-}
-
-html.theme-g90 cds-sidenav .cds--side-nav__link,
-html.theme-g90 cds-sidenav .cds--side-nav__submenu,
-html.theme-g100 cds-sidenav .cds--side-nav__link,
-html.theme-g100 cds-sidenav .cds--side-nav__submenu,
-html.dark-theme cds-sidenav .cds--side-nav__link,
-html.dark-theme cds-sidenav .cds--side-nav__submenu {
-  color: #f4f4f4 !important;
-}
-
-html.theme-g90 cds-sidenav .cds--side-nav__icon svg,
-html.theme-g100 cds-sidenav .cds--side-nav__icon svg,
-html.dark-theme cds-sidenav .cds--side-nav__icon svg {
-  fill: #f4f4f4 !important;
-}
-
 :root,
 .light-theme,
 .theme-white {
@@ -210,7 +172,7 @@ html.dark-theme cds-sidenav .cds--side-nav__icon svg {
   --scrollbar-thumb-hover: #a8a8a8;
 
   
-  --sidebar-bg: #f4f4f4;
+  --sidebar-bg: #ffffff;
   --sidebar-border: #e0e0e0;
   --sidebar-text: #525252;
   --sidebar-text-hover: #161616;
@@ -263,8 +225,8 @@ html.dark-theme cds-sidenav .cds--side-nav__icon svg {
   --scrollbar-thumb-hover: #6f6f6f;
 
 
-  --sidebar-bg: #393939;
-  --sidebar-border: #525252;
+  --sidebar-bg: #161616;
+  --sidebar-border: #393939;
   --sidebar-text: #c6c6c6;
   --sidebar-text-hover: #f4f4f4;
   --sidebar-icon: #f4f4f4;
@@ -317,8 +279,8 @@ html.dark-theme cds-sidenav .cds--side-nav__icon svg {
   --scrollbar-thumb-hover: #525252;
 
 
-  --sidebar-bg: #393939;
-  --sidebar-border: #525252;
+  --sidebar-bg: #161616;
+  --sidebar-border: #393939;
   --sidebar-text: #c6c6c6;
   --sidebar-text-hover: #f4f4f4;
   --sidebar-icon: #f4f4f4;
