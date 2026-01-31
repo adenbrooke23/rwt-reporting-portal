@@ -56,9 +56,6 @@ export class UpdatesComponent implements OnInit, OnDestroy {
     }
 
     this.loadAnnouncements();
-
-    // Mark all announcements as read when viewing the updates page
-    this.announcementService.markAllAsRead().subscribe();
   }
 
   ngOnDestroy(): void {
@@ -170,6 +167,9 @@ export class UpdatesComponent implements OnInit, OnDestroy {
   }
 
   openAnnouncement(announcementId: number): void {
+    // Mark as read when opening
+    this.announcementService.markAsRead(announcementId).subscribe();
+
     const sub = this.announcementService.getAnnouncementById(announcementId).subscribe({
       next: (announcement) => {
         if (announcement) {

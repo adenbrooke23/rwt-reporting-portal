@@ -149,6 +149,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openAnnouncement(announcementId: number): void {
+    // Mark as read when opening
+    this.announcementService.markAsRead(announcementId).subscribe();
+
     const sub = this.announcementService.getAnnouncementById(announcementId).subscribe({
       next: (announcement) => {
         if (announcement) {
