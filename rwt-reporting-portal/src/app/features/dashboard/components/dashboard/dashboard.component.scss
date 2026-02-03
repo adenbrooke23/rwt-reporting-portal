@@ -11,31 +11,28 @@
   min-height: 280px;
   display: flex;
   align-items: flex-end;
-  background-color: #000;
-  background-image: url('/assets/images/login-background.svg');
-  background-size: cover;
-  background-position: center;
+  background-color: #161616;
+  background-image: url('/assets/images/dashboard-header.svg');
+  background-size: 120%;
+  background-position: right center;
   background-repeat: no-repeat;
   overflow: hidden;
 
   @media (max-width: 768px) {
     min-height: 240px;
+    background-size: 150%;
   }
 
   @media (max-width: 480px) {
     min-height: 200px;
+    background-size: 180%;
   }
 }
 
 .banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(15, 98, 254, 0.4) 50%,
-    rgba(138, 63, 252, 0.35) 100%
-  );
+  background: transparent;
   z-index: 1;
 }
 
