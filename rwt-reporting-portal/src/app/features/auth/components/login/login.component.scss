@@ -48,8 +48,14 @@
 .login-subtitle {
   font-size: 0.875rem;
   color: #c6c6c6;
-  margin: 0 0 spacing.$spacing-06 0;
-  font-weight: 400;
+  margin: 0 0 spacing.$spacing-04 0;
+  font-weight: 500;
+}
+
+.title-divider {
+  height: 1px;
+  background: #393939;
+  margin-bottom: spacing.$spacing-06;
 }
 
 .login-section {
@@ -103,37 +109,10 @@
   }
 }
 
-.section-divider {
-  position: relative;
-  display: flex;
-  align-items: center;
+.simple-divider {
+  height: 1px;
+  background: #393939;
   margin: spacing.$spacing-05 0;
-  color: #6f6f6f;
-  font-size: 0.75rem;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #393939;
-  }
-
-  &::before {
-    margin-right: spacing.$spacing-03;
-  }
-
-  &::after {
-    margin-left: spacing.$spacing-03;
-  }
-
-  span {
-    white-space: nowrap;
-  }
-
-  &.alt-divider {
-    margin-top: spacing.$spacing-06;
-  }
 }
 
 .login-form {
@@ -333,22 +312,25 @@ cds-notification {
 .alt-login-button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: spacing.$spacing-03;
   width: 100%;
   padding: 14px 16px;
   font-size: 0.875rem;
   font-weight: 400;
-  color: #f4f4f4;
-  background: transparent;
-  border: 1px solid #6f6f6f;
+  color: #fff;
+  background: #0f62fe;
+  border: 1px solid #fff;
   cursor: pointer;
-  transition: background-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9),
-              border-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
+  transition: background-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
   outline: none;
 
   &:hover {
-    background: #353535;
-    border-color: #c6c6c6;
+    background: #0353e9;
+  }
+
+  &:active {
+    background: #002d9c;
   }
 
   &:focus {

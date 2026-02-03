@@ -2,7 +2,8 @@
   <div class="login-content">
     <!-- Title Section -->
     <h1 class="login-title">Log in</h1>
-    <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'RWT Reporting Portal' }}</p>
+    <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'RWT Enterprise Reporting Portal' }}</p>
+    <div class="title-divider"></div>
 
     <!-- SSO Section (Primary login for regular users) -->
     <div class="login-section" *ngIf="!isAdminLogin">
@@ -97,7 +98,7 @@
     </cds-inline-notification>
 
     <!-- Alternative Logins Section -->
-    <div class="section-divider"></div>
+    <div class="simple-divider"></div>
     <div class="login-section alt-section">
       <span class="section-label">Alternative logins</span>
       <button
@@ -121,10 +122,10 @@
     </div>
 
     <!-- Need Help Section -->
-    <div class="section-divider"></div>
+    <div class="simple-divider"></div>
     <div class="need-help">
       <span>Need help?</span>
-      <a href="mailto:helpdesk@redwoodtrust.com" class="help-link">Contact the Redwood Trust Help Desk</a>
+      <a href="mailto:servicedesk@redwoodtrust.com" class="help-link">Contact the Redwood Trust Help Desk</a>
     </div>
   </div>
 </div>
