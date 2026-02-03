@@ -423,11 +423,12 @@ export class AnnouncementsComponent implements OnInit, OnDestroy {
     const textarea = this.contentTextarea?.nativeElement;
     if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = this.formData.content.substring(start, end);
-    const beforeText = this.formData.content.substring(0, start);
-    const afterText = this.formData.content.substring(end);
+    const content = this.formData.content || '';
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const selectedText = content.substring(start, end);
+    const beforeText = content.substring(0, start);
+    const afterText = content.substring(end);
 
     let insertion = '';
     let cursorOffset = 0;
