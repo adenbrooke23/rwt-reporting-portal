@@ -140,8 +140,8 @@
   height: 40px;
   font-size: 0.875rem;
   border: none;
-  border-bottom: 1px solid #6f6f6f;
-  background: #262626;
+  border-bottom: 1px solid #525252;
+  background: #161616;
   color: #f4f4f4;
   transition: border-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9),
               background-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
@@ -155,7 +155,7 @@
   }
 
   &:hover:not(:focus) {
-    background: #353535;
+    background: #262626;
   }
 
   &::placeholder {
@@ -319,18 +319,18 @@ cds-notification {
   font-size: 0.875rem;
   font-weight: 400;
   color: #f4f4f4;
-  background: #393939;
+  background: #161616;
   border: 1px solid #fff;
   cursor: pointer;
   transition: background-color 0.11s cubic-bezier(0.2, 0, 0.38, 0.9);
   outline: none;
 
   &:hover {
-    background: #4c4c4c;
+    background: #262626;
   }
 
   &:active {
-    background: #525252;
+    background: #393939;
   }
 
   &:focus {
