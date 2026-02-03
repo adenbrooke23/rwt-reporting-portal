@@ -118,7 +118,11 @@ export class AuthService {
     };
 
     const user = this.decodeJwtUser(accessToken);
+
+    // Store both token AND user immediately to prevent race condition
+    // where checkExistingSession() might clear the session if user isn't stored
     this.storeToken(token, true);
+    this.storeUser(user, true);
 
     this.authState.next({
       isAuthenticated: true,
@@ -128,22 +132,24 @@ export class AuthService {
       error: null
     });
 
+    // Fetch profile to get avatar and other details, then update
     this.fetchUserProfile().subscribe({
       next: (profile) => {
-        const updatedUser: User = {
-          ...user,
-          avatarId: profile.avatarId
-        };
-        this.storeUser(updatedUser, true);
-        this.authState.next({
-          ...this.authState.value,
-          user: updatedUser
-        });
+        if (profile.avatarId) {
+          const updatedUser: User = {
+            ...user,
+            avatarId: profile.avatarId
+          };
+          this.storeUser(updatedUser, true);
+          this.authState.next({
+            ...this.authState.value,
+            user: updatedUser
+          });
+        }
       },
       error: (err) => {
         console.error('Failed to fetch user profile:', err);
-
-        this.storeUser(user, true);
+        // User is already stored, no action needed
       }
     });
 
