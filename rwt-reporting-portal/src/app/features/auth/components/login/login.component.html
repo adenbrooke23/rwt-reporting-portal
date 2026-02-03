@@ -1,142 +1,130 @@
 <div class="login-container">
-  <div class="login-card">
-    
-    <div class="login-form-section">
-      
-      <div class="login-header">
-        <h1 class="login-title">{{ isAdminLogin ? 'Admin Portal' : 'RWT Reporting Portal' }}</h1>
-        <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'Sign in to continue' }}</p>
+  <div class="login-content">
+    <!-- Title Section -->
+    <h1 class="login-title">Log in</h1>
+    <p class="login-subtitle">{{ isAdminLogin ? 'Administrative access only' : 'RWT Reporting Portal' }}</p>
+
+    <!-- SSO Section (Primary login for regular users) -->
+    <div class="login-section" *ngIf="!isAdminLogin">
+      <div class="section-header">
+        <span class="section-label">Continue with SSO</span>
       </div>
-
-      
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-        
-        <div class="form-group">
-          <label for="username" class="form-label">Username</label>
-          <input
-            type="text"
-            id="username"
-            formControlName="username"
-            class="form-input"
-            placeholder="Enter your username"
-            [class.error]="username?.invalid && username?.touched"
-          />
-          <div class="error-message" *ngIf="username?.invalid && username?.touched">
-            <span *ngIf="username?.errors?.['required']">Username is required</span>
-            <span *ngIf="username?.errors?.['minlength']">Username must be at least 3 characters</span>
-          </div>
-        </div>
-
-        
-        <div class="form-group">
-          <label for="password" class="form-label">Password</label>
-          <div class="password-input-wrapper">
-            <input
-              [type]="passwordVisible ? 'text' : 'password'"
-              id="password"
-              formControlName="password"
-              class="form-input password-input"
-              placeholder="Enter your password"
-              [class.error]="password?.invalid && password?.touched"
-            />
-            <button
-              type="button"
-              class="password-toggle"
-              (click)="togglePasswordVisibility()"
-              [attr.aria-label]="passwordVisible ? 'Hide password' : 'Show password'"
-            >
-              <svg *ngIf="!passwordVisible" ibmIcon="view" size="16" class="icon"></svg>
-              <svg *ngIf="passwordVisible" ibmIcon="view--off" size="16" class="icon"></svg>
-            </button>
-          </div>
-          <div class="error-message" *ngIf="password?.invalid && password?.touched">
-            <span *ngIf="password?.errors?.['required']">Password is required</span>
-            <span *ngIf="password?.errors?.['minlength']">Password must be at least 8 characters</span>
-          </div>
-        </div>
-
-        
-        <div class="form-group remember-me">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              formControlName="rememberMe"
-              class="checkbox-input"
-            />
-            <span class="checkbox-text">Remember me</span>
-          </label>
-          <a href="#" class="forgot-password">Forgot password?</a>
-        </div>
-
-        
-        <cds-inline-notification
-          *ngIf="sessionExpired"
-          [notificationObj]="sessionExpiredNotification"
-          (close)="onCloseSessionExpired()">
-        </cds-inline-notification>
-
-        
-        <cds-inline-notification
-          *ngIf="errorMessage"
-          [notificationObj]="errorNotification"
-          (close)="onCloseNotification()">
-        </cds-inline-notification>
-
-        
-        <button
-          type="submit"
-          class="submit-button"
-          [disabled]="isLoading"
-          [class.loading]="isLoading"
-        >
-          <span *ngIf="!isLoading" class="button-content">Sign in</span>
-          <svg *ngIf="!isLoading" ibmIcon="arrow--right" size="16" class="button-icon"></svg>
-          <span *ngIf="isLoading" class="loading-spinner">
-            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Signing in...
-          </span>
-        </button>
-
-        
-        <div class="sso-divider">
-          <span>Or continue with</span>
-        </div>
-
-        <div class="sso-options">
-          <a href="https://erpqaapi.redwoodtrust.com/api/auth/login" class="sso-button">
-            <svg ibmIcon="login" size="16" class="icon"></svg>
-            Sign in with Redwood Trust SSO
-          </a>
-        </div>
-
-        
-        <div class="admin-login-section" *ngIf="!isAdminLogin">
-          <a href="#" (click)="navigateToAdminLogin(); $event.preventDefault()" class="admin-login-link">
-            <svg ibmIcon="user--admin" size="16"></svg>
-            <span>Administrator Login</span>
-          </a>
-        </div>
-        <div class="admin-login-section" *ngIf="isAdminLogin">
-          <a href="#" (click)="navigateToRegularLogin(); $event.preventDefault()" class="admin-login-link">
-            <svg ibmIcon="login" size="16"></svg>
-            <span>Regular User Login</span>
-          </a>
-        </div>
-      </form>
+      <a href="https://erpqaapi.redwoodtrust.com/api/auth/login" class="sso-button-primary">
+        <span>Sign in with Redwood Trust SSO</span>
+        <svg ibmIcon="arrow--right" size="16" class="button-icon"></svg>
+      </a>
     </div>
 
-    
-    <div class="divider"></div>
-
-    
-    <div class="branding-section">
-      <div class="logo-placeholder">
-        
-        <div class="placeholder-text">Logo Placeholder</div>
+    <!-- Admin Login Form (Only shown in admin mode) -->
+    <form *ngIf="isAdminLogin" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-input"
+          placeholder="Enter your username"
+          [class.error]="username?.invalid && username?.touched"
+        />
+        <div class="error-message" *ngIf="username?.invalid && username?.touched">
+          <span *ngIf="username?.errors?.['required']">Username is required</span>
+        </div>
       </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="password-input-wrapper">
+          <input
+            [type]="passwordVisible ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-input password-input"
+            placeholder="Enter your password"
+            [class.error]="password?.invalid && password?.touched"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="passwordVisible ? 'Hide password' : 'Show password'"
+          >
+            <svg *ngIf="!passwordVisible" ibmIcon="view" size="16" class="icon"></svg>
+            <svg *ngIf="passwordVisible" ibmIcon="view--off" size="16" class="icon"></svg>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="password?.invalid && password?.touched">
+          <span *ngIf="password?.errors?.['required']">Password is required</span>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <cds-inline-notification
+        *ngIf="sessionExpired"
+        [notificationObj]="sessionExpiredNotification"
+        (close)="onCloseSessionExpired()">
+      </cds-inline-notification>
+
+      <cds-inline-notification
+        *ngIf="errorMessage"
+        [notificationObj]="errorNotification"
+        (close)="onCloseNotification()">
+      </cds-inline-notification>
+
+      <button
+        type="submit"
+        class="submit-button"
+        [disabled]="isLoading"
+        [class.loading]="isLoading"
+      >
+        <span *ngIf="!isLoading" class="button-content">Sign in</span>
+        <svg *ngIf="!isLoading" ibmIcon="arrow--right" size="16" class="button-icon"></svg>
+        <span *ngIf="isLoading" class="loading-spinner">
+          <svg class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Signing in...
+        </span>
+      </button>
+    </form>
+
+    <!-- Session expired notification for regular users -->
+    <cds-inline-notification
+      *ngIf="!isAdminLogin && sessionExpired"
+      [notificationObj]="sessionExpiredNotification"
+      (close)="onCloseSessionExpired()">
+    </cds-inline-notification>
+
+    <!-- Alternative Logins Section -->
+    <div class="section-divider"></div>
+    <div class="login-section alt-section">
+      <span class="section-label">Alternative logins</span>
+      <button
+        *ngIf="!isAdminLogin"
+        type="button"
+        class="alt-login-button"
+        (click)="navigateToAdminLogin()"
+      >
+        <svg ibmIcon="user--admin" size="16" class="button-icon"></svg>
+        <span>Administrator Login</span>
+      </button>
+      <button
+        *ngIf="isAdminLogin"
+        type="button"
+        class="alt-login-button"
+        (click)="navigateToRegularLogin()"
+      >
+        <svg ibmIcon="login" size="16" class="button-icon"></svg>
+        <span>Regular User Login</span>
+      </button>
+    </div>
+
+    <!-- Need Help Section -->
+    <div class="section-divider"></div>
+    <div class="need-help">
+      <span>Need help?</span>
+      <a href="mailto:helpdesk@redwoodtrust.com" class="help-link">Contact the Redwood Trust Help Desk</a>
     </div>
   </div>
 </div>

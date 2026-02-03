@@ -39,8 +39,7 @@ export class LoginComponent implements OnInit {
   constructor() {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
-      password: ['', [Validators.required]],
-      rememberMe: [false]
+      password: ['', [Validators.required]]
     });
   }
 
@@ -100,7 +99,7 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
-      const { username, password, rememberMe } = this.loginForm.value;
+      const { username, password } = this.loginForm.value;
 
       this.mockUserService.login(username, password).subscribe({
         next: (response) => {
